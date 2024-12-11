@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "trainingName": "Yoga Basics",
+    "trainingDate": "2023-12-01",
+    "trainingDuration": 60
+  },
+  {
+    "id": 2,
+    "trainingName": "Advanced Cardio",
+    "trainingDate": "2023-12-02",
+    "trainingDuration": 45
+  }
+]

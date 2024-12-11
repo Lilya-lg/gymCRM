@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "specialization": "Yoga",
+    "userId": 2
+  },
+  {
+    "id": 2,
+    "specialization": "Personal Training",
+    "userId": 1
+  }
+]
