@@ -1,4 +1,5 @@
 package uz.gym.crm.util;
+
 import java.security.SecureRandom;
 
 public class PasswordGenerator {
@@ -15,10 +16,8 @@ public class PasswordGenerator {
     public static String generatePassword() {
         return generatePassword(DEFAULT_LENGTH);
     }
+
     public static String generatePassword(int length) {
-        if (length < 8) {
-            throw new IllegalArgumentException("Password length must be at least 8 characters.");
-        }
 
         StringBuilder password = new StringBuilder(length);
 

@@ -1,36 +1,36 @@
 package uz.gym.crm.facade;
 
 import org.springframework.stereotype.Component;
-import uz.gym.crm.service.TraineeService;
-import uz.gym.crm.service.TrainerService;
-import uz.gym.crm.service.TrainingService;
+import uz.gym.crm.service.TraineeServiceImpl;
+import uz.gym.crm.service.TrainerServiceImpl;
+import uz.gym.crm.service.TrainingServiceImpl;
 
 @Component
 public class GymFacade {
 
-    private final TraineeService traineeService;
-    private final TrainerService trainerService;
+    private final TraineeServiceImpl traineeService;
+    private final TrainerServiceImpl trainerService;
 
-    private TrainingService trainingService; // Setter-based injection
+    private TrainingServiceImpl trainingService;
 
-    public GymFacade(TraineeService traineeService, TrainerService trainerService) {
+    public GymFacade(TraineeServiceImpl traineeService, TrainerServiceImpl trainerService) {
         this.traineeService = traineeService;
         this.trainerService = trainerService;
     }
 
-    public void setTrainingService(TrainingService trainingService) {
+    public void setTrainingService(TrainingServiceImpl trainingService) {
         this.trainingService = trainingService;
     }
 
-    public TraineeService getTraineeService() {
+    public TraineeServiceImpl getTraineeService() {
         return traineeService;
     }
 
-    public TrainerService getTrainerService() {
+    public TrainerServiceImpl getTrainerService() {
         return trainerService;
     }
 
-    public TrainingService getTrainingService() {
+    public TrainingServiceImpl getTrainingService() {
         return trainingService;
     }
 }

@@ -1,34 +1,39 @@
 package uz.gym.crm.service;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import uz.gym.crm.dao.TraineeDAO;
-import uz.gym.crm.dao.UserDAO;
+import uz.gym.crm.dao.BaseDAO;
+import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.User;
-import uz.gym.crm.util.PasswordGenerator;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
-public class TraineeServiceImpl extends AbstractProfileService<Trainee, Integer> implements TraineeService {
+public class TraineeServiceImpl extends AbstractProfileService<Trainee> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TraineeServiceImpl.class);
-    private final UserDAO userDAO;
-    public TraineeServiceImpl(TraineeDAO traineeDAO,UserDAO userDAO) {
-        super(traineeDAO);
+    private final UserDAOImpl userDAO;
+
+    public TraineeServiceImpl(BaseDAO<Trainee> traineeDAO, UserDAOImpl userDAO) {
+        super(traineeDAO, userDAO);
         this.userDAO = userDAO;
     }
+
     @Override
     public void create(Trainee trainee) {
-        User user = resolveUser(trainee.getUserId());
-        trainee.setUserId(trainee.getUserId());
+        Long userId = trainee.getUserId();
+        User user = resolveUser(userId);
         prepareUser(user);
+        if (user.getId() == 0) {
+            userDAO.create(user);
+        }
+        trainee.setUserId(user.getId());
         super.create(trainee);
+        LOGGER.info("Trainee entity created successfully with ID: {}", trainee.getId());
     }
-    private User resolveUser(Integer userId) {
-        // Resolve User entity by userId
+
+    private User resolveUser(Long userId) {
         Optional<User> userOptional = userDAO.findById(userId);
         if (userOptional.isEmpty()) {
             LOGGER.error("User with ID {} not found!", userId);

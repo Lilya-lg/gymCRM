@@ -1,14 +1,11 @@
 package uz.gym.crm.domain;
+
 import jakarta.persistence.*;
+
 import java.time.LocalDate;
 
 @Entity
-public class Training {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
+public class Training extends BaseEntity {
     private String trainingName;
 
     @Enumerated(EnumType.STRING)
@@ -24,15 +21,6 @@ public class Training {
     @ManyToOne
     @JoinColumn(name = "trainer_id", nullable = false)
     private Trainer trainer;
-
-    // Getters and Setters
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
 
     public String getTrainingName() {
         return trainingName;
