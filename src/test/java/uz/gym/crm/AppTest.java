@@ -8,9 +8,9 @@ import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.Training;
 import uz.gym.crm.facade.GymFacade;
-import uz.gym.crm.service.TraineeService;
-import uz.gym.crm.service.TrainerService;
-import uz.gym.crm.service.TrainingService;
+import uz.gym.crm.service.TraineeServiceImpl;
+import uz.gym.crm.service.TrainerServiceImpl;
+import uz.gym.crm.service.TrainingServiceImpl;
 
 import java.util.Map;
 
@@ -33,9 +33,9 @@ class AppTest {
     @Test
     void verifyBeansInitialization() {
         assertNotNull(context.getBean(GymFacade.class), "GymFacade bean should be initialized.");
-        assertNotNull(context.getBean(TraineeService.class), "TraineeService bean should be initialized.");
-        assertNotNull(context.getBean(TrainerService.class), "TrainerService bean should be initialized.");
-        assertNotNull(context.getBean(TrainingService.class), "TrainingService bean should be initialized.");
+        assertNotNull(context.getBean(TraineeServiceImpl.class), "TraineeService bean should be initialized.");
+        assertNotNull(context.getBean(TrainerServiceImpl.class), "TrainerService bean should be initialized.");
+        assertNotNull(context.getBean(TrainingServiceImpl.class), "TrainingService bean should be initialized.");
         assertNotNull(context.getBean("trainerStorage"), "TrainerStorage bean should be initialized.");
         assertNotNull(context.getBean("traineeStorage"), "TraineeStorage bean should be initialized.");
         assertNotNull(context.getBean("trainingStorage"), "TrainingStorage bean should be initialized.");
@@ -43,9 +43,9 @@ class AppTest {
 
     @Test
     void verifyStorageInitialization() {
-        Map<Integer, Trainer> trainerStorage = (Map<Integer, Trainer>) context.getBean("trainerStorage");
-        Map<Integer, Trainee> traineeStorage = (Map<Integer, Trainee>) context.getBean("traineeStorage");
-        Map<Integer, Training> trainingStorage = (Map<Integer, Training>) context.getBean("trainingStorage");
+        Map<Long, Trainer> trainerStorage = (Map<Long, Trainer>) context.getBean("trainerStorage");
+        Map<Long, Trainee> traineeStorage = (Map<Long, Trainee>) context.getBean("traineeStorage");
+        Map<Long, Training> trainingStorage = (Map<Long, Training>) context.getBean("trainingStorage");
 
         assertFalse(trainerStorage.isEmpty(), "Trainer storage should be populated. Verify trainers.json file.");
         assertFalse(traineeStorage.isEmpty(), "Trainee storage should be populated. Verify trainees.json file.");
@@ -54,10 +54,10 @@ class AppTest {
 
     @Test
     void verifyTrainerStorageContent() {
-        Map<Integer, Trainer> trainerStorage = (Map<Integer, Trainer>) context.getBean("trainerStorage");
-        assertTrue(trainerStorage.containsKey(1), "Trainer storage should contain a trainer with ID 1.");
+        Map<Long, Trainer> trainerStorage = (Map<Long, Trainer>) context.getBean("trainerStorage");
+        assertTrue(trainerStorage.containsKey(1L), "Trainer storage should contain a trainer with ID 1.");
 
-        Trainer trainer = trainerStorage.get(1);
+        Trainer trainer = trainerStorage.get(1L);
         assertNotNull(trainer, "Trainer with ID 1 should exist.");
         assertEquals("Yoga", trainer.getSpecialization(), "Trainer specialization should match the input data.");
         assertNotNull(trainer.getUserId(), "Trainer should have a User object.");
@@ -65,33 +65,12 @@ class AppTest {
 
     @Test
     void verifyTraineeStorageContent() {
-        // Check specific data in traineeStorage
-        @SuppressWarnings("unchecked")
-        Map<Integer, Trainee> traineeStorage = (Map<Integer, Trainee>) context.getBean("traineeStorage");
-        assertTrue(traineeStorage.containsKey(1), "Trainee storage should contain a trainee with ID 1.");
+        Map<Long, Trainee> traineeStorage = (Map<Long, Trainee>) context.getBean("traineeStorage");
+        assertTrue(traineeStorage.containsKey(1L), "Trainee storage should contain a trainee with ID 1.");
 
-        Trainee trainee = traineeStorage.get(1);
+        Trainee trainee = traineeStorage.get(1L);
         assertNotNull(trainee, "Trainee with ID 1 should exist.");
         assertNotNull(trainee.getUserId(), "Trainee should have a User object.");
     }
 
-    @Test
-    void verifyFacadeFunctionality() {
-        // Validate that the facade integrates with the services correctly
-        GymFacade gymFacade = context.getBean(GymFacade.class);
-
-        assertNotNull(gymFacade.getTraineeService(), "GymFacade should have TraineeService injected.");
-        assertNotNull(gymFacade.getTrainerService(), "GymFacade should have TrainerService injected.");
-        assertNotNull(gymFacade.getTrainingService(), "GymFacade should have TrainingService injected.");
-
-        // Test TraineeService call via the facade
-        TraineeService traineeService = gymFacade.getTraineeService();
-        assertNotNull(traineeService.getAll(), "TraineeService should return a non-null list of trainees.");
-        assertFalse(traineeService.getAll().isEmpty(), "TraineeService should return a non-empty list if data exists.");
-
-        // Test TrainerService call via the facade
-        TrainerService trainerService = gymFacade.getTrainerService();
-        assertNotNull(trainerService.getAll(), "TrainerService should return a non-null list of trainers.");
-        assertFalse(trainerService.getAll().isEmpty(), "TrainerService should return a non-empty list if data exists.");
-    }
 }

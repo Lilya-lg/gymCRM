@@ -7,52 +7,54 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import uz.gym.crm.config.AppConfig;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
-import uz.gym.crm.domain.User;
 import uz.gym.crm.facade.GymFacade;
 
 public class App {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
     public static void main(String[] args) {
         LOGGER.info("Starting Gym CRM application...");
+
+        // Initialize Spring context
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
         GymFacade facade = context.getBean(GymFacade.class);
+
         LOGGER.info("GymFacade initialized: {}", facade);
 
+        // Log storage beans
         LOGGER.info("Trainer storage: {}", context.getBean("trainerStorage"));
         LOGGER.info("Trainee storage: {}", context.getBean("traineeStorage"));
         LOGGER.info("Training storage: {}", context.getBean("trainingStorage"));
         LOGGER.info("User storage: {}", context.getBean("userStorage"));
 
         LOGGER.info("Gym CRM application started successfully.");
-        GymFacade gymFacade = context.getBean(GymFacade.class);
-        // Test Trainee Service
-        LOGGER.info("Fetching all trainees:");
-        gymFacade.getTraineeService().getAll().forEach(System.out::println);
 
+        // === Test Trainee Creation ===
+        LOGGER.info("Creating a new trainee...");
         Trainee newTrainee = new Trainee();
-        newTrainee.setId(1);
-        newTrainee.setUserId(2); // Refers to User with ID 2
+        newTrainee.setId(1L); // Unique ID for the trainee
+        newTrainee.setUserId(2L); // References User ID to be resolved internally
         facade.getTraineeService().create(newTrainee);
 
-        LOGGER.info("Fetching all trainees:");
+        LOGGER.info("Fetching all trainees after creation:");
         facade.getTraineeService().getAll().forEach(trainee -> {
-            LOGGER.info("Trainee: " + trainee);
-            int userId = trainee.getUserId();
-            LOGGER.info("Associated User: " + userId);
+            LOGGER.info("Trainee ID: {}", trainee.getId());
+            LOGGER.info("Associated User ID: {}", trainee.getUserId());
         });
 
-        // Create and check Trainer
+        // === Test Trainer Creation ===
+        LOGGER.info("Creating a new trainer...");
         Trainer newTrainer = new Trainer();
-        newTrainer.setId(1);
+        newTrainer.setId(1L); // Unique ID for the trainer
         newTrainer.setSpecialization("Yoga");
-        newTrainer.setUserId(1); // Refers to User with ID 1
+        newTrainer.setUserId(1L); // References User ID to be resolved internally
         facade.getTrainerService().create(newTrainer);
 
-        LOGGER.info("Fetching all trainers:");
+        LOGGER.info("Fetching all trainers after creation:");
         facade.getTrainerService().getAll().forEach(trainer -> {
-            LOGGER.info("Trainer: " + trainer.getSpecialization());
-            int userId = trainer.getUserId();
-            LOGGER.info("Associated User: " + userId);
+            LOGGER.info("Trainer ID: {}", trainer.getId());
+            LOGGER.info("Specialization: {}", trainer.getSpecialization());
+            LOGGER.info("Associated User ID: {}", trainer.getUserId());
         });
 
         LOGGER.info("Gym CRM application completed successfully.");

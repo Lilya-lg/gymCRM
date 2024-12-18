@@ -1,47 +1,47 @@
 package uz.gym.crm.service;
 
-
 import org.springframework.stereotype.Service;
-import uz.gym.crm.dao.TrainerDAO;
-import uz.gym.crm.dao.UserDAO;
+import uz.gym.crm.dao.BaseDAO;
+import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.Trainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uz.gym.crm.domain.User;
-import uz.gym.crm.util.PasswordGenerator;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
-public class TrainerServiceImpl extends AbstractProfileService<Trainer, Integer> implements TrainerService {
+public class TrainerServiceImpl extends AbstractProfileService<Trainer> implements BaseService<Trainer> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrainerServiceImpl.class);
-    private final UserDAO userDAO;
-    public TrainerServiceImpl(TrainerDAO trainerDAO,UserDAO userDAO) {
-        super(trainerDAO);
+    private final UserDAOImpl userDAO;
+
+    public TrainerServiceImpl(BaseDAO<Trainer> trainerDAO, UserDAOImpl userDAO) {
+        super(trainerDAO, userDAO);
         this.userDAO = userDAO;
     }
+
     @Override
     public void create(Trainer trainer) {
-        User user = resolveUser(trainer.getUserId());
-        trainer.setUserId(user.getId());
+        Long userId = trainer.getUserId();
+        User user = resolveUser(userId);
         prepareUser(user);
-        super.create(trainer);
-    }
-
-    private User resolveUser(Integer userId) {
-        // Resolve User entity by userId
-        Optional<User> userOptional = userDAO.findById(userId);
-        if (userOptional.isEmpty()) {
-            LOGGER.error("User with ID {} not found!", userId);
-            throw new IllegalArgumentException("User not found for ID: " + userId);
+        if (user.getId() == 0) {
+            userDAO.create(user);
         }
-        return userOptional.get();
+        trainer.setUserId(user.getId());
+        super.create(trainer);
+        LOGGER.info("Trainer entity created successfully with ID: {}", trainer.getId());
     }
 
     @Override
-    protected User getUser(Trainer entity) {
+    public User getUser(Trainer entity) {
         return resolveUser(entity.getUserId());
+    }
+
+    private User resolveUser(Long userId) {
+        return userDAO.read(userId).orElseThrow(() -> {
+            LOGGER.error("User with ID {} not found! Proceeding without user.", userId);
+            return new IllegalArgumentException("User not found for ID: " + userId);
+        });
     }
 }

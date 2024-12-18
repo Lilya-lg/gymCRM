@@ -1,39 +1,31 @@
 package uz.gym.crm.service;
 
 import uz.gym.crm.dao.BaseDAO;
+import uz.gym.crm.domain.BaseEntity;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.util.PasswordGenerator;
+import uz.gym.crm.util.UsernameGenerator;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class AbstractProfileService<T, ID> extends BaseServiceImpl<T, ID> {
+public abstract class AbstractProfileService<T extends BaseEntity> extends BaseServiceImpl<T> {
+    public final BaseDAO<User> userDAO;
 
-    public AbstractProfileService(BaseDAO<T, ID> dao) {
+    public AbstractProfileService(BaseDAO<T> dao, BaseDAO<User> userDAO) {
         super(dao);
+        this.userDAO = userDAO;
     }
-    protected String generateUniqueUsername(String baseUsername, List<String> existingUsernames) {
-        String uniqueUsername = baseUsername;
-        int counter = 1;
 
-        while (existingUsernames.contains(uniqueUsername)) {
-            uniqueUsername = baseUsername + counter;
-            counter++;
-        }
-
-        return uniqueUsername;
-    }
     protected void prepareUser(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null.");
+        if (user.getUsername() == null || user.getUsername().isEmpty()) {
+            List<User> existingUsers = userDAO.getAll();
+            String uniqueUsername = UsernameGenerator.generateUniqueUsername(user, existingUsers);
+            user.setUsername(uniqueUsername);
         }
-        String baseUsername = user.getFirstName().toLowerCase() + "." + user.getLastName().toLowerCase();
-        List<String> existingUsernames = super.getAll().stream()
-                .map(entity -> getUser(entity).getUsername())
-                .collect(Collectors.toList());
-        String uniqueUsername = generateUniqueUsername(baseUsername, existingUsernames);
-        user.setUsername(uniqueUsername);
-        user.setPassword(PasswordGenerator.generatePassword());
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            user.setPassword(PasswordGenerator.generatePassword());
+        }
     }
 
     protected abstract User getUser(T entity);

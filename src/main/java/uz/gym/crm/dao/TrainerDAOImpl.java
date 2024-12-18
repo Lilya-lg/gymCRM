@@ -7,9 +7,8 @@ import uz.gym.crm.domain.Trainer;
 import java.util.Map;
 
 @Repository
-public class TrainerDAOImpl extends BaseDAOImpl<Trainer, Integer> implements TrainerDAO {
-    public TrainerDAOImpl(Map<Integer, Trainer> trainerStorage) {
-        super(Trainer::getId);
-        this.storage.putAll(trainerStorage); // Populate storage
+public class TrainerDAOImpl extends BaseDAOImpl<Trainer, Long> {
+    public TrainerDAOImpl(Map<Long, Trainer> storage) {
+        super(storage, Trainer::getId);
     }
 }

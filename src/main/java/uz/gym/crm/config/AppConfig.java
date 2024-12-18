@@ -9,6 +9,7 @@ import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.Training;
 import uz.gym.crm.domain.User;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,22 +18,22 @@ import java.util.concurrent.ConcurrentHashMap;
 @ComponentScan(basePackages = "uz.gym.crm")
 public class AppConfig {
     @Bean
-    public Map<Integer, Trainer> trainerStorage() {
-        return new ConcurrentHashMap<>();
+    public Map<Long, Trainer> trainerStorage() {
+        return new HashMap<>();
     }
 
     @Bean
-    public Map<Integer, Trainee> traineeStorage() {
-        return new ConcurrentHashMap<>();
+    public Map<Long, Trainee> traineeStorage() {
+        return new HashMap<>();
     }
 
     @Bean
-    public Map<Integer, Training> trainingStorage() {
-        return new ConcurrentHashMap<>();
+    public Map<Long, Training> trainingStorage() {
+        return new HashMap<>();
     }
 
     @Bean
-    public Map<Integer, User> userStorage() {
-        return new ConcurrentHashMap<>();
+    public Map<Long, User> userStorage() {
+        return new HashMap<>();
     }
 }
