@@ -11,16 +11,14 @@ public class GymFacade {
     private final TraineeServiceImpl traineeService;
     private final TrainerServiceImpl trainerService;
 
-    private TrainingServiceImpl trainingService;
+    private final TrainingServiceImpl trainingService;
 
-    public GymFacade(TraineeServiceImpl traineeService, TrainerServiceImpl trainerService) {
+    public GymFacade(TraineeServiceImpl traineeService, TrainerServiceImpl trainerService, TrainingServiceImpl trainingService) {
         this.traineeService = traineeService;
         this.trainerService = trainerService;
-    }
-
-    public void setTrainingService(TrainingServiceImpl trainingService) {
         this.trainingService = trainingService;
     }
+
 
     public TraineeServiceImpl getTraineeService() {
         return traineeService;

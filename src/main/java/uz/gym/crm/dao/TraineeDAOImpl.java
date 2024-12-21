@@ -7,7 +7,7 @@ import uz.gym.crm.domain.Trainer;
 import java.util.Map;
 
 @Repository
-public class TraineeDAOImpl extends BaseDAOImpl<Trainee, Long> {
+public class TraineeDAOImpl extends BaseDAOImpl<Trainee> {
     public TraineeDAOImpl(Map<Long, Trainee> storage) {
         super(storage, Trainee::getId);
     }

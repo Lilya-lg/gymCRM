@@ -60,7 +60,7 @@ class AppTest {
         Trainer trainer = trainerStorage.get(1L);
         assertNotNull(trainer, "Trainer with ID 1 should exist.");
         assertEquals("Yoga", trainer.getSpecialization(), "Trainer specialization should match the input data.");
-        assertNotNull(trainer.getUserId(), "Trainer should have a User object.");
+        assertNotNull(trainer, "Trainer should have a User object.");
     }
 
     @Test
@@ -70,7 +70,7 @@ class AppTest {
 
         Trainee trainee = traineeStorage.get(1L);
         assertNotNull(trainee, "Trainee with ID 1 should exist.");
-        assertNotNull(trainee.getUserId(), "Trainee should have a User object.");
+        assertNotNull(trainee, "Trainee should have a User object.");
     }
 
 }

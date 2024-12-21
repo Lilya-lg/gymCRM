@@ -1,15 +1,10 @@
 package uz.gym.crm.domain;
-
 import jakarta.persistence.*;
 
 @Entity
-public class Trainer extends BaseEntity {
+public class Trainer extends User{
 
     private String specialization;
-
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
-    private Long userId;
 
     public String getSpecialization() {
         return specialization;
@@ -19,11 +14,4 @@ public class Trainer extends BaseEntity {
         this.specialization = specialization;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
 }

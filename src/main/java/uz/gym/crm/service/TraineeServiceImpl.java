@@ -13,37 +13,26 @@ import java.util.Optional;
 @Service
 public class TraineeServiceImpl extends AbstractProfileService<Trainee> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TraineeServiceImpl.class);
-    private final UserDAOImpl userDAO;
+    private final BaseDAO<User> userDAO;
 
-    public TraineeServiceImpl(BaseDAO<Trainee> traineeDAO, UserDAOImpl userDAO) {
-        super(traineeDAO, userDAO);
+    public TraineeServiceImpl(BaseDAO<Trainee> traineeDAO,BaseDAO<User> userDAO) {
+        super(traineeDAO,userDAO);
         this.userDAO = userDAO;
     }
 
+
     @Override
     public void create(Trainee trainee) {
-        Long userId = trainee.getUserId();
-        User user = resolveUser(userId);
-        prepareUser(user);
-        if (user.getId() == 0) {
-            userDAO.create(user);
-        }
-        trainee.setUserId(user.getId());
+        prepareUser(trainee);
         super.create(trainee);
         LOGGER.info("Trainee entity created successfully with ID: {}", trainee.getId());
     }
-
-    private User resolveUser(Long userId) {
-        Optional<User> userOptional = userDAO.findById(userId);
-        if (userOptional.isEmpty()) {
-            LOGGER.error("User with ID {} not found!", userId);
-            throw new IllegalArgumentException("User not found for ID: " + userId);
-        }
-        return userOptional.get();
-    }
-
     @Override
     protected User getUser(Trainee entity) {
-        return resolveUser(entity.getUserId());
+        return userDAO.read(entity.getId())
+                .orElseThrow(() -> {
+                    LOGGER.error("User with ID {} not found!", entity.getId());
+                    return new IllegalArgumentException("User not found for ID: " + entity.getId());
+                });
     }
 }

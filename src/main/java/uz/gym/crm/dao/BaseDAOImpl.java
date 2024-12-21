@@ -8,12 +8,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-public abstract class BaseDAOImpl<T extends BaseEntity, ID> implements BaseDAO<T> {
+public abstract class BaseDAOImpl<T extends BaseEntity> implements BaseDAO<T> {
     protected final Map<Long, T> storage;
     private final Function<T, Long> idExtractor;
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseDAOImpl.class);
 
-    public BaseDAOImpl(Map<Long, T> storage,Function<T, Long> idExtractor) {
+    public BaseDAOImpl(Map<Long, T> storage, Function<T, Long> idExtractor) {
         this.storage = storage;
         this.idExtractor = idExtractor;
     }
@@ -69,4 +69,10 @@ public abstract class BaseDAOImpl<T extends BaseEntity, ID> implements BaseDAO<T
         return entities;
 
     }
+
+    @Override
+    public Optional<T> findById(Long id) {
+     return Optional.ofNullable(storage.get(id));
+    }
+
 }

@@ -13,12 +13,10 @@ public class DomainClassesTest {
         void testTrainee() {
             Trainee trainee = new Trainee();
             trainee.setId(1L);
-            trainee.setUserId(2L);
             trainee.setDateOfBirth(LocalDate.of(1990, 1, 1));
             trainee.setAddress("123 Test Street");
 
             assertEquals(1L, trainee.getId());
-            assertEquals(2L, trainee.getUserId());
             assertEquals(LocalDate.of(1990, 1, 1), trainee.getDateOfBirth());
             assertEquals("123 Test Street", trainee.getAddress());
         }
@@ -27,11 +25,9 @@ public class DomainClassesTest {
         void testTrainer() {
             Trainer trainer = new Trainer();
             trainer.setId(1L);
-            trainer.setUserId(3L);
             trainer.setSpecialization("Yoga");
 
             assertEquals(1L, trainer.getId());
-            assertEquals(3L, trainer.getUserId());
             assertEquals("Yoga", trainer.getSpecialization());
         }
 
@@ -60,7 +56,7 @@ public class DomainClassesTest {
 
         @Test
         void testUser() {
-            User user = new User();
+            Trainer user = new Trainer();
             user.setId(1L);
             user.setFirstName("John");
             user.setLastName("Doe");

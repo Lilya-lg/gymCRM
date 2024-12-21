@@ -1,5 +1,6 @@
 package uz.gym.crm.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import uz.gym.crm.dao.BaseDAO;
 import uz.gym.crm.domain.BaseEntity;
 import uz.gym.crm.domain.User;
@@ -7,12 +8,11 @@ import uz.gym.crm.util.PasswordGenerator;
 import uz.gym.crm.util.UsernameGenerator;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-public abstract class AbstractProfileService<T extends BaseEntity> extends BaseServiceImpl<T> {
-    public final BaseDAO<User> userDAO;
 
-    public AbstractProfileService(BaseDAO<T> dao, BaseDAO<User> userDAO) {
+public abstract class AbstractProfileService<T extends User> extends BaseServiceImpl<T> {
+    private BaseDAO<User> userDAO;
+    public AbstractProfileService(BaseDAO<T> dao,BaseDAO<User> userDAO) {
         super(dao);
         this.userDAO = userDAO;
     }
@@ -27,7 +27,8 @@ public abstract class AbstractProfileService<T extends BaseEntity> extends BaseS
             user.setPassword(PasswordGenerator.generatePassword());
         }
     }
-
     protected abstract User getUser(T entity);
+
+
 }
 

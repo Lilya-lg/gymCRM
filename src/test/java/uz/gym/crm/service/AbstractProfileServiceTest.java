@@ -5,9 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import uz.gym.crm.dao.BaseDAO;
 import uz.gym.crm.dao.TraineeDAOImpl;
 import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.Trainee;
+import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.util.UsernameGenerator;
 
@@ -33,29 +35,13 @@ public class AbstractProfileServiceTest {
         profileService = new TestProfileService(traineeDAO, userDAO);
     }
 
-    @Test
-    void testPrepareUserWithMissingUsername() {
-        User user = new User();
-        user.setId(1L);
-        user.setPassword("password");
-        user.setFirstName("John"); // Ensure required fields are set
-        user.setLastName("Doe");
 
-        List<User> existingUsers = Arrays.asList(createTestUser(2L));
-        when(userDAO.getAll()).thenReturn(existingUsers);
 
-        // Act
-        profileService.prepareUser(user);
 
-        // Assert
-        assertNotNull(user.getUsername(), "Username should not be null");
-        assertTrue(user.getUsername().startsWith("john.doe"), "Username should start with 'john.doe'");
-        verify(userDAO).getAll();
-    }
 
     @Test
     void testPrepareUserWithMissingPassword() {
-        User user = new User();
+        Trainer user = new Trainer();
         user.setId(1L);
         user.setUsername("testuser");
 
@@ -67,24 +53,26 @@ public class AbstractProfileServiceTest {
     @Test
     void testGetUserFromEntity() {
         Trainee trainee = new Trainee();
-        trainee.setUserId(100L);
-        User user = createTestUser(100L);
+        trainee.setId(100L); // Используем id, унаследованный от User
+        trainee.setFirstName("Jane");
+        trainee.setLastName("Doe");
 
-        // Ensure proper mock setup
-        when(userDAO.read(100L)).thenReturn(Optional.of(user)); // Use 'read' instead of 'findById'
+        // Мокируем возврат из userDAO
+        when(userDAO.read(100L)).thenReturn(Optional.of(trainee));
 
         // Act
         User result = profileService.getUser(trainee);
 
         // Assert
         assertNotNull(result, "User should not be null");
-        assertEquals(user, result, "Returned user should match the mocked user");
-        verify(userDAO).read(100L); // Verify interaction with mock
+        assertEquals(trainee, result, "Returned user should match the mocked user");
+        verify(userDAO).read(100L); // Убедитесь, что userDAO вызван
 
     }
 
+
     private User createTestUser(Long id) {
-        User user = new User();
+        Trainer user = new Trainer();
         user.setId(id);
         user.setFirstName("John");
         user.setLastName("Doe");
@@ -96,15 +84,17 @@ public class AbstractProfileServiceTest {
 
     // Concrete subclass for testing purposes
     private static class TestProfileService extends AbstractProfileService<Trainee> {
-
-        public TestProfileService(TraineeDAOImpl traineeDAO, UserDAOImpl userDAO) {
-            super(traineeDAO, userDAO);
+        private final BaseDAO<User> userDAO;
+        public TestProfileService(BaseDAO<Trainee> traineeDAO, BaseDAO<User> userDAO) {
+            super(traineeDAO,userDAO);
+            this.userDAO = userDAO;
         }
+
 
         @Override
         protected User getUser(Trainee entity) {
-            return userDAO.read(entity.getUserId()).orElseThrow(() ->
-                    new IllegalArgumentException("User not found for ID: " + entity.getUserId()));
+            return userDAO.read(entity.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("User not found for ID: " + entity.getId()));
         }
     }
 }

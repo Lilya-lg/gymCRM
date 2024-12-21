@@ -8,6 +8,7 @@ import org.mockito.MockitoAnnotations;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import uz.gym.crm.dao.BaseDAO;
+import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.User;
 
 import java.util.Arrays;
@@ -96,7 +97,7 @@ class BaseServiceImplTest {
     }
 
     private User createTestUser(Long id) {
-        User user = new User();
+        Trainer user = new Trainer();
         user.setId(id);
         user.setFirstName("John");
         user.setLastName("Doe");

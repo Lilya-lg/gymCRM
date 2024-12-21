@@ -112,7 +112,6 @@ class TraineeDAOImplTest {
         trainee.setId(id);
         trainee.setDateOfBirth(LocalDate.of(2000, 1, 1));
         trainee.setAddress("123 Test St");
-        trainee.setUserId(100L);
         return trainee;
     }
 }

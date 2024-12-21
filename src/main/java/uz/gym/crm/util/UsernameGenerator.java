@@ -7,17 +7,25 @@ import java.util.stream.Collectors;
 
 public class UsernameGenerator {
     private UsernameGenerator() {
-        // Private constructor to prevent instantiation
     }
 
-    public static String generateUniqueUsername(User user, List<User> existingUsers) {
+    public static <T extends User> String generateUniqueUsername(T user, List<? extends User> existingUsers) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
+        }
+
         String firstName = user.getFirstName() != null ? user.getFirstName() : "user";
         String lastName = user.getLastName() != null ? user.getLastName() : String.valueOf(user.getId());
+
+        // Generate base username
         String baseUsername = (firstName + "." + lastName).toLowerCase();
+
+        // Collect all existing usernames
         List<String> existingUsernames = existingUsers.stream()
                 .map(User::getUsername)
                 .collect(Collectors.toList());
 
+        // Generate unique username
         String uniqueUsername = baseUsername;
         int counter = 1;
 
@@ -27,5 +35,6 @@ public class UsernameGenerator {
 
         return uniqueUsername;
     }
+
 }
 

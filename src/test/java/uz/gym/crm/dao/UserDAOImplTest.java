@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.User;
 
 import java.util.*;
@@ -106,7 +107,7 @@ public class UserDAOImplTest {
     }
 
     private User createTestUser(Long id) {
-        User user = new User();
+        Trainer user = new Trainer();
         user.setId(id);
         user.setFirstName("John");
         user.setLastName("Doe");

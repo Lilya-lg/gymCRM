@@ -51,10 +51,8 @@ class GymFacadeTest {
 
     @Test
     void testSetAndGetTrainingService() {
-        TrainingServiceImpl newTrainingService = mock(TrainingServiceImpl.class);
-        gymFacade.setTrainingService(newTrainingService);
-
-        assertEquals(newTrainingService, gymFacade.getTrainingService());
+        assertNotNull(gymFacade.getTrainingService());
+        assertEquals(trainingService, gymFacade.getTrainingService());
     }
 
     @Test
@@ -82,7 +80,6 @@ class GymFacadeTest {
     @Test
     void testUseTrainingService() {
         List<Training> trainings = Arrays.asList(new Training(), new Training());
-        gymFacade.setTrainingService(trainingService);
         when(trainingService.getAll()).thenReturn(trainings);
 
         List<Training> result = gymFacade.getTrainingService().getAll();

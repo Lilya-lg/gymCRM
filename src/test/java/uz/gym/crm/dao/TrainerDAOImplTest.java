@@ -110,7 +110,6 @@ class TrainerDAOImplTest {
         Trainer trainer = new Trainer();
         trainer.setId(id);
         trainer.setSpecialization("Java Trainer");
-        trainer.setUserId(100L);
         return trainer;
     }
 }

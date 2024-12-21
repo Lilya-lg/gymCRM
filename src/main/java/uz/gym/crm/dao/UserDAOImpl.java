@@ -8,20 +8,10 @@ import java.util.Map;
 import java.util.Optional;
 
 @Repository
-public class UserDAOImpl extends BaseDAOImpl<User, Long> {
+public class UserDAOImpl extends BaseDAOImpl<User> {
 
     public UserDAOImpl(Map<Long, User> storage) {
         super(storage, User::getId);
-    }
-
-    public Optional<User> findById(Long id) {
-        return Optional.ofNullable(storage.get(id));
-    }
-
-    public Optional<User> findByUsername(String username) {
-        return storage.values().stream()
-                .filter(user -> user.getUsername().equals(username))
-                .findFirst();
     }
 }
 

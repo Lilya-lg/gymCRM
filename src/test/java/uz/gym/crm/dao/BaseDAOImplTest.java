@@ -13,7 +13,7 @@ import static org.mockito.Mockito.*;
 
 class BaseDAOImplTest {
 
-    private BaseDAOImpl<TestEntity, Long> baseDAO;
+    private BaseDAOImpl<TestEntity> baseDAO;
 
     @Mock
     private Map<Long, TestEntity> mockStorage;
