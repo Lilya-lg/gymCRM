@@ -70,9 +70,5 @@ public abstract class BaseDAOImpl<T extends BaseEntity> implements BaseDAO<T> {
 
     }
 
-    @Override
-    public Optional<T> findById(Long id) {
-     return Optional.ofNullable(storage.get(id));
-    }
 
 }

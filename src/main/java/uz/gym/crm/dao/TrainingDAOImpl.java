@@ -1,7 +1,6 @@
 package uz.gym.crm.dao;
 
 import org.springframework.stereotype.Repository;
-import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.Training;
 
 import java.util.Map;

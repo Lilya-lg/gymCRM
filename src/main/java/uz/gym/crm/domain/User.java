@@ -1,9 +1,7 @@
 package uz.gym.crm.domain;
 
-import jakarta.persistence.*;
 
-
-public class User extends BaseEntity{
+public class User extends BaseEntity {
     private String firstName;
     private String lastName;
     private String username;

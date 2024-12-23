@@ -76,12 +76,12 @@ public class StorageInitializer implements BeanPostProcessor {
         return bean;
     }
 
-    public <T extends BaseEntity, K> void populateStorage(Map<K, T> storage, Resource fileResource, Class<T> type) throws Exception {
+    public <T extends BaseEntity> void populateStorage(Map<Long, T> storage, Resource fileResource, Class<T> type) throws Exception {
         try (InputStream inputStream = fileResource.getInputStream()) {
             List<T> items = OBJECT_MAPPER.readValue(inputStream,
                     OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, type));
             for (T item : items) {
-                K id = (K) Long.valueOf(item.getId());
+                Long id = Long.valueOf(item.getId());
                 storage.put(id, item);
             }
         }

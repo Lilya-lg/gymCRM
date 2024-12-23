@@ -17,10 +17,11 @@ class StorageInitializerTest {
         StorageInitializer initializer = new StorageInitializer();
         ClassPathResource trainerFile = new ClassPathResource("trainers.json");
 
-        Map<Integer, Trainer> trainerStorage = new HashMap<>();
+        Map<Long, Trainer> trainerStorage = new HashMap<>();
         initializer.populateStorage(trainerStorage, trainerFile, Trainer.class);
 
         assertFalse(trainerStorage.isEmpty(), "Trainer storage should not be empty after initialization.");
     }
 }
+
 
