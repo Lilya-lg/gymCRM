@@ -1,26 +1,36 @@
 package uz.gym.crm.domain;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.time.LocalDate;
 
 @Entity
-public class Training extends BaseEntity {
-    private String trainingName;
-
-    @Enumerated(EnumType.STRING)
-    private TrainingType trainingType;
-
-    private LocalDate trainingDate;
-    private Integer trainingDuration;
+@Table(name = "Training")
+public class Training{
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "trainee_id", nullable = false)
+    @JoinColumn(name = "trainee_id")
     private Trainee trainee;
 
     @ManyToOne
-    @JoinColumn(name = "trainer_id", nullable = false)
+    @JoinColumn(name = "trainer_id")
     private Trainer trainer;
+
+    @Column(nullable = false)
+    private String trainingName;
+
+    @ManyToOne
+    @JoinColumn(name = "training_type_id", nullable = false)
+    private TrainingType trainingType;
+
+    @Column(nullable = false)
+    private LocalDate trainingDate;
+    @Column(nullable = false)
+    private Integer trainingDuration;
+
 
     public String getTrainingName() {
         return trainingName;
@@ -68,5 +78,13 @@ public class Training extends BaseEntity {
 
     public void setTrainer(Trainer trainer) {
         this.trainer = trainer;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

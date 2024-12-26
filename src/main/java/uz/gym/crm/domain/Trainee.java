@@ -1,14 +1,21 @@
 package uz.gym.crm.domain;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.time.LocalDate;
 
 @Entity
-public class Trainee extends User {
+@Table(name = "trainee")
+public class Trainee{
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private LocalDate dateOfBirth;
     private String address;
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     public LocalDate getDateOfBirth() {
         return dateOfBirth;
@@ -26,4 +33,29 @@ public class Trainee extends User {
         this.address = address;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    @Override
+    public String toString() {
+        return "Trainee{" +
+                "id=" + id +
+                ", dateOfBirth=" + dateOfBirth +
+                ", address='" + address + '\'' +
+                ", user=" + (user != null ? user.getUsername() : "null") +
+                '}';
+    }
 }

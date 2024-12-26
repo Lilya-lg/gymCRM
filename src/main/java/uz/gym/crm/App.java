@@ -1,72 +1,49 @@
 package uz.gym.crm;
 
+
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import uz.gym.crm.config.AppConfig;
-import uz.gym.crm.domain.Trainee;
-import uz.gym.crm.domain.Trainer;
-import uz.gym.crm.facade.GymFacade;
 
+import org.springframework.context.annotation.ComponentScan;
+
+import uz.gym.crm.config.HibernateUtil;
+import uz.gym.crm.domain.User;
+
+@ComponentScan(basePackages = "uz.gym.crm")
 public class App {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
-        LOGGER.info("Starting Gym CRM application...");
+        Session session = null;
+        Transaction transaction = null;
 
-        ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
-        GymFacade facade = context.getBean(GymFacade.class);
+        try {
+            session = HibernateUtil.getSessionFactory().openSession();
+            transaction = session.beginTransaction();
+            System.out.println("aa"+App.class.getClassLoader().getResource("hibernate.cfg.xml"));
 
-        LOGGER.info("GymFacade initialized successfully.");
-        logStorageBeanSizes(context);
+            // Create a test User entity
+            User user = new User();
+            user.setFirstName("Masha");
+            user.setLastName("Ivanova");
+            user.setUsername("masha.ivanova");
+            user.setPassword("password123");
+            user.setActive(true);
 
-        LOGGER.info("Gym CRM application setup completed.");
+            // Save the User entity to the database
+            session.save(user);
 
-        createAndLogTrainee(facade);
+            transaction.commit();
+            System.out.println("User saved successfully!");
 
-        createAndLogTrainer(facade);
-
-        LOGGER.info("Gym CRM application terminated successfully.");
-    }
-
-    private static void logStorageBeanSizes(ApplicationContext context) {
-        LOGGER.info("Trainer storage size: {}", context.getBean("trainerStorage", java.util.Map.class).size());
-        LOGGER.info("Trainee storage size: {}", context.getBean("traineeStorage", java.util.Map.class).size());
-        LOGGER.info("Training storage size: {}", context.getBean("trainingStorage", java.util.Map.class).size());
-        LOGGER.info("User storage size: {}", context.getBean("userStorage", java.util.Map.class).size());
-    }
-
-    private static void createAndLogTrainee(GymFacade facade) {
-        LOGGER.info("Creating a new trainee...");
-        Trainee newTrainee = new Trainee();
-        newTrainee.setId(1L);
-        newTrainee.setFirstName("Jane");
-        newTrainee.setLastName("Smith");
-
-        facade.getTraineeService().create(newTrainee);
-
-        LOGGER.info("Fetching all trainees after creation:");
-        facade.getTraineeService().getAll().forEach(trainee -> {
-            LOGGER.info("Trainee: ID={}, FirstName={}, LastName={}, Username={}",
-                    trainee.getId(), trainee.getFirstName(), trainee.getLastName(), trainee.getUsername());
-        });
-    }
-
-    private static void createAndLogTrainer(GymFacade facade) {
-        LOGGER.info("Creating a new trainer...");
-        Trainer newTrainer = new Trainer();
-        newTrainer.setId(1L); // Unique ID for the trainer
-        newTrainer.setFirstName("John");
-        newTrainer.setLastName("Doe");
-        newTrainer.setSpecialization("Yoga");
-
-        facade.getTrainerService().create(newTrainer);
-
-        LOGGER.info("Fetching all trainers after creation:");
-        facade.getTrainerService().getAll().forEach(trainer -> {
-            LOGGER.info("Trainer: ID={}, FirstName={}, LastName={}, Username={}, Specialization={}",
-                    trainer.getId(), trainer.getFirstName(), trainer.getLastName(), trainer.getUsername(), trainer.getSpecialization());
-        });
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            e.printStackTrace();
+        } finally {
+            if (session != null) session.close();
+            HibernateUtil.shutdown();
+        }
     }
 }

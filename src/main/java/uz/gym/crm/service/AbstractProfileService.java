@@ -1,20 +1,33 @@
 package uz.gym.crm.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import uz.gym.crm.dao.BaseDAO;
-import uz.gym.crm.domain.User;
+import uz.gym.crm.dao.TrainingDAOImpl;
+import uz.gym.crm.dao.UserDAOImpl;
+import uz.gym.crm.domain.*;
 import uz.gym.crm.util.PasswordGenerator;
 import uz.gym.crm.util.UsernameGenerator;
 
+import java.beans.FeatureDescriptor;
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 
-public abstract class AbstractProfileService<T extends User> extends BaseServiceImpl<T> {
-    private BaseDAO<User> userDAO;
-
-    public AbstractProfileService(BaseDAO<T> dao, BaseDAO<User> userDAO) {
+public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> {
+    private UserDAOImpl userDAO;
+    TrainingDAOImpl trainingDAO;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractProfileService.class);
+    public AbstractProfileService(BaseDAO<T> dao, UserDAOImpl userDAO) {
         super(dao);
         this.userDAO = userDAO;
     }
+
 
     protected void prepareUser(User user) {
         if (user.getUsername() == null || user.getUsername().isEmpty()) {
@@ -25,6 +38,112 @@ public abstract class AbstractProfileService<T extends User> extends BaseService
         if (user.getPassword() == null || user.getPassword().isEmpty()) {
             user.setPassword(PasswordGenerator.generatePassword());
         }
+    }
+    //9,10 - Update profile
+    public void updateProfile(String username, String password, T updatedEntity) {
+        LOGGER.debug("Updating profile for username: {}", username);
+
+        if (!authenticate(username, password)) {
+            LOGGER.error("Authentication failed for username: {}", username);
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
+
+
+        T existingEntity = findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
+
+        copyNonNullProperties(updatedEntity, existingEntity);
+
+
+        dao.save(existingEntity);
+        LOGGER.info("Profile updated successfully for username: {}", username);
+    }
+    //5, 6 Select by username
+    public Optional<T> findByUsername(String username) {
+        LOGGER.debug("Searching for profile with username: {}", username);
+        return dao.findByUsername(username);
+    }
+
+    public boolean authenticate(String username, String password) {
+        return userDAO.findByUsernameAndPassword(username, password).isPresent();
+    }
+    //7,8 Change password
+    public void changePassword(String username, String oldPassword, String newPassword) {
+        if (!authenticate(username, oldPassword)) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
+
+        User user = userDAO.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
+
+        user.setPassword(newPassword);
+        userDAO.save(user);
+    }
+    //11.Activate profile
+    public void activate(String username) {
+        LOGGER.debug("Activating profile with username: {}", username);
+
+        T entity = findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found for username: " + username));
+
+        User user = getUser(entity);
+        user.setActive(true);
+
+        dao.save(entity);
+        LOGGER.info("Profile with username {} activated successfully.", username);
+    }
+    //12.Deactivate profile
+    public void deactivate(String username, String password) {
+        LOGGER.debug("Deactivating profile with username: {}", username);
+        if (!authenticate(username, password)) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
+        T entity = findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found for username: " + username));
+
+        User user = getUser(entity);
+        user.setActive(false);
+
+        dao.save(entity);
+        LOGGER.info("Profile with username {} deactivated successfully.", username);
+    }
+    //14,15 get training list
+    public List<Training> getTrainingListByCriteria(String username, LocalDate fromDate, LocalDate toDate, String trainerName, String trainingType) {
+        LOGGER.debug("Fetching training list with ORM filters for profile with username: {}", username);
+        T profile = findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found for username: " + username));
+
+        if (profile instanceof Trainee trainee) {
+            return trainingDAO.findByCriteria(
+                    trainee,
+                    trainerName,
+                    fromDate,
+                    toDate
+            );
+        } else if (profile instanceof Trainer trainer) {
+            return trainingDAO.findByCriteriaForTrainer(
+                    trainer,
+                    trainerName,
+                    trainingType,
+                    fromDate,
+                    toDate
+            );
+        } else {
+            throw new IllegalArgumentException("Unsupported profile type for username: " + username);
+        }
+    }
+
+
+    private void copyNonNullProperties(T source, T target) {
+        BeanUtils.copyProperties(source, target, getNullPropertyNames(source));
+    }
+
+    private String[] getNullPropertyNames(T source) {
+        final BeanWrapper src = new BeanWrapperImpl(source);
+        return Arrays.stream(src.getPropertyDescriptors())
+                .map(FeatureDescriptor::getName)
+                .filter(name -> src.getPropertyValue(name) == null)
+                .toArray(String[]::new);
     }
 
     protected abstract User getUser(T entity);

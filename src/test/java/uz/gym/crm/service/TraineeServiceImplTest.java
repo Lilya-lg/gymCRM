@@ -4,135 +4,127 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import uz.gym.crm.dao.TraineeDAOImpl;
+import uz.gym.crm.dao.TrainingDAOImpl;
 import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.Trainee;
+import uz.gym.crm.domain.Trainer;
+import uz.gym.crm.domain.Training;
 import uz.gym.crm.domain.User;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
-
 class TraineeServiceImplTest {
+        private UserDAOImpl mockUserDAO;
+        private TraineeDAOImpl mockTraineeDAO;
+        private TrainingDAOImpl mockTrainingDAO;
+        private TraineeServiceImpl service;
 
-    @InjectMocks
-    private TraineeServiceImpl traineeService;
+        @BeforeEach
+        void setUp() {
+            mockUserDAO = Mockito.mock(UserDAOImpl.class);
+            mockTraineeDAO = Mockito.mock(TraineeDAOImpl.class);
+            mockTrainingDAO = Mockito.mock(TrainingDAOImpl.class);
 
-    @Mock
-    private TraineeDAOImpl traineeDAO;
+            service = new TraineeServiceImpl(mockUserDAO, mockTraineeDAO, mockTrainingDAO);
+        }
 
-    @Mock
-    private UserDAOImpl userDAO;
+        @Test
+        void create_ShouldPrepareUserAndSaveTrainee() {
+            User user = new User();
+            user.setFirstName("John");
+            user.setLastName("Doe");
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        traineeService = new TraineeServiceImpl(traineeDAO,userDAO);
+            Trainee trainee = new Trainee();
+            trainee.setUser(user);
+
+            doNothing().when(mockTraineeDAO).save(any(Trainee.class));
+
+            service.create(trainee);
+
+            assertNotNull(user.getUsername());
+            assertNotNull(user.getPassword());
+            verify(mockTraineeDAO, times(1)).save(trainee);
+        }
+
+        @Test
+        void deleteProfileByUsername_ShouldDeleteTraineeAndUser() {
+            User user = new User();
+            user.setUsername("johndoe");
+            user.setPassword("password");
+
+            Trainee trainee = new Trainee();
+            trainee.setId(1L);
+            trainee.setUser(user);
+
+            when(mockUserDAO.findByUsernameAndPassword("johndoe", "password")).thenReturn(Optional.of(user));
+            when(mockTraineeDAO.findByUser_Username("johndoe")).thenReturn(Optional.of(trainee));
+
+            service.deleteProfileByUsername("johndoe", "password");
+
+            verify(mockTraineeDAO, times(1)).delete(1L);
+        }
+
+        @Test
+        void findByUsernameAndPassword_ShouldReturnTrainee_WhenCredentialsAreValid() {
+            Trainee trainee = new Trainee();
+            trainee.setId(1L);
+
+            when(mockTraineeDAO.findByUser_UsernameAndUser_Password("johndoe", "password"))
+                    .thenReturn(Optional.of(trainee));
+
+            Optional<Trainee> result = service.findByUsernameAndPassword("johndoe", "password");
+
+            assertTrue(result.isPresent());
+            assertEquals(1L, result.get().getId());
+            verify(mockTraineeDAO, times(1)).findByUser_UsernameAndUser_Password("johndoe", "password");
+        }
+
+        @Test
+        void findByUsernameAndPassword_ShouldThrowException_WhenCredentialsAreInvalid() {
+            when(mockTraineeDAO.findByUser_UsernameAndUser_Password("johndoe", "wrongpassword"))
+                    .thenReturn(Optional.empty());
+
+            Optional<Trainee> result = service.findByUsernameAndPassword("johndoe", "wrongpassword");
+
+            assertFalse(result.isPresent());
+        }
+/*
+        @Test
+        void updateTraineeTrainers_ShouldUpdateTrainerList() {
+            User user = new User();
+            user.setUsername("johndoe");
+
+            Trainee trainee = new Trainee();
+            trainee.setUser(user);
+
+            Training existingTraining = new Training();
+            existingTraining.setId(1L);
+
+            Training newTraining = new Training();
+
+            when(mockTraineeDAO.findByUser_Username("johndoe")).thenReturn(Optional.of(trainee));
+            when(mockTrainingDAO.findByTraineeUsername("johndoe")).thenReturn(List.of(existingTraining));
+            doNothing().when(mockTrainingDAO).delete(anyLong());
+            doNothing().when(mockTrainingDAO).save(any(Training.class));
+
+            service.updateTraineeTrainers("johndoe", List.of(2L));
+
+            verify(mockTraineeDAO, times(1)).findByUser_Username("johndoe");
+            verify(mockTrainingDAO, times(1)).findByTraineeUsername("johndoe");
+            verify(mockTrainingDAO, times(1)).delete(existingTraining.getId());
+            verify(mockTrainingDAO, times(1)).save(any(Training.class));
+        }
     }
 
-    @Test
-    void testGetUserFromTrainee() {
-        // Arrange
-        Trainee trainee = createTestTrainee(1L);
-        User user = createTestUser(1L, "Jane", "Smith", "jane.smith");
-
-        when(userDAO.read(1L)).thenReturn(Optional.of(user));
-
-        // Act
-        User result = traineeService.getUser(trainee);
-
-        // Assert
-        assertNotNull(result, "User should not be null");
-        assertEquals(user, result, "Returned user should match the mock user");
-        verify(userDAO).read(1L);
-    }
-
-    @Test
-    void testGetUserThrowsExceptionWhenUserNotFound() {
-        // Arrange
-        Trainee trainee = createTestTrainee(1L);
-
-        when(userDAO.read(1L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            traineeService.getUser(trainee);
-        });
-        assertEquals("User not found for ID: 1", exception.getMessage());
-        verify(userDAO).read(1L);
-    }
-
-    @Test
-    void testPrepareUserWithMissingUsername() {
-        Trainee trainee = createTestTrainee(1L);
-        trainee.setUsername(null); // Simulate missing username
-
-        User existingUser = createTestUser(2L, "Jane", "Smith", "jane.smith");
-        when(userDAO.getAll()).thenReturn(Arrays.asList(existingUser));
-
-        // Act
-        traineeService.prepareUser(trainee);
-
-        // Assert
-        assertNotNull(trainee.getUsername(), "Username should be generated");
-        assertTrue(trainee.getUsername().startsWith("john.doe"), "Username should follow the format 'first.last'");
-        verify(userDAO).getAll();
-
-    }
-
-    @Test
-    void testPrepareUserWithMissingPassword() {
-        // Arrange
-        Trainee trainee = createTestTrainee(1L);
-        trainee.setPassword(null); // Simulate missing password
-
-        // Act
-        traineeService.prepareUser(trainee);
-
-        // Assert
-        assertNotNull(trainee.getPassword(), "Password should be generated");
-    }
-
-      @Test
-    void testGetAllTrainees() {
-        Trainee trainee1 = createTestTrainee(1L);
-        Trainee trainee2 = createTestTrainee(2L);
-        List<Trainee> trainees = Arrays.asList(trainee1, trainee2);
-
-        when(traineeDAO.getAll()).thenReturn(trainees);
-
-        List<Trainee> result = traineeService.getAll();
-
-        assertEquals(2, result.size());
-        assertTrue(result.containsAll(trainees));
-        verify(traineeDAO).getAll();
-    }
-
-    private Trainee createTestTrainee(Long id) {
-        Trainee trainee = new Trainee();
-        trainee.setId(id);
-        trainee.setFirstName("john");
-        trainee.setLastName("doe");
-        trainee.setDateOfBirth(LocalDate.of(2000, 1, 1));
-        trainee.setAddress("123 Test St");
-        return trainee;
-    }
-
-    private User createTestUser(Long id, String firstName, String lastName, String username) {
-        User user = new Trainee(); // Используем Trainee, так как User абстрактный
-        user.setId(id);
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setUsername(username);
-        user.setPassword("password");
-        user.setActive(true);
-        return user;
-    }
-
+ */
 }

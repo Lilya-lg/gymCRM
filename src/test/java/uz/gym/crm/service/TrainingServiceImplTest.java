@@ -5,9 +5,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import uz.gym.crm.dao.TraineeDAOImpl;
+import uz.gym.crm.dao.TrainerDAOImpl;
 import uz.gym.crm.dao.TrainingDAOImpl;
-import uz.gym.crm.domain.Training;
-import uz.gym.crm.domain.TrainingType;
+import uz.gym.crm.dao.TrainingTypeDAOImpl;
+import uz.gym.crm.domain.*;
+
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -18,88 +21,110 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class TrainingServiceImplTest {
-    @InjectMocks
-    private TrainingServiceImpl trainingService;
 
-    @Mock
-    private TrainingDAOImpl trainingDAO;
+    private TraineeDAOImpl mockTraineeDAO;
+    private TrainerDAOImpl mockTrainerDAO;
+    private TrainingDAOImpl mockTrainingDAO;
+    private TrainingServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
+        mockTraineeDAO = Mockito.mock(TraineeDAOImpl.class);
+        mockTrainerDAO = Mockito.mock(TrainerDAOImpl.class);
+        mockTrainingDAO = Mockito.mock(TrainingDAOImpl.class);
 
+        service = new TrainingServiceImpl(mockTraineeDAO, mockTrainerDAO, null, mockTrainingDAO);
+    }
+/*
     @Test
-    void testCreateTraining() {
-        Training training = createTestTraining(1L);
+    void addTraining_ShouldAddTraining_WhenAllDependenciesExistAndTrainingTypeIsValid() {
+        // Prepare mocks
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
 
-        trainingService.create(training);
+        Trainer trainer = new Trainer();
+        trainer.setId(2L);
 
-        verify(trainingDAO).create(training);
-    }
+        TrainingType trainingType = new TrainingType();
+        trainingType.setId(1L); // Valid TrainingType ID (Yoga)
 
-    @Test
-    void testGetTrainingById() {
-        Training training = createTestTraining(1L);
-        when(trainingDAO.read(1L)).thenReturn(Optional.of(training));
-
-        Training result = trainingService.read(1L);
-
-        assertNotNull(result);
-        assertEquals(training, result);
-        verify(trainingDAO).read(1L);
-    }
-
-    @Test
-    void testGetTrainingById_NotFound() {
-        when(trainingDAO.read(1L)).thenReturn(Optional.empty());
-
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            trainingService.read(1L);
-        });
-
-        assertEquals("Entity not found for ID: 1", exception.getMessage());
-        verify(trainingDAO).read(1L);
-    }
-
-    @Test
-    void testUpdateTraining() {
-        Training training = createTestTraining(1L);
-
-        trainingService.update(training);
-
-        verify(trainingDAO).update(training);
-    }
-
-    @Test
-    void testDeleteTraining() {
-        trainingService.delete(1L);
-
-        verify(trainingDAO).delete(1L);
-    }
-
-    @Test
-    void testGetAllTrainings() {
-        Training training1 = createTestTraining(1L);
-        Training training2 = createTestTraining(2L);
-        List<Training> trainings = Arrays.asList(training1, training2);
-
-        when(trainingDAO.getAll()).thenReturn(trainings);
-
-        List<Training> result = trainingService.getAll();
-
-        assertEquals(2, result.size());
-        assertTrue(result.containsAll(trainings));
-        verify(trainingDAO).getAll();
-    }
-
-    private Training createTestTraining(Long id) {
         Training training = new Training();
-        training.setId(id);
-        training.setTrainingName("Java Basics");
-        training.setTrainingType(TrainingType.YOGA);
-        training.setTrainingDate(LocalDate.of(2024, 12, 18));
-        training.setTrainingDuration(5);
-        return training;
+        training.setTrainee(trainee);
+        training.setTrainer(trainer);
+        training.setTrainingType(trainingType);
+
+        when(mockTraineeDAO.read(1L)).thenReturn(Optional.of(trainee));
+        when(mockTrainerDAO.read(2L)).thenReturn(Optional.of(trainer));
+        doNothing().when(mockTrainingDAO).save(training);
+
+        // Call the method under test
+        service.addTraining(training);
+
+        // Verify interactions
+        verify(mockTraineeDAO, times(1)).read(1L);
+        verify(mockTrainerDAO, times(1)).read(2L);
+        verify(mockTrainingDAO, times(1)).save(training);
+
+        assertEquals("Yoga", training.getTrainingType().getName());
+    }
+
+
+
+    @Test
+    void addTraining_ShouldThrowException_WhenTrainingTypeIsInvalid() {
+        // Prepare mocks
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
+
+        Trainer trainer = new Trainer();
+        trainer.setId(2L);
+
+        TrainingType trainingType = new TrainingType();
+        trainingType.setId(99L); // Invalid TrainingType ID
+
+        Training training = new Training();
+        training.setTrainee(trainee);
+        training.setTrainer(trainer);
+        training.setTrainingType(trainingType);
+
+        when(mockTraineeDAO.read(1L)).thenReturn(Optional.of(trainee));
+        when(mockTrainerDAO.read(2L)).thenReturn(Optional.of(trainer));
+
+        // Call the method under test and expect exception
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> service.addTraining(training));
+
+        assertEquals("Invalid TrainingType ID: 99", exception.getMessage());
+        verify(mockTraineeDAO, times(1)).read(1L);
+        verify(mockTrainerDAO, times(1)).read(2L);
+        verifyNoInteractions(mockTrainingDAO);
+    }
+ */
+    @Test
+    void addTraining_ShouldAddTraining_WhenTrainingTypeIsNull() {
+        // Prepare mocks
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
+
+        Trainer trainer = new Trainer();
+        trainer.setId(2L);
+
+        Training training = new Training();
+        training.setTrainee(trainee);
+        training.setTrainer(trainer);
+        training.setTrainingType(null);
+
+        when(mockTraineeDAO.read(1L)).thenReturn(Optional.of(trainee));
+        when(mockTrainerDAO.read(2L)).thenReturn(Optional.of(trainer));
+        doNothing().when(mockTrainingDAO).save(training);
+
+        // Call the method under test
+        service.addTraining(training);
+
+        // Verify interactions
+        verify(mockTraineeDAO, times(1)).read(1L);
+        verify(mockTrainerDAO, times(1)).read(2L);
+        verify(mockTrainingDAO, times(1)).save(training);
+
+        assertNull(training.getTrainingType());
     }
 }

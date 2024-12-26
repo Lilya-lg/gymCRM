@@ -1,74 +1,111 @@
 package uz.gym.crm.dao;
 
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uz.gym.crm.domain.BaseEntity;
+import uz.gym.crm.config.HibernateUtil;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
-public abstract class BaseDAOImpl<T extends BaseEntity> implements BaseDAO<T> {
-    protected final Map<Long, T> storage;
-    private final Function<T, Long> idExtractor;
+public  class BaseDAOImpl<T> implements BaseDAO<T> {
+    private final Class<T> entityType;
+    private final SessionFactory sessionFactory;
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseDAOImpl.class);
+    public BaseDAOImpl(Class<T> entityType) {
 
-    public BaseDAOImpl(Map<Long, T> storage, Function<T, Long> idExtractor) {
-        this.storage = storage;
-        this.idExtractor = idExtractor;
+        this.entityType = entityType;
+        this.sessionFactory = HibernateUtil.getSessionFactory();
     }
-
+    public BaseDAOImpl(Class<T> entityType, SessionFactory sessionFactory) {
+        this.entityType = entityType;
+        this.sessionFactory = sessionFactory;
+    }
+    protected SessionFactory getSessionFactory() {
+        return this.sessionFactory;
+    }
     @Override
-    public void create(T entity) {
-
-        Long id = idExtractor.apply(entity);
-        LOGGER.debug("Attempting to create entity with ID: {}", id);
-        storage.put(id, entity);
-        LOGGER.info("Entity created successfully with ID: {}", id);
+    public void save(T entity) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            session.save(entity);
+            LOGGER.debug("Attempting to create entity");
+            transaction.commit();
+            LOGGER.info("Entity created successfully");
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            e.printStackTrace();
+        }
     }
 
     @Override
     public Optional<T> read(Long id) {
-        LOGGER.debug("Attempting to read entity with ID: {}", id);
-        T entity = storage.get(id);
-        if (entity != null) {
-            LOGGER.info("Entity read successfully with ID: {}", id);
-        } else {
-            LOGGER.warn("Entity not found with ID: {}", id);
-        }
-        return Optional.ofNullable(entity);
-    }
-
-    @Override
-    public void update(T entity) {
-        Long id = idExtractor.apply(entity);
-        LOGGER.debug("Attempting to update entity with ID: {}", id);
-        if (storage.containsKey(id)) {
-            storage.put(id, entity);
-            LOGGER.info("Entity updated successfully with ID: {}", id);
-        } else {
-            LOGGER.warn("Entity not found for update with ID: {}", id);
-        }
-    }
-
-    @Override
-    public void delete(Long id) {
-        LOGGER.debug("Attempting to delete entity with ID: {}", id);
-        if (storage.remove(id) != null) {
-            LOGGER.info("Entity deleted successfully with ID: {}", id);
-        } else {
-            LOGGER.warn("Entity not found for deletion with ID: {}", id);
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return Optional.ofNullable(session.get(entityType, id));
         }
     }
 
     @Override
     public List<T> getAll() {
-        LOGGER.debug("Attempting to fetch all entities from storage");
-        List<T> entities = new ArrayList<>(storage.values());
-        LOGGER.info("Fetched {} entities from storage", entities.size());
-        return entities;
-
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.createQuery("FROM " + entityType.getSimpleName(), entityType).list();
+        }
     }
 
+    @Override
+    public void update(T entity) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            session.update(entity);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            e.printStackTrace();
+        }
+    }
 
+    @Override
+    public void delete(Long id) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            T entity = session.get(entityType, id);
+            if (entity != null) {
+                session.delete(entity);
+            }
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            e.printStackTrace();
+        }
+    }
+    @Override
+    public boolean existsById(Long id) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String query = "SELECT COUNT(e) > 0 FROM " + entityType.getSimpleName() + " e WHERE e.id = :id";
+            return session.createQuery(query, Boolean.class)
+                    .setParameter("id", id)
+                    .uniqueResult();
+        }
+    }
+
+    @Override
+    public Optional<T> findByUsername(String username) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            String query = "FROM " + entityType.getSimpleName() + " WHERE username = :username";
+            T result = session.createQuery(query, entityType)
+                    .setParameter("username", username)
+                    .uniqueResult();
+            return Optional.ofNullable(result);
+        }
+    }
 }
