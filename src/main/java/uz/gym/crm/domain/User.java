@@ -1,27 +1,12 @@
 package uz.gym.crm.domain;
 
-import jakarta.persistence.*;
 
-@Entity
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
+public class User extends BaseEntity {
     private String firstName;
     private String lastName;
     private String username;
     private String password;
     private boolean isActive;
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
 
     public String getFirstName() {
         return firstName;

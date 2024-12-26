@@ -7,54 +7,66 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import uz.gym.crm.config.AppConfig;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
-import uz.gym.crm.domain.User;
 import uz.gym.crm.facade.GymFacade;
 
 public class App {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
     public static void main(String[] args) {
         LOGGER.info("Starting Gym CRM application...");
+
         ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
         GymFacade facade = context.getBean(GymFacade.class);
-        LOGGER.info("GymFacade initialized: {}", facade);
 
-        LOGGER.info("Trainer storage: {}", context.getBean("trainerStorage"));
-        LOGGER.info("Trainee storage: {}", context.getBean("traineeStorage"));
-        LOGGER.info("Training storage: {}", context.getBean("trainingStorage"));
-        LOGGER.info("User storage: {}", context.getBean("userStorage"));
+        LOGGER.info("GymFacade initialized successfully.");
+        logStorageBeanSizes(context);
 
-        LOGGER.info("Gym CRM application started successfully.");
-        GymFacade gymFacade = context.getBean(GymFacade.class);
-        // Test Trainee Service
-        LOGGER.info("Fetching all trainees:");
-        gymFacade.getTraineeService().getAll().forEach(System.out::println);
+        LOGGER.info("Gym CRM application setup completed.");
 
+        createAndLogTrainee(facade);
+
+        createAndLogTrainer(facade);
+
+        LOGGER.info("Gym CRM application terminated successfully.");
+    }
+
+    private static void logStorageBeanSizes(ApplicationContext context) {
+        LOGGER.info("Trainer storage size: {}", context.getBean("trainerStorage", java.util.Map.class).size());
+        LOGGER.info("Trainee storage size: {}", context.getBean("traineeStorage", java.util.Map.class).size());
+        LOGGER.info("Training storage size: {}", context.getBean("trainingStorage", java.util.Map.class).size());
+        LOGGER.info("User storage size: {}", context.getBean("userStorage", java.util.Map.class).size());
+    }
+
+    private static void createAndLogTrainee(GymFacade facade) {
+        LOGGER.info("Creating a new trainee...");
         Trainee newTrainee = new Trainee();
-        newTrainee.setId(1);
-        newTrainee.setUserId(2); // Refers to User with ID 2
+        newTrainee.setId(1L);
+        newTrainee.setFirstName("Jane");
+        newTrainee.setLastName("Smith");
+
         facade.getTraineeService().create(newTrainee);
 
-        LOGGER.info("Fetching all trainees:");
+        LOGGER.info("Fetching all trainees after creation:");
         facade.getTraineeService().getAll().forEach(trainee -> {
-            LOGGER.info("Trainee: " + trainee);
-            int userId = trainee.getUserId();
-            LOGGER.info("Associated User: " + userId);
+            LOGGER.info("Trainee: ID={}, FirstName={}, LastName={}, Username={}",
+                    trainee.getId(), trainee.getFirstName(), trainee.getLastName(), trainee.getUsername());
         });
+    }
 
-        // Create and check Trainer
+    private static void createAndLogTrainer(GymFacade facade) {
+        LOGGER.info("Creating a new trainer...");
         Trainer newTrainer = new Trainer();
-        newTrainer.setId(1);
+        newTrainer.setId(1L); // Unique ID for the trainer
+        newTrainer.setFirstName("John");
+        newTrainer.setLastName("Doe");
         newTrainer.setSpecialization("Yoga");
-        newTrainer.setUserId(1); // Refers to User with ID 1
+
         facade.getTrainerService().create(newTrainer);
 
-        LOGGER.info("Fetching all trainers:");
+        LOGGER.info("Fetching all trainers after creation:");
         facade.getTrainerService().getAll().forEach(trainer -> {
-            LOGGER.info("Trainer: " + trainer.getSpecialization());
-            int userId = trainer.getUserId();
-            LOGGER.info("Associated User: " + userId);
+            LOGGER.info("Trainer: ID={}, FirstName={}, LastName={}, Username={}, Specialization={}",
+                    trainer.getId(), trainer.getFirstName(), trainer.getLastName(), trainer.getUsername(), trainer.getSpecialization());
         });
-
-        LOGGER.info("Gym CRM application completed successfully.");
     }
 }

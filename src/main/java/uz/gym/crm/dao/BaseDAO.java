@@ -1,11 +1,16 @@
 package uz.gym.crm.dao;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface BaseDAO<T, ID> {
+public interface BaseDAO<T> {
     void create(T entity);
-    T read(ID id);
+
+    Optional<T> read(Long id);
+
     void update(T entity);
-    void delete(ID id);
+
+    void delete(Long id);
+
     List<T> getAll();
 }

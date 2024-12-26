@@ -1,18 +1,17 @@
 package uz.gym.crm.service;
 
 
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uz.gym.crm.dao.BaseDAO;
 
 import java.util.List;
 
-public abstract class BaseServiceImpl<T, ID> implements BaseService<T, ID> {
-    protected final BaseDAO<T, ID> dao;
+public abstract class BaseServiceImpl<T> implements BaseService<T> {
+    protected final BaseDAO<T> dao;
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseServiceImpl.class);
-    public BaseServiceImpl(BaseDAO<T, ID> dao) {
+
+    public BaseServiceImpl(BaseDAO<T> dao) {
         this.dao = dao;
     }
 
@@ -28,20 +27,18 @@ public abstract class BaseServiceImpl<T, ID> implements BaseService<T, ID> {
         }
     }
 
-    @Override
-    public T read(ID id) {
+    public T read(Long id) {
         LOGGER.debug("Reading entity with ID: {}", id);
         try {
-            T entity = dao.read(id);
             LOGGER.info("Successfully read entity with ID: {}", id);
-            return entity;
+            return dao.read(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Entity not found for ID: " + id));
         } catch (Exception e) {
             LOGGER.error("Error reading entity with ID: {}", id, e);
             throw e;
         }
     }
 
-    @Override
     public void update(T entity) {
         LOGGER.debug("Updating entity: {}", entity);
         try {
@@ -54,8 +51,7 @@ public abstract class BaseServiceImpl<T, ID> implements BaseService<T, ID> {
 
     }
 
-    @Override
-    public void delete(ID id) {
+    public void delete(Long id) {
         LOGGER.debug("Deleting entity with ID: {}", id);
         try {
             dao.delete(id);

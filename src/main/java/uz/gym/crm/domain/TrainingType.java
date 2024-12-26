@@ -1,4 +1,5 @@
 package uz.gym.crm.domain;
+
 public enum TrainingType {
     YOGA("Yoga"),
     CARDIO("Cardio"),
