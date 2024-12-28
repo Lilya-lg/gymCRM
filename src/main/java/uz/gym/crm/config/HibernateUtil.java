@@ -11,6 +11,8 @@ public class HibernateUtil {
         try {
             // Build the SessionFactory from the hibernate.cfg.xml configuration
             sessionFactory = new Configuration().configure("hibernate.cfg.xml").buildSessionFactory();
+            TrainingTypeInitializer.initializeTrainingTypes(sessionFactory);
+
         } catch (HibernateException ex) {
             // Log the exception and throw an initializer error
             System.err.println("Initial SessionFactory creation failed." + ex);

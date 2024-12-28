@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uz.gym.crm.domain.User;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -48,18 +49,18 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> {
         return dao.findByUsername(username);
     }
     //17.Get trainers list that not assigned on trainee by trainee's username
-    /*
+
     public List<Trainer> getUnassignedTrainersForTrainee(String traineeUsername) {
         LOGGER.debug("Fetching unassigned trainers for trainee with username: {}", traineeUsername);
 
-        List<Trainer> unassignedTrainers = trainerRepository.findUnassignedTrainersForTrainee(traineeUsername);
+        List<Trainer> unassignedTrainers = trainerDAO.getUnassignedTrainersByTraineeUsername(traineeUsername);
 
         LOGGER.info("Found {} unassigned trainers for trainee with username: {}", unassignedTrainers.size(), traineeUsername);
         return unassignedTrainers;
     }
 
 
-     */
+
 
 
     @Override

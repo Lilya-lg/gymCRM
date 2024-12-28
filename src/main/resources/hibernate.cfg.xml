@@ -22,7 +22,7 @@
         <property name="hibernate.format_sql">true</property>
 
         <!-- Auto schema generation -->
-        <property name="hibernate.hbm2ddl.auto">update</property>
+        <property name="hibernate.hbm2ddl.auto">create</property>
         <!-- Entity class mappings -->
         <mapping class="uz.gym.crm.domain.User"/>
         <mapping class="uz.gym.crm.domain.Test"/>
@@ -30,6 +30,8 @@
         <mapping class="uz.gym.crm.domain.Trainee"/>
         <mapping class="uz.gym.crm.domain.Training"/>
         <mapping class="uz.gym.crm.domain.TrainingType"/>
+        <mapping class="uz.gym.crm.dao.TestEntity"/>
+
 
     </session-factory>
 </hibernate-configuration>

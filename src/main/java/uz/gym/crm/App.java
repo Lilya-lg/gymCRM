@@ -26,9 +26,9 @@ public class App {
 
             // Create a test User entity
             User user = new User();
-            user.setFirstName("Masha");
-            user.setLastName("Ivanova");
-            user.setUsername("masha.ivanova");
+            user.setFirstName("Mash");
+            user.setLastName("Ivanov");
+            user.setUsername("masha.ivanova2");
             user.setPassword("password123");
             user.setActive(true);
 

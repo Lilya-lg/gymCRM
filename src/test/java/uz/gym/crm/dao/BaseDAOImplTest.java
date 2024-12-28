@@ -1,15 +1,20 @@
 package uz.gym.crm.dao;
-
+import uz.gym.crm.dao.TestEntity;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import uz.gym.crm.domain.User;
+
+import uz.gym.crm.config.HibernateUtil;
+import uz.gym.crm.domain.BaseEntity;
+import uz.gym.crm.domain.Trainee;
 
 import java.util.List;
 import java.util.Objects;
@@ -19,157 +24,178 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class BaseDAOImplTest {
-/*
+
     private BaseDAOImpl<TestEntity> baseDAO;
-
-    @Mock
     private SessionFactory sessionFactory;
-
-    @Mock
     private Session session;
-
-    @Mock
-    private Transaction transaction;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        when(sessionFactory.openSession()).thenReturn(session);
-        when(session.beginTransaction()).thenReturn(transaction);
-        baseDAO = new BaseDAOImpl<>(TestEntity.class, sessionFactory);
+        // Configure Hibernate for testing with an in-memory database
+        Configuration configuration = new Configuration();
+        configuration.addAnnotatedClass(TestEntity.class); // Add the test entity
+        configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+        configuration.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
+        configuration.setProperty("hibernate.connection.url", "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
+        configuration.setProperty("hibernate.hbm2ddl.auto", "create-drop");
+        configuration.setProperty("hibernate.show_sql", "true");
+
+        sessionFactory = configuration.buildSessionFactory();
+        if (session != null) {
+            session.close();
+        }
+        session = sessionFactory.openSession();
+        Transaction transaction = session.beginTransaction();
+        session.createQuery("DELETE FROM TestEntity").executeUpdate();
+        transaction.commit();
+        session.clear();
+        baseDAO = new BaseDAOImpl(TestEntity.class, session);
     }
 
     @Test
     void save_ShouldSaveEntity() {
-        TestEntity entity = new TestEntity(1L, "testEntity");
+        TestEntity entity = new TestEntity("testEntity");
 
-        baseDAO.save(entity);
+        Transaction transaction = session.beginTransaction();
+        baseDAO.save(entity); // Save without starting a new transaction
+        transaction.commit();
 
-        verify(session).save(entity);
-        verify(transaction).commit();
+        // Retrieve and validate the saved entity
+        TestEntity result = session.get(TestEntity.class, entity.getId());
+        assertNotNull(result);
+        assertEquals(entity.getUsername(), result.getUsername());
     }
 
     @Test
     void read_ShouldReturnEntity() {
-        Long id = 1L;
-        TestEntity entity = new TestEntity(id, "testEntity");
-        when(session.get(TestEntity.class, id)).thenReturn(entity);
+        TestEntity entity = new TestEntity( "testEntity");
 
-        Optional<TestEntity> result = baseDAO.read(id);
+        // Save through baseDAO
+        baseDAO.save(entity);
 
+        // Read through baseDAO
+        Optional<TestEntity> result = baseDAO.read(entity.getId());
         assertTrue(result.isPresent());
-        assertEquals(entity, result.get());
+        assertEquals(entity.getUsername(), result.get().getUsername());
     }
 
     @Test
     void getAll_ShouldReturnListOfEntities() {
-        // Arrange
-        List<TestEntity> entities = List.of(
-                new TestEntity(1L, "testEntity1"),
-                new TestEntity(2L, "testEntity2")
-        );
+        TestEntity entity1 = new TestEntity("testEntity1");
+        TestEntity entity2 = new TestEntity("testEntity2");
 
-        // Mock the Query object
-        Query<TestEntity> queryMock = mock(Query.class);
-        when(session.createQuery("FROM TestEntity", TestEntity.class)).thenReturn(queryMock);
-        when(queryMock.list()).thenReturn(entities);
+        // Use the DAO to save entities
+        baseDAO.save(entity1);
+        baseDAO.save(entity2);
 
-        // Act
+        // Fetch all entities using the DAO
         List<TestEntity> result = baseDAO.getAll();
 
-        // Assert
-        assertEquals(entities.size(), result.size());
-        assertEquals(entities, result);
+        // Verify the results
+        assertEquals(2, result.size()); // Only 2 entities should exist
+        assertTrue(result.stream().anyMatch(e -> "testEntity1".equals(e.getUsername())));
+        assertTrue(result.stream().anyMatch(e -> "testEntity2".equals(e.getUsername())));
     }
 
     @Test
     void update_ShouldUpdateEntity() {
-        TestEntity entity = new TestEntity(1L, "updatedEntity");
+        TestEntity entity = new TestEntity( "testEntity");
+        Transaction transaction = session.beginTransaction();
+        session.save(entity);
+        transaction.commit();
 
+        entity.setUsername("updatedEntity");
         baseDAO.update(entity);
 
-        verify(session).update(entity);
-        verify(transaction).commit();
+        TestEntity result = session.get(TestEntity.class, entity.getId());
+        assertEquals("updatedEntity", result.getUsername());
     }
 
     @Test
     void delete_ShouldDeleteEntity() {
-        Long id = 1L;
-        TestEntity entity = new TestEntity(id, "testEntity");
-        when(session.get(TestEntity.class, id)).thenReturn(entity);
+        TestEntity entity = new TestEntity("testEntity");
+        Transaction transaction = session.beginTransaction();
+        session.save(entity);
+        transaction.commit();
 
-        baseDAO.delete(id);
+        baseDAO.delete(entity.getId());
 
-        verify(session).delete(entity);
-        verify(transaction).commit();
+        TestEntity result = session.get(TestEntity.class, entity.getId());
+        assertNull(result);
     }
 
     @Test
     void existsById_ShouldReturnTrueIfExists() {
-        Long id = 1L;
-        when(session.createQuery("SELECT COUNT(e) > 0 FROM TestEntity e WHERE e.id = :id", Boolean.class)
-                .setParameter("id", id)
-                .uniqueResult()).thenReturn(true);
+        TestEntity entity = new TestEntity();
+        entity.setUsername("testEntity");
 
-        boolean exists = baseDAO.existsById(id);
+        Transaction transaction = session.beginTransaction();
+        session.save(entity);
+        transaction.commit();
 
+        boolean exists = baseDAO.existsById(entity.getId());
         assertTrue(exists);
     }
 
     @Test
     void findByUsername_ShouldReturnEntity() {
-        String username = "testUsername";
-        TestEntity entity = new TestEntity(1L, username);
-        when(session.createQuery("FROM TestEntity WHERE username = :username", TestEntity.class)
-                .setParameter("username", username)
-                .uniqueResult()).thenReturn(entity);
+        TestEntity entity = new TestEntity();
+        entity.setUsername("testUsername");
 
-        Optional<TestEntity> result = baseDAO.findByUsername(username);
+        // Save the entity
+        Transaction transaction = session.beginTransaction();
+        session.save(entity);
+        transaction.commit();
 
-        assertTrue(result.isPresent());
-        assertEquals(entity, result.get());
+        // Clear the session to ensure no caching issues
+        session.clear();
+
+        // Find by username
+        Optional<TestEntity> result = baseDAO.findByUsername("testUsername");
+
+        assertTrue(result.isPresent(), "Entity should be present");
+        assertEquals(entity.getUsername(), result.get().getUsername());
     }
+
 
     // TestEntity class for testing purposes
-    static class TestEntity {
-        private Long id;
-        private String username;
+    @Test
+    void save_ShouldHandleTransaction() {
+        TestEntity entity = new TestEntity("transactionEntity");
 
-        public TestEntity(Long id, String username) {
-            this.id = id;
-            this.username = username;
-        }
+        // Simulate an active transaction
+        Transaction transaction = session.beginTransaction();
+        baseDAO.save(entity); // Save should not start a new transaction
+        transaction.commit();
 
-        public Long getId() {
-            return id;
-        }
-
-        public void setId(Long id) {
-            this.id = id;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            TestEntity that = (TestEntity) o;
-            return id.equals(that.id) && username.equals(that.username);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(id, username);
-        }
-
+        TestEntity result = session.get(TestEntity.class, entity.getId());
+        assertNotNull(result, "Entity should be saved within an active transaction");
+        assertEquals("transactionEntity", result.getUsername());
     }
 
- */
+    @Test
+    void save_ShouldThrowExceptionOnFailure() {
+        TestEntity entity = null; // Invalid entity to trigger an exception
+
+        Exception exception = assertThrows(Exception.class, () -> {
+            baseDAO.save(entity);
+        });
+
+        assertNotNull(exception, "Exception should be thrown when saving a null entity");
+    }
+
+    @Test
+    void existsById_ShouldReturnFalseIfNotExists() {
+        boolean exists = baseDAO.existsById(999L); // Assuming 999L doesn't exist
+        assertFalse(exists, "existsById should return false for non-existent ID");
+    }
+
+    @Test
+    void findByUsername_ShouldReturnEmptyOptionalForNonExistentUser() {
+        Optional<TestEntity> result = baseDAO.findByUsername("nonExistentUsername");
+        assertTrue(result.isEmpty(), "findByUsername should return empty for a non-existent username");
+    }
+
 }
+
+

@@ -1,5 +1,6 @@
 package uz.gym.crm.service;
 
+import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.User;
 
 import java.util.Optional;
+import java.util.Set;
 
 
 @Service
@@ -71,50 +73,9 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> {
         }
     }
     //update Trainee's trainers list
-    /*
-    public void updateTraineeTrainers(String traineeUsername, List<Long> trainerIds) {
-        LOGGER.debug("Updating trainers list for trainee with username: {}", traineeUsername);
-
-        Trainee trainee = findByUsername(traineeUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Trainee not found for username: " + traineeUsername));
-
-        List<Trainer> trainers = trainerRepository.findAllById(trainerIds);
-        if (trainers.size() != trainerIds.size()) {
-            throw new IllegalArgumentException("One or more trainer IDs are invalid.");
-        }
-
-        List<Training> existingTrainings = trainingDAO.findByTraineeUsername(traineeUsername);
-
-        existingTrainings.stream()
-                .filter(training -> !trainerIds.contains(training.getTrainer().getId()))
-                .forEach(training -> {
-                    LOGGER.info("Removing outdated training: {}", training);
-                    trainingDAO.delete(training.getId());
-                });
-
-        trainers.forEach(trainer -> {
-            boolean exists = existingTrainings.stream()
-                    .anyMatch(training -> training.getTrainer().getId().equals(trainer.getId()));
-
-            if (!exists) {
-                Training newTraining = new Training();
-                newTraining.setTrainee(trainee);
-                newTraining.setTrainer(trainer);
-                newTraining.setTrainingName("Updated Training");
-                newTraining.setTrainingDate(LocalDate.now());
-                newTraining.setTrainingDuration(60);
-                trainingDAO.save(newTraining);
-
-                LOGGER.info("Created new training association: {}", newTraining);
-            }
-        });
-
-        LOGGER.info("Trainers list updated successfully for trainee with username: {}", traineeUsername);
-    }
 
 
 
-     */
 
 
     @Override

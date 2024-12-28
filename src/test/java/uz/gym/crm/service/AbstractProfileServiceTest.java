@@ -1,5 +1,7 @@
 package uz.gym.crm.service;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import uz.gym.crm.dao.BaseDAO;
 import uz.gym.crm.dao.TrainingDAOImpl;
@@ -11,7 +13,7 @@ import uz.gym.crm.domain.User;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-/*
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -165,4 +167,4 @@ class AbstractProfileServiceTest {
     }
 }
 
- */
+

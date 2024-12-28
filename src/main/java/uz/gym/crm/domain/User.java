@@ -18,7 +18,10 @@ public class User{
     private String password;
     @Column(name = "is_active",nullable = false)
     private boolean isActive;
-
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, optional =  true)
+    private Trainer trainer;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, optional =  true)
+    private Trainee trainee;
     public String getFirstName() {
         return firstName;
     }

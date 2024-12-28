@@ -14,12 +14,14 @@ import java.util.List;
 
 @Repository
 public class TrainingDAOImpl extends BaseDAOImpl<Training> {
-    public TrainingDAOImpl() {
-        super(Training.class);
+    private final Session session;
+    public TrainingDAOImpl(Session session) {
+        super(Training.class,session);
+        this.session = session;
     }
 
     public List<Training> findByCriteria(Trainee trainee, String trainer, LocalDate fromDate, LocalDate toDate) {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+
             String jpql = "SELECT t FROM Training t " +
                     "WHERE t.trainee = :trainee " +
                     "AND (:trainer IS NULL OR CONCAT(t.trainer.user.firstName, ' ', t.trainer.user.lastName) = :trainer) " +
@@ -33,13 +35,12 @@ public class TrainingDAOImpl extends BaseDAOImpl<Training> {
             query.setParameter("toDate", toDate);
 
             return query.getResultList();
-        }
+
 
 
     }
 
     public List<Training> findByCriteriaForTrainer(Trainer trainer, String trainerName, String trainingType, LocalDate fromDate, LocalDate toDate) {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             String jpql = "SELECT t FROM Training t " +
                     "WHERE t.trainer = :trainer " +
                     "AND (:trainerName IS NULL OR CONCAT(t.trainer.user.firstName, ' ', t.trainer.user.lastName) = :trainerName) " +
@@ -55,7 +56,7 @@ public class TrainingDAOImpl extends BaseDAOImpl<Training> {
             query.setParameter("toDate", toDate);
 
             return query.getResultList();
-        }
+
     }
 }
 

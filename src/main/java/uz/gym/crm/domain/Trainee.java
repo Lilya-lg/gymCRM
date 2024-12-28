@@ -3,6 +3,8 @@ package uz.gym.crm.domain;
 import javax.persistence.*;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "trainee")
@@ -14,8 +16,16 @@ public class Trainee{
     private LocalDate dateOfBirth;
     private String address;
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id",unique = true, nullable = false)
     private User user;
+
+    @ManyToMany
+    @JoinTable(
+            name = "trainee_trainer",
+            joinColumns = @JoinColumn(name = "trainee_id"), // Foreign key for Trainee
+            inverseJoinColumns = @JoinColumn(name = "trainer_id") // Foreign key for Trainer
+    )
+    private Set<Trainer> trainers = new HashSet<>();
 
     public LocalDate getDateOfBirth() {
         return dateOfBirth;
@@ -49,6 +59,13 @@ public class Trainee{
         this.user = user;
     }
 
+    public Set<Trainer> getTrainers() {
+        return trainers;
+    }
+
+    public void setTrainers(Set<Trainer> trainers) {
+        this.trainers = trainers;
+    }
     @Override
     public String toString() {
         return "Trainee{" +

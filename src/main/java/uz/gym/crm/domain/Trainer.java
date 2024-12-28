@@ -1,6 +1,8 @@
 package uz.gym.crm.domain;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "trainer")
@@ -12,8 +14,11 @@ public class Trainer{
     @Column(nullable = false)
     private String specialization;
     @OneToOne(cascade = CascadeType.ALL, optional = false)
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @JoinColumn(name = "user_id", referencedColumnName = "id",unique = true)
     private User user;
+
+    @ManyToMany(mappedBy = "trainers")
+    private Set<Trainee> trainees = new HashSet<>();
 
     public String getSpecialization() {
         return specialization;
@@ -37,5 +42,13 @@ public class Trainer{
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Set<Trainee> getTrainees() {
+        return trainees;
+    }
+
+    public void setTrainees(Set<Trainee> trainees) {
+        this.trainees = trainees;
     }
 }
