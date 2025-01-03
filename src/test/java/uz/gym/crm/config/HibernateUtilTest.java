@@ -6,6 +6,7 @@ import org.hibernate.internal.util.config.ConfigurationException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.hibernate.cfg.Configuration;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class HibernateUtilTest {

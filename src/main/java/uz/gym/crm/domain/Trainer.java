@@ -5,26 +5,28 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "trainer")
-public class Trainer{
+@Table(name = "trainers")
+public class Trainer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String specialization;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "specialization", referencedColumnName = "id")
+    private TrainingType specialization;
+
     @OneToOne(cascade = CascadeType.ALL, optional = false)
-    @JoinColumn(name = "user_id", referencedColumnName = "id",unique = true)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
     private User user;
 
     @ManyToMany(mappedBy = "trainers")
     private Set<Trainee> trainees = new HashSet<>();
 
-    public String getSpecialization() {
+    public TrainingType getSpecialization() {
         return specialization;
     }
 
-    public void setSpecialization(String specialization) {
+    public void setSpecialization(TrainingType specialization) {
         this.specialization = specialization;
     }
 

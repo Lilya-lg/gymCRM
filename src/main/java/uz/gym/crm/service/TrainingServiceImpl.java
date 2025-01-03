@@ -14,7 +14,7 @@ import uz.gym.crm.domain.TrainingType;
 
 
 @Service
-public class TrainingServiceImpl extends BaseServiceImpl<Training> {
+public class TrainingServiceImpl extends BaseServiceImpl<Training> implements TrainingService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrainingServiceImpl.class);
     private final TraineeDAOImpl traineeDAO;
     private final TrainerDAOImpl trainerDAO;
@@ -32,7 +32,7 @@ public class TrainingServiceImpl extends BaseServiceImpl<Training> {
         this.trainingTypeDao = trainingTypeDao;
     }
 
-    //16. add training
+
     public void addTraining(Training training) {
         LOGGER.debug("Adding a new training: {}", training);
 
@@ -53,7 +53,6 @@ public class TrainingServiceImpl extends BaseServiceImpl<Training> {
         training.setTrainee(trainee);
         training.setTrainer(trainer);
 
-        // Save Training
         dao.save(training);
         LOGGER.info("Training added successfully with ID: {}", training.getId());
     }

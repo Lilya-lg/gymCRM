@@ -7,8 +7,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "trainee")
-public class Trainee{
+@Table(name = "trainees")
+public class Trainee {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -16,7 +16,7 @@ public class Trainee{
     private LocalDate dateOfBirth;
     private String address;
     @OneToOne
-    @JoinColumn(name = "user_id",unique = true, nullable = false)
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
     private User user;
 
     @ManyToMany
@@ -66,6 +66,7 @@ public class Trainee{
     public void setTrainers(Set<Trainer> trainers) {
         this.trainers = trainers;
     }
+
     @Override
     public String toString() {
         return "Trainee{" +

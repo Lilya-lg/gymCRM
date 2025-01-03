@@ -22,9 +22,7 @@ public class App {
         try {
             session = HibernateUtil.getSessionFactory().openSession();
             transaction = session.beginTransaction();
-            System.out.println("aa"+App.class.getClassLoader().getResource("hibernate.cfg.xml"));
 
-            // Create a test User entity
             User user = new User();
             user.setFirstName("Mash");
             user.setLastName("Ivanov");
@@ -32,7 +30,6 @@ public class App {
             user.setPassword("password123");
             user.setActive(true);
 
-            // Save the User entity to the database
             session.save(user);
 
             transaction.commit();

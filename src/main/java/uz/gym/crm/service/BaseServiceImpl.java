@@ -7,9 +7,10 @@ import uz.gym.crm.dao.BaseDAO;
 import java.util.List;
 
 public abstract class BaseServiceImpl<T> implements BaseService<T> {
-   // protected final JpaRepository<T, Long> repository;
-   protected final BaseDAO<T> dao;
+    // protected final JpaRepository<T, Long> repository;
+    protected final BaseDAO<T> dao;
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseServiceImpl.class);
+
     public BaseServiceImpl(BaseDAO<T> dao) {
         this.dao = dao;
     }

@@ -7,9 +7,9 @@ import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
+import uz.gym.crm.domain.TrainingType;
 import uz.gym.crm.domain.User;
 
 import java.util.Optional;
@@ -29,6 +29,7 @@ class UserDAOImplTest {
         configuration.addAnnotatedClass(User.class);
         configuration.addAnnotatedClass(Trainer.class);
         configuration.addAnnotatedClass(Trainee.class);
+        configuration.addAnnotatedClass(TrainingType.class);
         configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
         configuration.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
         configuration.setProperty("hibernate.connection.url", "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");

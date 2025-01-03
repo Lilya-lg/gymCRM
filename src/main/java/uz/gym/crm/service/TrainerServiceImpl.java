@@ -13,7 +13,7 @@ import java.util.Optional;
 
 
 @Service
-public class TrainerServiceImpl extends AbstractProfileService<Trainer> {
+public class TrainerServiceImpl extends AbstractProfileService<Trainer> implements TrainerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrainerServiceImpl.class);
     private final UserDAOImpl userDAO;
     private final TrainerDAOImpl trainerDAO;
@@ -24,7 +24,7 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> {
         this.trainerDAO = trainerDAO;
     }
 
-    //1. Create Trainer profile
+
     @Override
     public void create(Trainer trainer) {
         prepareUser(trainer.getUser());
@@ -32,23 +32,23 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> {
         LOGGER.info("Trainer entity created successfully with ID: {}", trainer.getId());
     }
 
-    //4. Trainer username and password matching
+
     public Optional<Trainer> findByUsernameAndPassword(String username, String password) {
         LOGGER.debug("Attempting to find trainer with username: {} and password: {}", username, password);
         try {
-            return trainerDAO.findByUser_UsernameAndUser_Password(username, password);
+            return trainerDAO.findByUsernameAndPassword(username, password);
         } catch (Exception e) {
             LOGGER.error("Error finding trainer with username: {} and password: {}", username, password, e);
             throw e;
         }
     }
 
-    //6.
+
     public Optional<Trainer> findByUsername(String username) {
         LOGGER.debug("Searching for profile with username: {}", username);
         return dao.findByUsername(username);
     }
-    //17.Get trainers list that not assigned on trainee by trainee's username
+
 
     public List<Trainer> getUnassignedTrainersForTrainee(String traineeUsername) {
         LOGGER.debug("Fetching unassigned trainers for trainee with username: {}", traineeUsername);
@@ -58,9 +58,6 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> {
         LOGGER.info("Found {} unassigned trainers for trainee with username: {}", unassignedTrainers.size(), traineeUsername);
         return unassignedTrainers;
     }
-
-
-
 
 
     @Override

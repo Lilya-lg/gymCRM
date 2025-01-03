@@ -8,8 +8,10 @@ import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uz.gym.crm.config.TrainingTypeInitializer;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
+import uz.gym.crm.domain.TrainingType;
 import uz.gym.crm.domain.User;
 
 import java.time.LocalDate;
@@ -31,6 +33,7 @@ public class TrainerDAOImplTest {
         configuration.addAnnotatedClass(Trainer.class);
         configuration.addAnnotatedClass(User.class);
         configuration.addAnnotatedClass(Trainee.class);
+        configuration.addAnnotatedClass(TrainingType.class);
         configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
         configuration.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
         configuration.setProperty("hibernate.connection.url", "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
@@ -49,6 +52,8 @@ public class TrainerDAOImplTest {
         session.createQuery("DELETE FROM Trainer").executeUpdate();
         session.createQuery("DELETE FROM User").executeUpdate();
         transaction.commit();
+        TrainingTypeInitializer.initializeTrainingTypes(sessionFactory);
+
     }
 
     @AfterEach
@@ -71,7 +76,7 @@ public class TrainerDAOImplTest {
         // Create the Trainer and associate the User
         Trainer trainer = new Trainer();
         trainer.setUser(user);
-        trainer.setSpecialization("Yoga"); // Example specialization
+        trainer.setSpecialization(getTrainingType("Yoga")); // Example specialization
 
         // Save the Trainer
         Transaction transaction = session.beginTransaction();
@@ -80,14 +85,14 @@ public class TrainerDAOImplTest {
         transaction.commit();
 
         // Test the DAO method
-        Optional<Trainer> result = trainerDAO.findByUser_UsernameAndUser_Password("trainerUser", "trainerPass");
+        Optional<Trainer> result = trainerDAO.findByUsernameAndPassword("trainerUser", "trainerPass");
         assertTrue(result.isPresent(), "Trainer should be found");
         assertEquals(user.getUsername(), result.get().getUser().getUsername());
     }
 
     @Test
     void findByUser_UsernameAndUser_Password_ShouldReturnEmptyOptional() {
-        Optional<Trainer> result = trainerDAO.findByUser_UsernameAndUser_Password("nonExistentUser", "wrongPass");
+        Optional<Trainer> result = trainerDAO.findByUsernameAndPassword("nonExistentUser", "wrongPass");
         assertTrue(result.isEmpty(), "No Trainer should be found for invalid credentials");
     }
 
@@ -103,7 +108,7 @@ public class TrainerDAOImplTest {
         // Create the Trainer and associate the User
         Trainer trainer = new Trainer();
         trainer.setUser(user);
-        trainer.setSpecialization("Yoga"); // Example specialization
+        trainer.setSpecialization(getTrainingType("Yoga")); // Example specialization
 
         // Save the Trainer
         Transaction transaction = session.beginTransaction();
@@ -116,7 +121,11 @@ public class TrainerDAOImplTest {
         assertTrue(result.isPresent(), "Trainer should be found");
         assertEquals(user.getUsername(), result.get().getUser().getUsername());
     }
-
+    private TrainingType getTrainingType(String type) {
+        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class)
+                .setParameter("type", type)
+                .uniqueResult();
+    }
     @Test
     void findByUsername_ShouldReturnEmptyOptional() {
         Optional<Trainer> result = trainerDAO.findByUsername("nonExistentUser");
@@ -150,7 +159,7 @@ public class TrainerDAOImplTest {
 
         Trainer trainer1 = new Trainer();
         trainer1.setUser(trainerUser1);
-        trainer1.setSpecialization("Yoga");
+        trainer1.setSpecialization(getTrainingType("Yoga"));
 
         session.persist(trainerUser1);
         session.persist(trainer1);
@@ -164,7 +173,7 @@ public class TrainerDAOImplTest {
 
         Trainer trainer2 = new Trainer();
         trainer2.setUser(trainerUser2);
-        trainer2.setSpecialization("Cardio");
+        trainer2.setSpecialization(getTrainingType("Cardio"));
 
         session.persist(trainerUser2);
         session.persist(trainer2);
@@ -185,7 +194,7 @@ public class TrainerDAOImplTest {
 
         // Assertions
         assertEquals(1, unassignedTrainers.size());
-        assertEquals("Cardio", unassignedTrainers.get(0).getSpecialization());
+        assertEquals("Cardio", unassignedTrainers.get(0).getSpecialization().getTrainingType());
     }
 
 

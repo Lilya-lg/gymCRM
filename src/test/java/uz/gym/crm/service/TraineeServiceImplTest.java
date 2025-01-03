@@ -18,86 +18,88 @@ import uz.gym.crm.domain.User;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
+
 class TraineeServiceImplTest {
-        private UserDAOImpl mockUserDAO;
-        private TraineeDAOImpl mockTraineeDAO;
-        private TrainingDAOImpl mockTrainingDAO;
-        private TraineeServiceImpl service;
+    private UserDAOImpl mockUserDAO;
+    private TraineeDAOImpl mockTraineeDAO;
+    private TrainingDAOImpl mockTrainingDAO;
+    private TraineeServiceImpl service;
 
-        @BeforeEach
-        void setUp() {
-            mockUserDAO = Mockito.mock(UserDAOImpl.class);
-            mockTraineeDAO = Mockito.mock(TraineeDAOImpl.class);
-            mockTrainingDAO = Mockito.mock(TrainingDAOImpl.class);
+    @BeforeEach
+    void setUp() {
+        mockUserDAO = Mockito.mock(UserDAOImpl.class);
+        mockTraineeDAO = Mockito.mock(TraineeDAOImpl.class);
+        mockTrainingDAO = Mockito.mock(TrainingDAOImpl.class);
 
-            service = new TraineeServiceImpl(mockUserDAO, mockTraineeDAO, mockTrainingDAO);
-        }
+        service = new TraineeServiceImpl(mockUserDAO, mockTraineeDAO, mockTrainingDAO);
+    }
 
-        @Test
-        void create_ShouldPrepareUserAndSaveTrainee() {
-            User user = new User();
-            user.setFirstName("John");
-            user.setLastName("Doe");
+    @Test
+    void create_ShouldPrepareUserAndSaveTrainee() {
+        User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
 
-            Trainee trainee = new Trainee();
-            trainee.setUser(user);
+        Trainee trainee = new Trainee();
+        trainee.setUser(user);
 
-            doNothing().when(mockTraineeDAO).save(any(Trainee.class));
+        doNothing().when(mockTraineeDAO).save(any(Trainee.class));
 
-            service.create(trainee);
+        service.create(trainee);
 
-            assertNotNull(user.getUsername());
-            assertNotNull(user.getPassword());
-            verify(mockTraineeDAO, times(1)).save(trainee);
-        }
+        assertNotNull(user.getUsername());
+        assertNotNull(user.getPassword());
+        verify(mockTraineeDAO, times(1)).save(trainee);
+    }
 
-        @Test
-        void deleteProfileByUsername_ShouldDeleteTraineeAndUser() {
-            User user = new User();
-            user.setUsername("johndoe");
-            user.setPassword("password");
+    @Test
+    void deleteProfileByUsername_ShouldDeleteTraineeAndUser() {
+        User user = new User();
+        user.setUsername("johndoe");
+        user.setPassword("password");
 
-            Trainee trainee = new Trainee();
-            trainee.setId(1L);
-            trainee.setUser(user);
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
+        trainee.setUser(user);
 
-            when(mockUserDAO.findByUsernameAndPassword("johndoe", "password")).thenReturn(Optional.of(user));
-            when(mockTraineeDAO.findByUser_Username("johndoe")).thenReturn(Optional.of(trainee));
+        when(mockUserDAO.findByUsernameAndPassword("johndoe", "password")).thenReturn(Optional.of(user));
+        when(mockTraineeDAO.findByUsername("johndoe")).thenReturn(Optional.of(trainee));
 
-            service.deleteProfileByUsername("johndoe", "password");
+        service.deleteProfileByUsername("johndoe", "password");
 
-            verify(mockTraineeDAO, times(1)).delete(1L);
-        }
+        verify(mockTraineeDAO, times(1)).delete(1L);
+    }
 
-        @Test
-        void findByUsernameAndPassword_ShouldReturnTrainee_WhenCredentialsAreValid() {
-            Trainee trainee = new Trainee();
-            trainee.setId(1L);
+    @Test
+    void findByUsernameAndPassword_ShouldReturnTrainee_WhenCredentialsAreValid() {
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
 
-            when(mockTraineeDAO.findByUser_UsernameAndUser_Password("johndoe", "password"))
-                    .thenReturn(Optional.of(trainee));
+        when(mockTraineeDAO.findByUsernameAndPassword("johndoe", "password"))
+                .thenReturn(Optional.of(trainee));
 
-            Optional<Trainee> result = service.findByUsernameAndPassword("johndoe", "password");
+        Optional<Trainee> result = service.findByUsernameAndPassword("johndoe", "password");
 
-            assertTrue(result.isPresent());
-            assertEquals(1L, result.get().getId());
-            verify(mockTraineeDAO, times(1)).findByUser_UsernameAndUser_Password("johndoe", "password");
-        }
+        assertTrue(result.isPresent());
+        assertEquals(1L, result.get().getId());
+        verify(mockTraineeDAO, times(1)).findByUsernameAndPassword("johndoe", "password");
+    }
 
-        @Test
-        void findByUsernameAndPassword_ShouldThrowException_WhenCredentialsAreInvalid() {
-            when(mockTraineeDAO.findByUser_UsernameAndUser_Password("johndoe", "wrongpassword"))
-                    .thenReturn(Optional.empty());
+    @Test
+    void findByUsernameAndPassword_ShouldThrowException_WhenCredentialsAreInvalid() {
+        when(mockTraineeDAO.findByUsernameAndPassword("johndoe", "wrongpassword"))
+                .thenReturn(Optional.empty());
 
-            Optional<Trainee> result = service.findByUsernameAndPassword("johndoe", "wrongpassword");
+        Optional<Trainee> result = service.findByUsernameAndPassword("johndoe", "wrongpassword");
 
-            assertFalse(result.isPresent());
-        }
+        assertFalse(result.isPresent());
+    }
 /*
         @Test
         void updateTraineeTrainers_ShouldUpdateTrainerList() {

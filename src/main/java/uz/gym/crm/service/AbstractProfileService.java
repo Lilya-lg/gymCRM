@@ -23,6 +23,7 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> {
     private UserDAOImpl userDAO;
     TrainingDAOImpl trainingDAO;
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractProfileService.class);
+
     public AbstractProfileService(BaseDAO<T> dao, UserDAOImpl userDAO) {
         super(dao);
         this.userDAO = userDAO;
@@ -39,6 +40,7 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> {
             user.setPassword(PasswordGenerator.generatePassword());
         }
     }
+
     //9,10 - Update profile
     public void updateProfile(String username, String password, T updatedEntity) {
         LOGGER.debug("Updating profile for username: {}", username);
@@ -58,6 +60,7 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> {
         dao.save(existingEntity);
         LOGGER.info("Profile updated successfully for username: {}", username);
     }
+
     //5, 6 Select by username
     public Optional<T> findByUsername(String username) {
         LOGGER.debug("Searching for profile with username: {}", username);
@@ -67,6 +70,7 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> {
     public boolean authenticate(String username, String password) {
         return userDAO.findByUsernameAndPassword(username, password).isPresent();
     }
+
     //7,8 Change password
     public void changePassword(String username, String oldPassword, String newPassword) {
         if (!authenticate(username, oldPassword)) {
@@ -79,6 +83,7 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> {
         user.setPassword(newPassword);
         userDAO.save(user);
     }
+
     //11.Activate profile
     public void activate(String username) {
         LOGGER.debug("Activating profile with username: {}", username);
@@ -92,6 +97,7 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> {
         dao.save(entity);
         LOGGER.info("Profile with username {} activated successfully.", username);
     }
+
     //12.Deactivate profile
     public void deactivate(String username, String password) {
         LOGGER.debug("Deactivating profile with username: {}", username);
@@ -107,6 +113,7 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> {
         dao.save(entity);
         LOGGER.info("Profile with username {} deactivated successfully.", username);
     }
+
     //14,15 get training list
     public List<Training> getTrainingListByCriteria(String username, LocalDate fromDate, LocalDate toDate, String trainerName, String trainingType) {
         LOGGER.debug("Fetching training list with ORM filters for profile with username: {}", username);

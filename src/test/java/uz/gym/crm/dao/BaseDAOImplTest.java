@@ -1,27 +1,16 @@
 package uz.gym.crm.dao;
-import uz.gym.crm.dao.TestEntity;
+
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.query.Query;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-
-import uz.gym.crm.config.HibernateUtil;
-import uz.gym.crm.domain.BaseEntity;
-import uz.gym.crm.domain.Trainee;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class BaseDAOImplTest {
 
@@ -68,7 +57,7 @@ class BaseDAOImplTest {
 
     @Test
     void read_ShouldReturnEntity() {
-        TestEntity entity = new TestEntity( "testEntity");
+        TestEntity entity = new TestEntity("testEntity");
 
         // Save through baseDAO
         baseDAO.save(entity);
@@ -99,7 +88,7 @@ class BaseDAOImplTest {
 
     @Test
     void update_ShouldUpdateEntity() {
-        TestEntity entity = new TestEntity( "testEntity");
+        TestEntity entity = new TestEntity("testEntity");
         Transaction transaction = session.beginTransaction();
         session.save(entity);
         transaction.commit();

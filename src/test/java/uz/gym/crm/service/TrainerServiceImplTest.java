@@ -1,4 +1,5 @@
 package uz.gym.crm.service;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -54,27 +55,28 @@ class TrainerServiceImplTest {
         Trainer trainer = new Trainer();
         trainer.setId(1L);
 
-        when(mockTrainerDAO.findByUser_UsernameAndUser_Password("johndoe", "password"))
+        when(mockTrainerDAO.findByUsernameAndPassword("johndoe", "password"))
                 .thenReturn(Optional.of(trainer));
 
         Optional<Trainer> result = service.findByUsernameAndPassword("johndoe", "password");
 
         assertTrue(result.isPresent());
         assertEquals(1L, result.get().getId());
-        verify(mockTrainerDAO, times(1)).findByUser_UsernameAndUser_Password("johndoe", "password");
+        verify(mockTrainerDAO, times(1)).findByUsernameAndPassword("johndoe", "password");
     }
 
     @Test
     void findByUsernameAndPassword_ShouldThrowException_WhenErrorOccurs() {
-        when(mockTrainerDAO.findByUser_UsernameAndUser_Password("johndoe", "password"))
+        when(mockTrainerDAO.findByUsernameAndPassword("johndoe", "password"))
                 .thenThrow(new RuntimeException("Database error"));
 
         Exception exception = assertThrows(RuntimeException.class, () ->
                 service.findByUsernameAndPassword("johndoe", "password"));
 
         assertEquals("Database error", exception.getMessage());
-        verify(mockTrainerDAO, times(1)).findByUser_UsernameAndUser_Password("johndoe", "password");
+        verify(mockTrainerDAO, times(1)).findByUsernameAndPassword("johndoe", "password");
     }
+
     @Test
     void create_ShouldLogSuccessMessage() {
         User user = new User();

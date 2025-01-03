@@ -7,7 +7,7 @@ import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uz.gym.crm.domain.*;
+import uz.gym.crm.config.TrainingTypeInitializer;
 
 import java.time.LocalDate;
 
@@ -17,7 +17,11 @@ class TrainingTest {
 
     private SessionFactory sessionFactory;
     private Session session;
-
+    private TrainingType getTrainingType(String type) {
+        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class)
+                .setParameter("type", type)
+                .uniqueResult();
+    }
     @BeforeEach
     void setUp() {
         // Configure Hibernate with H2 database
@@ -35,6 +39,8 @@ class TrainingTest {
 
         sessionFactory = configuration.buildSessionFactory();
         session = sessionFactory.openSession();
+        TrainingTypeInitializer.initializeTrainingTypes(sessionFactory);
+
     }
 
     @AfterEach
@@ -66,15 +72,15 @@ class TrainingTest {
 
         Trainer trainer = new Trainer();
         trainer.setUser(trainerUser);
-        trainer.setSpecialization("Cardio");
+        trainer.setSpecialization(getTrainingType("Cardio"));
 
-        TrainingType trainingType = new TrainingType("Cardio");
+        //TrainingType trainingType = new TrainingType("Cardio");
 
         Training training = new Training();
         training.setTrainee(trainee);
         training.setTrainer(trainer);
         training.setTrainingName("Morning Cardio");
-        training.setTrainingType(trainingType);
+        training.setTrainingType(getTrainingType("Cardio"));
         training.setTrainingDate(LocalDate.now());
         training.setTrainingDuration(60);
 
@@ -84,7 +90,7 @@ class TrainingTest {
         session.save(trainee);
         session.save(trainerUser);
         session.save(trainer);
-        session.save(trainingType);
+       // session.save(getTrainingType("Cardio"));
         session.save(training);
         transaction.commit();
 
@@ -118,15 +124,15 @@ class TrainingTest {
 
         Trainer trainer = new Trainer();
         trainer.setUser(trainerUser);
-        trainer.setSpecialization("Strength"); // Ensure specialization is set
+        trainer.setSpecialization(getTrainingType("Pilates")); // Ensure specialization is set
 
-        TrainingType trainingType = new TrainingType("Strength");
+        //TrainingType trainingType = new TrainingType("Strength");
 
         Training training = new Training();
         training.setTrainee(trainee);
         training.setTrainer(trainer);
         training.setTrainingName("Evening Strength Training");
-        training.setTrainingType(trainingType);
+        training.setTrainingType(getTrainingType("Pilates"));
         training.setTrainingDate(LocalDate.of(2024, 12, 28));
         training.setTrainingDuration(90);
 
@@ -136,7 +142,7 @@ class TrainingTest {
         session.save(trainee);
         session.save(trainerUser);
         session.save(trainer);
-        session.save(trainingType);
+        //session.save(trainingType);
         session.save(training);
         transaction.commit();
 
@@ -145,6 +151,6 @@ class TrainingTest {
         assertNotNull(fetchedTraining, "Training should exist");
         assertEquals("traineeUser", fetchedTraining.getTrainee().getUser().getUsername());
         assertEquals("trainerUser", fetchedTraining.getTrainer().getUser().getUsername());
-        assertEquals("Strength", fetchedTraining.getTrainingType().getTrainingType());
+        assertEquals("Pilates", fetchedTraining.getTrainingType().getTrainingType());
     }
 }

@@ -2,7 +2,6 @@ package uz.gym.crm.dao;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,7 +56,6 @@ class TrainingTypeDAOImplTest {
         assertTrue(trainingTypes.stream().anyMatch(t -> "Cycle".equals(t.getTrainingType())));
         assertTrue(trainingTypes.stream().anyMatch(t -> "Pilates".equals(t.getTrainingType())));
     }
-
 
 
     @Test

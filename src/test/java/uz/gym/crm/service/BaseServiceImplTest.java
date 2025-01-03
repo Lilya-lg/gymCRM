@@ -13,6 +13,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 class BaseServiceImplTest {
 
     private BaseDAO<Trainee> mockDao;
@@ -21,7 +22,8 @@ class BaseServiceImplTest {
     @BeforeEach
     void setUp() {
         mockDao = Mockito.mock(BaseDAO.class);
-        service = new BaseServiceImpl<>(mockDao) {};
+        service = new BaseServiceImpl<>(mockDao) {
+        };
     }
 
     @Test
@@ -132,4 +134,61 @@ class BaseServiceImplTest {
         assertEquals("Jane", result.get(1).getUser().getFirstName());
         verify(mockDao, times(1)).getAll();
     }
+
+    @Test
+    void create_ShouldLogError_WhenSaveFails() {
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
+        User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        trainee.setUser(user);
+
+        doThrow(new RuntimeException("Database error")).when(mockDao).save(trainee);
+
+        Exception exception = assertThrows(RuntimeException.class, () -> service.create(trainee));
+        assertEquals("Database error", exception.getMessage());
+        verify(mockDao, times(1)).save(trainee);
+    }
+
+
+
+    @Test
+    void delete_ShouldLogError_WhenDeleteFails() {
+        doThrow(new RuntimeException("Database error")).when(mockDao).delete(1L);
+
+        Exception exception = assertThrows(RuntimeException.class, () -> service.delete(1L));
+        assertEquals("Database error", exception.getMessage());
+        verify(mockDao, times(1)).delete(1L);
+    }
+
+    @Test
+    void getAll_ShouldReturnEmptyList_WhenNoEntitiesExist() {
+        when(mockDao.getAll()).thenReturn(List.of());
+
+        List<Trainee> result = service.getAll();
+
+        assertTrue(result.isEmpty(), "The result should be an empty list");
+        verify(mockDao, times(1)).getAll();
+    }
+
+
+
+    @Test
+    void getAll_ShouldLogError_WhenFetchFails() {
+        doThrow(new RuntimeException("Database error")).when(mockDao).getAll();
+
+        Exception exception = assertThrows(RuntimeException.class, () -> service.getAll());
+        assertEquals("Database error", exception.getMessage());
+        verify(mockDao, times(1)).getAll();
+    }
+
+    @Test
+    void delete_ShouldHandleNonExistentIdGracefully() {
+        doNothing().when(mockDao).delete(999L);
+
+        assertDoesNotThrow(() -> service.delete(999L));
+        verify(mockDao, times(1)).delete(999L);
+    }
+
 }

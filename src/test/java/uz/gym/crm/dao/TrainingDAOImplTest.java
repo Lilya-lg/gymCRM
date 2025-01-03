@@ -1,4 +1,5 @@
 package uz.gym.crm.dao;
+
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -6,9 +7,7 @@ import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uz.gym.crm.config.HibernateUtil;
 import uz.gym.crm.config.TrainingTypeInitializer;
-import uz.gym.crm.dao.TrainingDAOImpl;
 import uz.gym.crm.domain.*;
 
 import java.time.LocalDate;
@@ -43,8 +42,8 @@ class TrainingDAOImplTest {
             session.close();
         }
         session = sessionFactory.openSession();
-       // TrainingTypeInitializer.initializeTrainingTypes(HibernateUtil.getSessionFactory());
-       // trainingDAO = new TrainingDAOImpl(session);
+        // TrainingTypeInitializer.initializeTrainingTypes(HibernateUtil.getSessionFactory());
+        // trainingDAO = new TrainingDAOImpl(session);
 
         // Clear the database before each test
         Transaction transaction = session.beginTransaction();
@@ -56,6 +55,11 @@ class TrainingDAOImplTest {
         transaction.commit();
         TrainingTypeInitializer.initializeTrainingTypes(sessionFactory);
         trainingDAO = new TrainingDAOImpl(session);
+    }
+    private TrainingType getTrainingType(String type) {
+        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class)
+                .setParameter("type", type)
+                .uniqueResult();
     }
 
     @AfterEach
@@ -76,7 +80,7 @@ class TrainingDAOImplTest {
 
         Trainer trainer = new Trainer();
         trainer.setUser(trainerUser);
-        trainer.setSpecialization("Yoga"); // Ensure specialization is set
+        trainer.setSpecialization(getTrainingType("Yoga")); // Ensure specialization is set
 
         User traineeUser = new User();
         traineeUser.setFirstName("Jane");
@@ -152,7 +156,7 @@ class TrainingDAOImplTest {
 
         Trainer trainer = new Trainer();
         trainer.setUser(trainerUser);
-        trainer.setSpecialization("Yoga");
+        trainer.setSpecialization(getTrainingType("Yoga"));
 
         // Query the predefined TrainingType
         TrainingType trainingType = session.createQuery(
@@ -201,7 +205,7 @@ class TrainingDAOImplTest {
 
         Trainer trainer = new Trainer();
         trainer.setUser(trainerUser);
-        trainer.setSpecialization("Yoga"); // Set specialization to avoid nullability error
+        trainer.setSpecialization(getTrainingType("Yoga")); // Set specialization to avoid nullability error
 
         // Save trainer
         Transaction transaction = session.beginTransaction();
