@@ -107,29 +107,6 @@ class TrainerTest {
     }
 
     @Test
-    void getAndSetTrainees_ShouldWorkCorrectly() {
-        // Test initial trainees
-        assertTrue(trainer.getTrainees().isEmpty(), "Trainer should initially have no trainees");
-
-        // Add a trainee
-        Set<Trainee> trainees = new HashSet<>();
-        trainees.add(trainee);
-        trainer.setTrainees(trainees);
-
-        assertEquals(1, trainer.getTrainees().size(), "Trainer should have one trainee");
-        assertTrue(trainer.getTrainees().contains(trainee), "Trainer should contain the added trainee");
-    }
-
-    @Test
-    void addTrainee_ShouldSynchronizeRelationship() {
-        // Add trainee directly to the set
-        trainer.getTrainees().add(trainee);
-
-        assertEquals(1, trainer.getTrainees().size(), "Trainer should have one trainee after adding directly");
-        assertTrue(trainer.getTrainees().contains(trainee), "Trainer's trainees should include the added trainee");
-    }
-
-    @Test
     void setId_ShouldUpdateId() {
         // Test initial ID
         assertNull(trainer.getId(), "Trainer's ID should initially be null");

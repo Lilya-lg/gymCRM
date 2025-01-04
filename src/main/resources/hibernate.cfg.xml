@@ -22,7 +22,7 @@
         <property name="hibernate.format_sql">true</property>
 
         <!-- Auto schema generation -->
-        <property name="hibernate.hbm2ddl.auto">modify</property>
+        <property name="hibernate.hbm2ddl.auto">create-drop</property>
         <!-- Entity class mappings -->
         <mapping class="uz.gym.crm.domain.User"/>
         <mapping class="uz.gym.crm.domain.Trainer"/>

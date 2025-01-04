@@ -1,8 +1,6 @@
 package uz.gym.crm.domain;
 
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "trainers")
@@ -19,8 +17,6 @@ public class Trainer {
     @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
     private User user;
 
-    @ManyToMany(mappedBy = "trainers")
-    private Set<Trainee> trainees = new HashSet<>();
 
     public TrainingType getSpecialization() {
         return specialization;
@@ -46,11 +42,5 @@ public class Trainer {
         this.user = user;
     }
 
-    public Set<Trainee> getTrainees() {
-        return trainees;
-    }
 
-    public void setTrainees(Set<Trainee> trainees) {
-        this.trainees = trainees;
-    }
 }

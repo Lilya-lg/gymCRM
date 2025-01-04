@@ -9,10 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import uz.gym.crm.config.TrainingTypeInitializer;
-import uz.gym.crm.domain.Trainee;
-import uz.gym.crm.domain.Trainer;
-import uz.gym.crm.domain.TrainingType;
-import uz.gym.crm.domain.User;
+import uz.gym.crm.domain.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -34,6 +31,7 @@ public class TrainerDAOImplTest {
         configuration.addAnnotatedClass(User.class);
         configuration.addAnnotatedClass(Trainee.class);
         configuration.addAnnotatedClass(TrainingType.class);
+        configuration.addAnnotatedClass(Training.class);
         configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
         configuration.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
         configuration.setProperty("hibernate.connection.url", "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
@@ -134,6 +132,10 @@ public class TrainerDAOImplTest {
 
     @Test
     void testGetUnassignedTrainersByTraineeUsername() {
+        TrainingType yogaType = getTrainingType("Yoga");
+        TrainingType cardioType = getTrainingType("Cardio");
+
+        // Create a trainee
         User traineeUser = new User();
         traineeUser.setFirstName("John");
         traineeUser.setLastName("Doe");
@@ -143,13 +145,8 @@ public class TrainerDAOImplTest {
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
-        trainee.setAddress("123 Street");
-        trainee.setDateOfBirth(LocalDate.of(1990, 1, 1));
 
-        session.persist(traineeUser);
-        session.persist(trainee);
-
-        // Create and persist Trainers
+        // Create trainers
         User trainerUser1 = new User();
         trainerUser1.setFirstName("Alice");
         trainerUser1.setLastName("Smith");
@@ -159,10 +156,7 @@ public class TrainerDAOImplTest {
 
         Trainer trainer1 = new Trainer();
         trainer1.setUser(trainerUser1);
-        trainer1.setSpecialization(getTrainingType("Yoga"));
-
-        session.persist(trainerUser1);
-        session.persist(trainer1);
+        trainer1.setSpecialization(yogaType);
 
         User trainerUser2 = new User();
         trainerUser2.setFirstName("Bob");
@@ -173,28 +167,37 @@ public class TrainerDAOImplTest {
 
         Trainer trainer2 = new Trainer();
         trainer2.setUser(trainerUser2);
-        trainer2.setSpecialization(getTrainingType("Cardio"));
+        trainer2.setSpecialization(cardioType);
 
-        session.persist(trainerUser2);
-        session.persist(trainer2);
+        // Persist entities
+        Transaction transaction = session.beginTransaction();
+        session.save(traineeUser);
+        session.save(trainee);
+        session.save(trainerUser1);
+        session.save(trainer1);
+        session.save(trainerUser2);
+        session.save(trainer2);
+        transaction.commit();
 
-        // Assign one trainer to the trainee
-        trainee.getTrainers().add(trainer1);
-        trainer1.getTrainees().add(trainee);
-        session.update(trainee);
-
-        // Synchronize the session with the database
-        Transaction transaction = session.beginTransaction(); // Start a new transaction
-        session.flush();
-        session.clear();
-        transaction.commit(); // Commit the transaction
+        // Assign trainer1 to the trainee
+        transaction = session.beginTransaction();
+        Training training = new Training();
+        training.setTrainee(trainee);
+        training.setTrainer(trainer1);
+        training.setTrainingName("Yoga Training");
+        training.setTrainingDate(LocalDate.now());
+        training.setTrainingDuration(60);
+        training.setTrainingType(yogaType);
+        session.save(training);
+        transaction.commit();
 
         // Fetch unassigned trainers
         List<Trainer> unassignedTrainers = trainerDAO.getUnassignedTrainersByTraineeUsername("traineeUser");
 
         // Assertions
-        assertEquals(1, unassignedTrainers.size());
-        assertEquals("Cardio", unassignedTrainers.get(0).getSpecialization().getTrainingType());
+        assertEquals(1, unassignedTrainers.size(), "Only one trainer should be unassigned");
+        assertEquals("Cardio", unassignedTrainers.get(0).getSpecialization().getTrainingType(), "Unassigned trainer should specialize in Cardio");
+
     }
 
 
