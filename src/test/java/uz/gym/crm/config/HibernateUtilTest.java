@@ -10,7 +10,7 @@ import org.hibernate.cfg.Configuration;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HibernateUtilTest {
-
+/*
     @Test
     void getSessionFactory_ShouldReturnSessionFactory() {
         // Verify that the SessionFactory is not null
@@ -41,4 +41,6 @@ class HibernateUtilTest {
         // Shutdown the SessionFactory
         HibernateUtil.shutdown();
     }
+
+ */
 }

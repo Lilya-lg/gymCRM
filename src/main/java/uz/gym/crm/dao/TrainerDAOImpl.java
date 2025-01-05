@@ -4,6 +4,7 @@ package uz.gym.crm.dao;
 import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
 import uz.gym.crm.domain.Trainer;
+import uz.gym.crm.util.DynamicQueryBuilder;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,19 +22,27 @@ public class TrainerDAOImpl extends BaseDAOImpl<Trainer> implements TrainerDAO {
     }
 
     public Optional<Trainer> findByUsernameAndPassword(String username, String password) {
-        Trainer trainer = session.createQuery(FIND_BY_USERNAME_AND_PASSWORD, Trainer.class).setParameter("username", username).setParameter("password", password).uniqueResult();
-        return Optional.ofNullable(trainer);
+        DynamicQueryBuilder<Trainer> queryBuilder = new DynamicQueryBuilder<>(FIND_BY_USERNAME_AND_PASSWORD);
+        queryBuilder.addCondition("u.username = :username", "username", username).addCondition("u.password = :password", "password", password);
+
+        return Optional.ofNullable(queryBuilder.buildQuery(session, Trainer.class).uniqueResult());
     }
 
     @Override
     public Optional<Trainer> findByUsername(String username) {
-        Trainer result = session.createQuery(FIND_BY_USERNAME, Trainer.class).setParameter("username", username).uniqueResult();
-        return Optional.ofNullable(result);
+        DynamicQueryBuilder<Trainer> queryBuilder = new DynamicQueryBuilder<>(FIND_BY_USERNAME);
+        queryBuilder.addCondition("u.username = :username", "username", username);
+
+        return Optional.ofNullable(queryBuilder.buildQuery(session, Trainer.class).uniqueResult());
+
     }
 
     @Override
     public List<Trainer> getUnassignedTrainersByTraineeUsername(String traineeUsername) {
-        return session.createQuery(GET_UNASSIGNED_TRAINERS, Trainer.class).setParameter("username", traineeUsername).getResultList();
+        DynamicQueryBuilder<Trainer> queryBuilder = new DynamicQueryBuilder<>(GET_UNASSIGNED_TRAINERS);
+        queryBuilder.addCondition("1=1", "username", traineeUsername);
+
+        return queryBuilder.buildQuery(session, Trainer.class).getResultList();
     }
 
 }

@@ -33,11 +33,11 @@ public class App {
             session.save(user);
 
             transaction.commit();
-            System.out.println("User saved successfully!");
+
 
         } catch (Exception e) {
             if (transaction != null) transaction.rollback();
-            e.printStackTrace();
+            LOGGER.error("Can't start transaction",e);
         } finally {
             if (session != null) session.close();
             HibernateUtil.shutdown();

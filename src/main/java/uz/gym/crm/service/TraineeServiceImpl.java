@@ -21,7 +21,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
 
 
     public TraineeServiceImpl(UserDAOImpl userDAO, TraineeDAOImpl traineeDAO, TrainingDAOImpl trainingDAO) {
-        super(traineeDAO, userDAO);
+        super(traineeDAO, userDAO, trainingDAO);
         this.userDAO = userDAO;
         this.traineeDAO = traineeDAO;
         this.trainingDAO = trainingDAO;

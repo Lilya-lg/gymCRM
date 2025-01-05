@@ -2,8 +2,8 @@ package uz.gym.crm.dao;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.hibernate.query.Query;
+import uz.gym.crm.util.DynamicQueryBuilder;
 
 import javax.persistence.Entity;
 import java.util.*;
@@ -11,11 +11,8 @@ import java.util.*;
 public class BaseDAOImpl<T> implements BaseDAO<T> {
     private final Class<T> entityType;
     private final Session session;
-    private static final Logger LOGGER = LoggerFactory.getLogger(BaseDAOImpl.class);
-    private static final String SELECT_ENTITY_BY_ID = "FROM %s WHERE id = :id";
-    private static final String SELECT_ALL_ENTITIES = "FROM %s";
-    private static final String CHECK_ENTITY_EXISTS_BY_ID = "SELECT COUNT(e) > 0 FROM %s e WHERE e.id = :id";
-    private static final String SELECT_ENTITY_BY_USERNAME = "FROM %s WHERE username = :username";
+    private static final String SELECT_ALL_ENTITIES = "FROM %s e";
+    private static final String CHECK_ENTITY_EXISTS_BY_ID = "SELECT COUNT(e) FROM %s e WHERE e.id = :id";
 
     public BaseDAOImpl(Class<T> entityType, Session session) {
 
@@ -53,8 +50,9 @@ public class BaseDAOImpl<T> implements BaseDAO<T> {
 
     @Override
     public List<T> getAll() {
-        String query = String.format(SELECT_ALL_ENTITIES, getEntityName());
-        return session.createQuery(query, entityType).list();
+        DynamicQueryBuilder<T> queryBuilder = new DynamicQueryBuilder<>(String.format(SELECT_ALL_ENTITIES, getEntityName()));
+        Query<T> query = queryBuilder.buildQuery(session, entityType);
+        return query.list();
     }
 
     @Override
@@ -82,7 +80,11 @@ public class BaseDAOImpl<T> implements BaseDAO<T> {
     @Override
     public boolean existsById(Long id) {
         String query = String.format(CHECK_ENTITY_EXISTS_BY_ID, getEntityName());
-        return session.createQuery(query, Boolean.class).setParameter("id", id).uniqueResult();
+        DynamicQueryBuilder<Long> queryBuilder = new DynamicQueryBuilder<>(query);
+        queryBuilder.addCondition("e.id = :id", "id", id);
+        Query<Long> hibernateQuery = queryBuilder.buildQuery(session, Long.class);
+        Long count = hibernateQuery.uniqueResult();
+        return count != null && count > 0;
 
 
     }
@@ -90,9 +92,10 @@ public class BaseDAOImpl<T> implements BaseDAO<T> {
     @Override
     public Optional<T> findByUsername(String username) {
 
-        String query = String.format(SELECT_ENTITY_BY_USERNAME, getEntityName());
-        T result = session.createQuery(query, entityType).setParameter("username", username).uniqueResult();
-        return Optional.ofNullable(result);
+        DynamicQueryBuilder<T> queryBuilder = new DynamicQueryBuilder<>(String.format(SELECT_ALL_ENTITIES, getEntityName()));
+        queryBuilder.addCondition("e.username = :username", "username", username);
+        Query<T> query = queryBuilder.buildQuery(session, entityType);
+        return Optional.ofNullable(query.uniqueResult());
 
     }
 

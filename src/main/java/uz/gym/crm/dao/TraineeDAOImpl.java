@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.Training;
+import uz.gym.crm.util.DynamicQueryBuilder;
 
 import javax.transaction.Transactional;
 import java.time.LocalDate;
@@ -25,17 +26,24 @@ public class TraineeDAOImpl extends BaseDAOImpl<Trainee> implements TraineeDAO {
 
     }
 
+    @Override
     public Optional<Trainee> findByUsernameAndPassword(String username, String password) {
-        Trainee trainee = session.createQuery(FIND_BY_USERNAME_AND_PASSWORD, Trainee.class).setParameter("username", username).setParameter("password", password).uniqueResult();
-        return Optional.ofNullable(trainee);
+        DynamicQueryBuilder<Trainee> queryBuilder = new DynamicQueryBuilder<>(FIND_BY_USERNAME_AND_PASSWORD);
+        queryBuilder.addCondition("u.username = :username", "username", username).addCondition("u.password = :password", "password", password);
+
+        return Optional.ofNullable(queryBuilder.buildQuery(session, Trainee.class).uniqueResult());
     }
 
+    @Override
     public Optional<Trainee> findByUsername(String username) {
-        Trainee result = session.createQuery(FIND_BY_USERNAME, Trainee.class).setParameter("username", username).uniqueResult();
-        return Optional.ofNullable(result);
+        DynamicQueryBuilder<Trainee> queryBuilder = new DynamicQueryBuilder<>(FIND_BY_USERNAME);
+        queryBuilder.addCondition("u.username = :username", "username", username);
+
+        return Optional.ofNullable(queryBuilder.buildQuery(session, Trainee.class).uniqueResult());
     }
 
     @Transactional
+    @Override
     public void updateTraineeTrainerList(Long traineeId, List<Long> trainerIds) {
         Trainee trainee = session.find(Trainee.class, traineeId);
         if (trainee == null) {
@@ -43,7 +51,10 @@ public class TraineeDAOImpl extends BaseDAOImpl<Trainee> implements TraineeDAO {
         }
 
 
-        List<Training> existingTrainings = session.createQuery(FETCH_TRAININGS_BY_TRAINEE, Training.class).setParameter("traineeId", traineeId).list();
+        DynamicQueryBuilder<Training> queryBuilder = new DynamicQueryBuilder<>(FETCH_TRAININGS_BY_TRAINEE);
+        queryBuilder.addCondition("t.trainee.id = :traineeId", "traineeId", traineeId);
+
+        List<Training> existingTrainings = queryBuilder.buildQuery(session, Training.class).getResultList();
 
 
         for (Training training : existingTrainings) {

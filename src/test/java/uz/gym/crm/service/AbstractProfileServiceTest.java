@@ -31,13 +31,12 @@ class AbstractProfileServiceTest {
         mockTrainingDAO = Mockito.mock(TrainingDAOImpl.class);
 
         // Anonymous subclass for testing
-        service = new AbstractProfileService<>(mockDao, mockUserDAO) {
+        service = new AbstractProfileService<>(mockDao, mockUserDAO,mockTrainingDAO) {
             @Override
             protected User getUser(Trainee entity) {
                 return entity.getUser();
             }
         };
-        ((AbstractProfileService<Trainee>) service).trainingDAO = mockTrainingDAO;
     }
 
     @Test

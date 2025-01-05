@@ -2,6 +2,7 @@ package uz.gym.crm.service;
 
 import org.springframework.stereotype.Service;
 import uz.gym.crm.dao.TrainerDAOImpl;
+import uz.gym.crm.dao.TrainingDAOImpl;
 import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.Trainer;
 import org.slf4j.Logger;
@@ -17,11 +18,13 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
     private static final Logger LOGGER = LoggerFactory.getLogger(TrainerServiceImpl.class);
     private final UserDAOImpl userDAO;
     private final TrainerDAOImpl trainerDAO;
+    private final TrainingDAOImpl trainingDAO;
 
-    public TrainerServiceImpl(UserDAOImpl userDAO, TrainerDAOImpl trainerDAO) {
-        super(trainerDAO, userDAO);
+    public TrainerServiceImpl(UserDAOImpl userDAO, TrainerDAOImpl trainerDAO, TrainingDAOImpl trainingDAO) {
+        super(trainerDAO, userDAO,trainingDAO);
         this.userDAO = userDAO;
         this.trainerDAO = trainerDAO;
+        this.trainingDAO = trainingDAO;
     }
 
 

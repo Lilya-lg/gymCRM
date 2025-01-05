@@ -8,6 +8,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import uz.gym.crm.dao.TrainerDAOImpl;
+import uz.gym.crm.dao.TrainingDAOImpl;
 import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.User;
@@ -24,12 +25,15 @@ class TrainerServiceImplTest {
     private UserDAOImpl mockUserDAO;
     private TrainerDAOImpl mockTrainerDAO;
     private TrainerServiceImpl service;
+    private TrainingDAOImpl mockTrainingDAO;
+
 
     @BeforeEach
     void setUp() {
         mockUserDAO = Mockito.mock(UserDAOImpl.class);
         mockTrainerDAO = Mockito.mock(TrainerDAOImpl.class);
-        service = new TrainerServiceImpl(mockUserDAO, mockTrainerDAO);
+        mockTrainingDAO = Mockito.mock(TrainingDAOImpl.class);
+        service = new TrainerServiceImpl(mockUserDAO, mockTrainerDAO,mockTrainingDAO);
     }
 
     @Test
