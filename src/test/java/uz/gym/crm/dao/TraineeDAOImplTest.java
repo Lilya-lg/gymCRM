@@ -67,24 +67,24 @@ public class TraineeDAOImplTest {
 
     @Test
     void findByUser_UsernameAndUser_Password_ShouldReturnTrainee() {
-        User user = new User(); // No-argument constructor
-        user.setFirstName("Test");  // Required field
-        user.setLastName("User");   // Required field
+        User user = new User();
+        user.setFirstName("Test");
+        user.setLastName("User");
         user.setUsername("testUser");
         user.setPassword("testPass");
-        user.setActive(true);       // Assuming this is a required field
+        user.setActive(true);
 
-        // Create the Trainee and associate the User
+
         Trainee trainee = new Trainee();
         trainee.setUser(user);
 
-        // Save the trainee
+
         Transaction transaction = session.beginTransaction();
         session.save(user);
         session.save(trainee);
         transaction.commit();
 
-        // Test the DAO method
+
         Optional<Trainee> result = traineeDAO.findByUsernameAndPassword("testUser", "testPass");
         assertTrue(result.isPresent(), "Trainee should be found");
         assertEquals(user.getUsername(), result.get().getUser().getUsername());
@@ -98,19 +98,19 @@ public class TraineeDAOImplTest {
 
     @Test
     void findByUser_Username_ShouldReturnTrainee() {
-        // Create and fully initialize the User
-        User user = new User(); // No-argument constructor
+
+        User user = new User();
         user.setFirstName("Test");
         user.setLastName("User");
         user.setUsername("testUser");
         user.setPassword("testPass");
-        user.setActive(true); // Assuming isActive is required
+        user.setActive(true);
 
-        // Create the Trainee and associate the User
+
         Trainee trainee = new Trainee();
         trainee.setUser(user);
 
-        // Save the trainee
+
         Transaction transaction = session.beginTransaction();
         session.save(user);
         session.save(trainee);
@@ -123,9 +123,7 @@ public class TraineeDAOImplTest {
     }
 
     private TrainingType getTrainingType(String type) {
-        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class)
-                .setParameter("type", type)
-                .uniqueResult();
+        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class).setParameter("type", type).uniqueResult();
     }
 
     @Test
@@ -136,14 +134,14 @@ public class TraineeDAOImplTest {
 
     @Test
     void findByUsername_ShouldReturnTrainee() {
-        User user = new User(); // No-argument constructor
-        user.setFirstName("Test");  // Required field
-        user.setLastName("User");   // Required field
+        User user = new User();
+        user.setFirstName("Test");
+        user.setLastName("User");
         user.setUsername("testUser");
         user.setPassword("testPass");
-        user.setActive(true);       // Assuming this is a required field
+        user.setActive(true);
 
-        // Create the Trainee and associate the User
+
         Trainee trainee = new Trainee();
         trainee.setUser(user);
 
@@ -164,84 +162,6 @@ public class TraineeDAOImplTest {
         Optional<Trainee> result = traineeDAO.findByUsername("nonExistentUser");
         assertTrue(result.isEmpty(), "No Trainee should be found for invalid username");
     }
-    /*
-    @Test
-
-    void updateTraineeTrainerList_ShouldUpdateTrainerList() {
-        TrainingType yogaType = getTrainingType("Yoga");
-        TrainingType cardioType = getTrainingType("Cardio");
-
-        // Create trainee
-        User traineeUser = new User();
-        traineeUser.setFirstName("Trainee");
-        traineeUser.setLastName("One");
-        traineeUser.setUsername("trainee1");
-        traineeUser.setPassword("password");
-        traineeUser.setActive(true);
-
-        Trainee trainee = new Trainee();
-        trainee.setUser(traineeUser);
-
-        // Create trainers
-        User trainerUser1 = new User();
-        trainerUser1.setFirstName("Trainer");
-        trainerUser1.setLastName("One");
-        trainerUser1.setUsername("trainer1");
-        trainerUser1.setPassword("password");
-        trainerUser1.setActive(true);
-
-        Trainer trainer1 = new Trainer();
-        trainer1.setUser(trainerUser1);
-        trainer1.setSpecialization(yogaType);
-
-        User trainerUser2 = new User();
-        trainerUser2.setFirstName("Trainer");
-        trainerUser2.setLastName("Two");
-        trainerUser2.setUsername("trainer2");
-        trainerUser2.setPassword("password");
-        trainerUser2.setActive(true);
-
-        Trainer trainer2 = new Trainer();
-        trainer2.setUser(trainerUser2);
-        trainer2.setSpecialization(cardioType);
-
-        // Save entities within a transaction
-        Transaction transaction = session.beginTransaction();
-        session.save(traineeUser);
-        session.save(trainee);
-        session.save(trainerUser1);
-        session.save(trainer1);
-        session.save(trainerUser2);
-        session.save(trainer2);
-        transaction.commit();
-
-        // Ensure the session is synchronized
-        session.flush();
-        session.clear();
-
-        // Perform the DAO operation within a new transaction
-        transaction = session.beginTransaction();
-        traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of(trainer1.getId(), trainer2.getId()));
-        transaction.commit();
-
-        // Ensure the session is synchronized again
-        session.flush();
-        session.clear();
-
-        // Verify updated associations
-        List<Training> updatedTrainings = session.createQuery(
-                        "SELECT t FROM Training t WHERE t.trainee.id = :traineeId", Training.class)
-                .setParameter("traineeId", trainee.getId())
-                .list();
-
-        assertEquals(2, updatedTrainings.size(), "Trainee should have two trainings");
-        assertTrue(updatedTrainings.stream().anyMatch(training -> training.getTrainer().getId().equals(trainer1.getId())),
-                "Trainer 1 should be associated with the trainee");
-        assertTrue(updatedTrainings.stream().anyMatch(training -> training.getTrainer().getId().equals(trainer2.getId())),
-                "Trainer 2 should be associated with the trainee");
-    }
-    
-     */
 
     void updateTraineeTrainerList(Long traineeId, List newTrainerIds) {
         TrainingType yogaType = getTrainingType("Yoga");
@@ -258,7 +178,7 @@ public class TraineeDAOImplTest {
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
 
-        // Create trainers
+
         User trainerUser1 = new User();
         trainerUser1.setFirstName("Trainer");
         trainerUser1.setLastName("One");
@@ -295,10 +215,7 @@ public class TraineeDAOImplTest {
         traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of(trainer1.getId(), trainer2.getId()));
 
         // Verify updated associations
-        List<Training> updatedTrainings = session.createQuery(
-                        "SELECT t FROM Training t WHERE t.trainee.id = :traineeId", Training.class)
-                .setParameter("traineeId", trainee.getId())
-                .list();
+        List<Training> updatedTrainings = session.createQuery("SELECT t FROM Training t WHERE t.trainee.id = :traineeId", Training.class).setParameter("traineeId", trainee.getId()).list();
 
         assertEquals(2, updatedTrainings.size(), "Trainee should have two trainings");
 
@@ -310,7 +227,7 @@ public class TraineeDAOImplTest {
     void updateTraineeTrainerList_ShouldHandleEmptyTrainerList() {
         Transaction transaction = session.beginTransaction();
 
-        // Create a user and trainee
+
         User traineeUser = new User();
         traineeUser.setFirstName("Trainee");
         traineeUser.setLastName("One");
@@ -321,23 +238,20 @@ public class TraineeDAOImplTest {
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
 
-        // Save trainee
+
         session.save(traineeUser);
         session.save(trainee);
         transaction.commit();
 
-        // Update trainee's trainers to an empty list
+
         session.beginTransaction();
         traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of());
         session.getTransaction().commit();
 
         // Fetch updated trainings for the trainee
-        List<Training> updatedTrainings = session.createQuery(
-                        "SELECT t FROM Training t WHERE t.trainee.id = :traineeId", Training.class)
-                .setParameter("traineeId", trainee.getId())
-                .list();
+        List<Training> updatedTrainings = session.createQuery("SELECT t FROM Training t WHERE t.trainee.id = :traineeId", Training.class).setParameter("traineeId", trainee.getId()).list();
 
-        // Assert that there are no trainings
+
         assertTrue(updatedTrainings.isEmpty(), "Trainee should have no trainings");
     }
 
@@ -345,12 +259,12 @@ public class TraineeDAOImplTest {
     void updateTraineeTrainerList_ShouldThrowExceptionForInvalidTraineeId() {
         Long invalidTraineeId = 999L;
 
-        // When & Then: Try updating trainers for a non-existent trainee and expect an exception
+
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             traineeDAO.updateTraineeTrainerList(invalidTraineeId, List.of(1L, 2L));
         });
 
-        // Verify the exception message
+
         assertEquals("Trainee with ID " + invalidTraineeId + " not found", exception.getMessage());
     }
 
@@ -372,18 +286,18 @@ public class TraineeDAOImplTest {
         session.save(trainee);
         transaction.commit();
 
-        // When: Try updating trainers with a non-existent trainer ID
+
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of(999L));
         });
 
-        // Then: Assert the exception message
+
         assertEquals("Trainer with ID 999 not found", exception.getMessage());
     }
 
     @Test
     void findByUsername_ShouldHandleCaseSensitivity() {
-        // Create and save a trainee
+
         User user = new User();
         user.setFirstName("Test");
         user.setLastName("User");
@@ -461,12 +375,9 @@ public class TraineeDAOImplTest {
         transaction.commit();
 
         // Fetch trainings for the trainee
-        List<Training> trainings = session.createQuery(
-                        "SELECT t FROM Training t WHERE t.trainee.id = :traineeId", Training.class)
-                .setParameter("traineeId", trainee.getId())
-                .list();
+        List<Training> trainings = session.createQuery("SELECT t FROM Training t WHERE t.trainee.id = :traineeId", Training.class).setParameter("traineeId", trainee.getId()).list();
 
-        // Assertions
+
         assertNotNull(trainings, "Trainings list should not be null");
         assertTrue(trainings.isEmpty(), "Trainee should have no associated trainings");
     }

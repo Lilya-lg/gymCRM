@@ -17,11 +17,11 @@ class TrainingTest {
 
     private SessionFactory sessionFactory;
     private Session session;
+
     private TrainingType getTrainingType(String type) {
-        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class)
-                .setParameter("type", type)
-                .uniqueResult();
+        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class).setParameter("type", type).uniqueResult();
     }
+
     @BeforeEach
     void setUp() {
         // Configure Hibernate with H2 database
@@ -58,7 +58,7 @@ class TrainingTest {
         traineeUser.setLastName("Doe");
         traineeUser.setUsername("traineeUser");
         traineeUser.setPassword("password");
-        traineeUser.setActive(true); // Assuming there's an active field
+        traineeUser.setActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
@@ -74,8 +74,6 @@ class TrainingTest {
         trainer.setUser(trainerUser);
         trainer.setSpecialization(getTrainingType("Cardio"));
 
-        //TrainingType trainingType = new TrainingType("Cardio");
-
         Training training = new Training();
         training.setTrainee(trainee);
         training.setTrainer(trainer);
@@ -84,13 +82,12 @@ class TrainingTest {
         training.setTrainingDate(LocalDate.now());
         training.setTrainingDuration(60);
 
-        // Save entities
+
         Transaction transaction = session.beginTransaction();
         session.save(traineeUser);
         session.save(trainee);
         session.save(trainerUser);
         session.save(trainer);
-       // session.save(getTrainingType("Cardio"));
         session.save(training);
         transaction.commit();
 
@@ -110,7 +107,7 @@ class TrainingTest {
         traineeUser.setLastName("Doe");
         traineeUser.setUsername("traineeUser");
         traineeUser.setPassword("password");
-        traineeUser.setActive(true); // Assuming there's an active field
+        traineeUser.setActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
@@ -124,9 +121,8 @@ class TrainingTest {
 
         Trainer trainer = new Trainer();
         trainer.setUser(trainerUser);
-        trainer.setSpecialization(getTrainingType("Pilates")); // Ensure specialization is set
+        trainer.setSpecialization(getTrainingType("Pilates"));
 
-        //TrainingType trainingType = new TrainingType("Strength");
 
         Training training = new Training();
         training.setTrainee(trainee);
@@ -136,13 +132,13 @@ class TrainingTest {
         training.setTrainingDate(LocalDate.of(2024, 12, 28));
         training.setTrainingDuration(90);
 
-        // Save entities
+
         Transaction transaction = session.beginTransaction();
         session.save(traineeUser);
         session.save(trainee);
         session.save(trainerUser);
         session.save(trainer);
-        //session.save(trainingType);
+
         session.save(training);
         transaction.commit();
 

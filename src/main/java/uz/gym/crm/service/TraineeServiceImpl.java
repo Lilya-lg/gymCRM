@@ -8,23 +8,22 @@ import uz.gym.crm.dao.TrainingDAOImpl;
 import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.User;
+import uz.gym.crm.service.abstr.AbstractProfileService;
+import uz.gym.crm.service.abstr.TraineeService;
 
+import java.util.List;
 import java.util.Optional;
 
 
 @Service
 public class TraineeServiceImpl extends AbstractProfileService<Trainee> implements TraineeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TraineeServiceImpl.class);
-    private final UserDAOImpl userDAO;
     private final TraineeDAOImpl traineeDAO;
-    private final TrainingDAOImpl trainingDAO;
 
 
     public TraineeServiceImpl(UserDAOImpl userDAO, TraineeDAOImpl traineeDAO, TrainingDAOImpl trainingDAO) {
         super(traineeDAO, userDAO, trainingDAO);
-        this.userDAO = userDAO;
         this.traineeDAO = traineeDAO;
-        this.trainingDAO = trainingDAO;
     }
 
 
@@ -35,27 +34,35 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
         LOGGER.info("Trainee entity created successfully with ID: {}", trainee.getId());
     }
 
-
-    public void deleteProfileByUsername(String username, String password) {
+    @Override
+    public void deleteProfileByUsername(String username, String userToDelete, String password) {
         LOGGER.debug("Deleting Trainee profile with username: {}", username);
-
-        super.authenticate(username, password);
-
-        Trainee trainee = traineeDAO.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Trainee not found for username: " + username));
-
-        User user = trainee.getUser();
-        dao.delete(trainee.getId());
+        if (!super.authenticate(username, password)) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
+        traineeDAO.findByUsername(userToDelete).ifPresentOrElse(trainee -> {
+            dao.delete(trainee.getId());
+            LOGGER.info("Trainee profile and associated user deleted successfully for username: {}", userToDelete);
+        }, () -> {
+            throw new IllegalArgumentException("Trainee not found for username: " + username);
+        });
         LOGGER.info("Trainee profile and associated user deleted successfully for username: {}", username);
     }
 
-    public Optional<Trainee> findByUsername(String username) {
-        LOGGER.debug("Searching for profile with username: {}", username);
-        return dao.findByUsername(username);
+
+    public Optional<Trainee> findByUsername(String username, String password, String usernameToSelect) {
+        if (!super.authenticate(username, password)) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
+        LOGGER.debug("Searching for profile with username: {}", usernameToSelect);
+        return dao.findByUsername(usernameToSelect);
     }
 
 
-    public Optional<Trainee> findByUsernameAndPassword(String username, String password) {
+    public Optional<Trainee> findByUsernameAndPassword(String usernameAuth, String passwordAuth,String username, String password) {
+        if (!super.authenticate(usernameAuth, passwordAuth)) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
         LOGGER.debug("Attempting to find trainer with username: {} and password: {}", username, password);
         try {
             return traineeDAO.findByUsernameAndPassword(username, password);
@@ -65,6 +72,13 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
         }
     }
 
+    @Override
+    public void updateTraineeTrainerList(String username, String password, Long traineeId, List<Long> trainerIds) {
+        if (!super.authenticate(username, password)) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
+        traineeDAO.updateTraineeTrainerList(traineeId, trainerIds);
+    }
 
     @Override
     protected User getUser(Trainee entity) {

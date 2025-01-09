@@ -1,39 +1,33 @@
 package uz.gym.crm.domain;
 
-import jakarta.persistence.EntityManager;
+
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.jupiter.api.Test;
 import uz.gym.crm.config.TrainingTypeInitializer;
-import uz.gym.crm.domain.User;
 
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class TrainerTest {
     private Trainer trainer;
-    private TrainingType trainingType;
     private User user;
     private Trainee trainee;
 
     private SessionFactory sessionFactory;
     private Session session;
+
     private TrainingType getTrainingType(String type) {
-        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class)
-                .setParameter("type", type)
-                .uniqueResult();
+        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class).setParameter("type", type).uniqueResult();
     }
+
     @BeforeEach
     void setUp() {
         // Configure Hibernate with H2 database
@@ -80,7 +74,7 @@ class TrainerTest {
 
     @Test
     void getAndSetSpecialization_ShouldWorkCorrectly() {
-        // Test initial specialization
+
         assertEquals("Yoga", trainer.getSpecialization().getTrainingType());
 
         // Change specialization and test
@@ -91,11 +85,11 @@ class TrainerTest {
 
     @Test
     void getAndSetUser_ShouldWorkCorrectly() {
-        // Test initial user
+
         assertEquals("John", trainer.getUser().getFirstName());
         assertEquals("Doe", trainer.getUser().getLastName());
 
-        // Change user and test
+
         User newUser = new User();
         newUser.setId(2L);
         newUser.setFirstName("Jane");
@@ -108,10 +102,10 @@ class TrainerTest {
 
     @Test
     void setId_ShouldUpdateId() {
-        // Test initial ID
+
         assertNull(trainer.getId(), "Trainer's ID should initially be null");
 
-        // Set ID
+
         trainer.setId(5L);
 
         assertEquals(5L, trainer.getId(), "Trainer's ID should be updated to 5");

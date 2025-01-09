@@ -6,7 +6,6 @@ import org.hibernate.Transaction;
 import org.junit.jupiter.api.BeforeEach;
 import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import uz.gym.crm.config.TrainingTypeInitializer;
 import uz.gym.crm.domain.*;
@@ -65,24 +64,24 @@ public class TrainerDAOImplTest {
     @Test
     void findByUser_UsernameAndUser_Password_ShouldReturnTrainer() {
         User user = new User();
-        user.setFirstName("TrainerFirst");  // Required field
-        user.setLastName("TrainerLast");    // Required field
-        user.setUsername("trainerUser");    // Required field
-        user.setPassword("trainerPass");    // Required field
-        user.setActive(true);               // Assuming this is a required field
+        user.setFirstName("TrainerFirst");
+        user.setLastName("TrainerLast");
+        user.setUsername("trainerUser");
+        user.setPassword("trainerPass");
+        user.setActive(true);
 
         // Create the Trainer and associate the User
         Trainer trainer = new Trainer();
         trainer.setUser(user);
         trainer.setSpecialization(getTrainingType("Yoga")); // Example specialization
 
-        // Save the Trainer
+
         Transaction transaction = session.beginTransaction();
         session.save(user);
         session.save(trainer);
         transaction.commit();
 
-        // Test the DAO method
+
         Optional<Trainer> result = trainerDAO.findByUsernameAndPassword("trainerUser", "trainerPass");
         assertTrue(result.isPresent(), "Trainer should be found");
         assertEquals(user.getUsername(), result.get().getUser().getUsername());
@@ -96,19 +95,19 @@ public class TrainerDAOImplTest {
 
     @Test
     void findByUsername_ShouldReturnTrainer() {
-        User user = new User(); // No-argument constructor
-        user.setFirstName("TrainerFirst");  // Required field
-        user.setLastName("TrainerLast");    // Required field
-        user.setUsername("trainerUser");    // Required field
-        user.setPassword("trainerPass");    // Required field
-        user.setActive(true);               // Assuming this is a required field
+        User user = new User();
+        user.setFirstName("TrainerFirst");
+        user.setLastName("TrainerLast");
+        user.setUsername("trainerUser");
+        user.setPassword("trainerPass");
+        user.setActive(true);
 
         // Create the Trainer and associate the User
         Trainer trainer = new Trainer();
         trainer.setUser(user);
         trainer.setSpecialization(getTrainingType("Yoga")); // Example specialization
 
-        // Save the Trainer
+
         Transaction transaction = session.beginTransaction();
         session.save(user);
         session.save(trainer);
@@ -119,11 +118,11 @@ public class TrainerDAOImplTest {
         assertTrue(result.isPresent(), "Trainer should be found");
         assertEquals(user.getUsername(), result.get().getUser().getUsername());
     }
+
     private TrainingType getTrainingType(String type) {
-        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class)
-                .setParameter("type", type)
-                .uniqueResult();
+        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class).setParameter("type", type).uniqueResult();
     }
+
     @Test
     void findByUsername_ShouldReturnEmptyOptional() {
         Optional<Trainer> result = trainerDAO.findByUsername("nonExistentUser");
@@ -135,7 +134,7 @@ public class TrainerDAOImplTest {
         TrainingType yogaType = getTrainingType("Yoga");
         TrainingType cardioType = getTrainingType("Cardio");
 
-        // Create a trainee
+
         User traineeUser = new User();
         traineeUser.setFirstName("John");
         traineeUser.setLastName("Doe");
@@ -179,7 +178,7 @@ public class TrainerDAOImplTest {
         session.save(trainer2);
         transaction.commit();
 
-        // Assign trainer1 to the trainee
+
         transaction = session.beginTransaction();
         Training training = new Training();
         training.setTrainee(trainee);

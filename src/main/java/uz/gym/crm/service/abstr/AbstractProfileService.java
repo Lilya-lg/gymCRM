@@ -1,8 +1,8 @@
-package uz.gym.crm.service;
+package uz.gym.crm.service.abstr;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uz.gym.crm.dao.BaseDAO;
+import uz.gym.crm.dao.abstr.BaseDAO;
 import uz.gym.crm.dao.TrainingDAOImpl;
 import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.*;
@@ -22,20 +22,20 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> imple
 
 
     public AbstractProfileService(BaseDAO<T> dao, UserDAOImpl userDAO, TrainingDAOImpl trainingDAO) {
-        super(dao);
+        super(dao, userDAO);
         this.userDAO = userDAO;
         this.trainingDAO = trainingDAO;
     }
 
-    public void updateProfile(String username, String password, T updatedEntity) {
-        LOGGER.debug("Updating profile for username: {}", username);
+    public void updateProfile(String username, String password, String usernameToUpdate, T updatedEntity) {
+        LOGGER.debug("Updating profile for username: {}", usernameToUpdate);
 
         if (!authenticate(username, password)) {
             LOGGER.error("Authentication failed for username: {}", username);
             throw new IllegalArgumentException("Invalid username or password.");
         }
 
-        T existingEntity = findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
+        T existingEntity = findByUsername(usernameToUpdate).orElseThrow(() -> new IllegalArgumentException("User not found for username: " + usernameToUpdate));
 
         ProfileMapper.updateFields(existingEntity, updatedEntity);
 
@@ -50,11 +50,6 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> imple
         return dao.findByUsername(username);
     }
 
-    public boolean authenticate(String username, String password) {
-        return userDAO.findByUsernameAndPassword(username, password).isPresent();
-    }
-
-
     public void changePassword(String username, String oldPassword, String newPassword) {
         if (!authenticate(username, oldPassword)) {
             throw new IllegalArgumentException("Invalid username or password.");
@@ -67,10 +62,12 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> imple
     }
 
 
-    public void activate(String username) {
+    public void activate(String username, String usernameToActive, String password) {
         LOGGER.debug("Activating profile with username: {}", username);
-
-        T entity = findByUsername(username).orElseThrow(() -> new IllegalArgumentException("Profile not found for username: " + username));
+        if (!authenticate(username, password)) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
+        T entity = findByUsername(usernameToActive).orElseThrow(() -> new IllegalArgumentException("Profile not found for username: " + username));
 
         User user = getUser(entity);
         user.setActive(true);
@@ -80,12 +77,12 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> imple
     }
 
 
-    public void deactivate(String username, String password) {
+    public void deactivate(String username, String usernameToDeactive, String password) {
         LOGGER.debug("Deactivating profile with username: {}", username);
         if (!authenticate(username, password)) {
             throw new IllegalArgumentException("Invalid username or password.");
         }
-        T entity = findByUsername(username).orElseThrow(() -> new IllegalArgumentException("Profile not found for username: " + username));
+        T entity = findByUsername(usernameToDeactive).orElseThrow(() -> new IllegalArgumentException("Profile not found for username: " + username));
 
         User user = getUser(entity);
         user.setActive(false);
@@ -95,20 +92,23 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> imple
     }
 
 
-    public List<Training> getTrainingListByCriteria(String username, LocalDate fromDate, LocalDate toDate, String trainerName, String trainingType) {
+    public List<Training> getTrainingListByCriteria(String username, LocalDate fromDate, LocalDate toDate, String trainerName, String trainingType, String traineeName, String usernameAuth, String password) {
         LOGGER.debug("Fetching training list with ORM filters for profile with username: {}", username);
+        if (!authenticate(usernameAuth, password)) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
         T profile = findByUsername(username).orElseThrow(() -> new IllegalArgumentException("Profile not found for username: " + username));
 
         if (profile instanceof Trainee trainee) {
-            return trainingDAO.findByCriteria(trainee, trainerName, fromDate, toDate);
+            return trainingDAO.findByCriteria(username, trainingType, fromDate, toDate, trainerName);
         } else if (profile instanceof Trainer trainer) {
-            return trainingDAO.findByCriteriaForTrainer(trainer, trainerName, trainingType, fromDate, toDate);
+            return trainingDAO.findByCriteriaForTrainer(trainerName, fromDate, toDate, traineeName);
         } else {
             throw new IllegalArgumentException("Unsupported profile type for username: " + username);
         }
     }
 
-    protected void prepareUser(User user) {
+    public void prepareUser(User user) {
         if (user.getUsername() == null || user.getUsername().isEmpty()) {
             List<User> existingUsers = userDAO.getAll();
             String uniqueUsername = UsernameGenerator.generateUniqueUsername(user, existingUsers);

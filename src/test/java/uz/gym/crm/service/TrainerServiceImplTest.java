@@ -2,11 +2,7 @@ package uz.gym.crm.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-
 import uz.gym.crm.dao.TrainerDAOImpl;
 import uz.gym.crm.dao.TrainingDAOImpl;
 import uz.gym.crm.dao.UserDAOImpl;
@@ -33,7 +29,7 @@ class TrainerServiceImplTest {
         mockUserDAO = Mockito.mock(UserDAOImpl.class);
         mockTrainerDAO = Mockito.mock(TrainerDAOImpl.class);
         mockTrainingDAO = Mockito.mock(TrainingDAOImpl.class);
-        service = new TrainerServiceImpl(mockUserDAO, mockTrainerDAO,mockTrainingDAO);
+        service = new TrainerServiceImpl(mockUserDAO, mockTrainerDAO, mockTrainingDAO);
     }
 
     @Test
@@ -56,13 +52,17 @@ class TrainerServiceImplTest {
 
     @Test
     void findByUsernameAndPassword_ShouldReturnTrainer_WhenCredentialsAreValid() {
+        User authenticatedUser = new User();
+        authenticatedUser.setUsername("adminUser");
+        authenticatedUser.setPassword("adminPassword");
         Trainer trainer = new Trainer();
         trainer.setId(1L);
 
-        when(mockTrainerDAO.findByUsernameAndPassword("johndoe", "password"))
-                .thenReturn(Optional.of(trainer));
+        when(mockTrainerDAO.findByUsernameAndPassword("johndoe", "password")).thenReturn(Optional.of(trainer));
 
-        Optional<Trainer> result = service.findByUsernameAndPassword("johndoe", "password");
+        when(mockUserDAO.findByUsernameAndPassword("adminUser", "adminPassword"))
+                .thenReturn(Optional.of(authenticatedUser));
+        Optional<Trainer> result = service.findByUsernameAndPassword("adminUser", "adminPassword","johndoe", "password");
 
         assertTrue(result.isPresent());
         assertEquals(1L, result.get().getId());
@@ -71,11 +71,14 @@ class TrainerServiceImplTest {
 
     @Test
     void findByUsernameAndPassword_ShouldThrowException_WhenErrorOccurs() {
-        when(mockTrainerDAO.findByUsernameAndPassword("johndoe", "password"))
-                .thenThrow(new RuntimeException("Database error"));
+        User authenticatedUser = new User();
+        authenticatedUser.setUsername("adminUser");
+        authenticatedUser.setPassword("adminPassword");
+        when(mockTrainerDAO.findByUsernameAndPassword("johndoe", "password")).thenThrow(new RuntimeException("Database error"));
 
-        Exception exception = assertThrows(RuntimeException.class, () ->
-                service.findByUsernameAndPassword("johndoe", "password"));
+        when(mockUserDAO.findByUsernameAndPassword("adminUser", "adminPassword"))
+                .thenReturn(Optional.of(authenticatedUser));
+        Exception exception = assertThrows(RuntimeException.class, () -> service.findByUsernameAndPassword("adminUser", "adminPassword","johndoe", "password"));
 
         assertEquals("Database error", exception.getMessage());
         verify(mockTrainerDAO, times(1)).findByUsernameAndPassword("johndoe", "password");
@@ -97,8 +100,6 @@ class TrainerServiceImplTest {
         assertNotNull(user.getUsername());
         assertNotNull(user.getPassword());
         verify(mockTrainerDAO, times(1)).save(trainer);
-        // Verify logger message (if using a mock logger)
-        // Verify log messages using a library like LogCaptor or appenders in a real-world scenario
     }
 
     @Test
@@ -127,59 +128,40 @@ class TrainerServiceImplTest {
 
     @Test
     void getUnassignedTrainersForTrainee_ShouldReturnListOfTrainers() {
+        User authenticatedUser = new User();
+        authenticatedUser.setUsername("adminUser");
+        authenticatedUser.setPassword("adminPassword");
+
         Trainer trainer1 = new Trainer();
         trainer1.setId(1L);
         Trainer trainer2 = new Trainer();
         trainer2.setId(2L);
+        when(mockUserDAO.findByUsernameAndPassword("adminUser", "adminPassword"))
+                .thenReturn(Optional.of(authenticatedUser));
 
-        when(mockTrainerDAO.getUnassignedTrainersByTraineeUsername("trainee1"))
-                .thenReturn(List.of(trainer1, trainer2));
+        when(mockTrainerDAO.getUnassignedTrainersByTraineeUsername("trainee1")).thenReturn(List.of(trainer1, trainer2));
 
-        List<Trainer> result = service.getUnassignedTrainersForTrainee("trainee1");
+        List<Trainer> result = service.getUnassignedTrainersForTrainee("trainee1","adminUser", "adminPassword");
 
         assertEquals(2, result.size(), "Should return two unassigned trainers");
         assertTrue(result.contains(trainer1) && result.contains(trainer2), "Returned trainers should match expected");
         verify(mockTrainerDAO, times(1)).getUnassignedTrainersByTraineeUsername("trainee1");
+        verify(mockUserDAO, times(1)).findByUsernameAndPassword("adminUser", "adminPassword");
     }
 
     @Test
     void getUnassignedTrainersForTrainee_ShouldReturnEmptyList() {
+        User authenticatedUser = new User();
+        authenticatedUser.setUsername("adminUser");
+        authenticatedUser.setPassword("adminPassword");
+        when(mockUserDAO.findByUsernameAndPassword("adminUser", "adminPassword"))
+                .thenReturn(Optional.of(authenticatedUser));
         when(mockTrainerDAO.getUnassignedTrainersByTraineeUsername("trainee1")).thenReturn(List.of());
 
-        List<Trainer> result = service.getUnassignedTrainersForTrainee("trainee1");
+        List<Trainer> result = service.getUnassignedTrainersForTrainee("trainee1","adminUser", "adminPassword");
 
         assertTrue(result.isEmpty(), "No trainers should be found for unassigned trainers query");
         verify(mockTrainerDAO, times(1)).getUnassignedTrainersByTraineeUsername("trainee1");
     }
-
-    /*
-    @Test
-    void getUnassignedTrainersForTrainee_ShouldReturnListOfTrainers() {
-        Trainer trainer1 = new Trainer();
-        trainer1.setId(1L);
-        Trainer trainer2 = new Trainer();
-        trainer2.setId(2L);
-
-        when(mockTrainerDAO.findUnassignedTrainersForTrainee("trainee1"))
-                .thenReturn(List.of(trainer1, trainer2));
-
-        List<Trainer> result = service.getUnassignedTrainersForTrainee("trainee1");
-
-        assertEquals(2, result.size());
-        verify(mockTrainerDAO, times(1)).findUnassignedTrainersForTrainee("trainee1");
-    }
-
-    @Test
-    void getUnassignedTrainersForTrainee_ShouldReturnEmptyList_WhenNoTrainersFound() {
-        when(mockTrainerDAO.findUnassignedTrainersForTrainee("trainee1"))
-                .thenReturn(List.of());
-
-        List<Trainer> result = service.getUnassignedTrainersForTrainee("trainee1");
-
-        assertTrue(result.isEmpty());
-        verify(mockTrainerDAO, times(1)).findUnassignedTrainersForTrainee("trainee1");
-    }
-
-     */
 }
 

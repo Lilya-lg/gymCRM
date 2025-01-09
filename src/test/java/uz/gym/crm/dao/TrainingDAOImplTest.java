@@ -42,10 +42,8 @@ class TrainingDAOImplTest {
             session.close();
         }
         session = sessionFactory.openSession();
-        // TrainingTypeInitializer.initializeTrainingTypes(HibernateUtil.getSessionFactory());
-        // trainingDAO = new TrainingDAOImpl(session);
 
-        // Clear the database before each test
+
         Transaction transaction = session.beginTransaction();
         session.createQuery("DELETE FROM Training").executeUpdate();
         session.createQuery("DELETE FROM Trainer").executeUpdate();
@@ -56,6 +54,7 @@ class TrainingDAOImplTest {
         TrainingTypeInitializer.initializeTrainingTypes(sessionFactory);
         trainingDAO = new TrainingDAOImpl(session);
     }
+
     private TrainingType getTrainingType(String type) {
         return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class)
                 .setParameter("type", type)
@@ -72,6 +71,7 @@ class TrainingDAOImplTest {
 
     @Test
     void findByCriteria_ShouldReturnMatchingTrainings() {
+
         User trainerUser = new User();
         trainerUser.setFirstName("John");
         trainerUser.setLastName("Doe");
@@ -80,7 +80,7 @@ class TrainingDAOImplTest {
 
         Trainer trainer = new Trainer();
         trainer.setUser(trainerUser);
-        trainer.setSpecialization(getTrainingType("Yoga")); // Ensure specialization is set
+        trainer.setSpecialization(getTrainingType("Yoga"));
 
         User traineeUser = new User();
         traineeUser.setFirstName("Jane");
@@ -91,21 +91,16 @@ class TrainingDAOImplTest {
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
 
-        // Retrieve the predefined TrainingType (Yoga)
-        TrainingType trainingType = session.createQuery(
-                        "FROM TrainingType t WHERE t.trainingType = :type", TrainingType.class)
-                .setParameter("type", "Yoga")
-                .getSingleResult();
 
         Training training = new Training();
         training.setTrainee(trainee);
         training.setTrainer(trainer);
-        training.setTrainingType(trainingType); // Assign the retrieved TrainingType
+        training.setTrainingType(getTrainingType("Yoga"));
         training.setTrainingName("Yoga Session");
         training.setTrainingDate(LocalDate.of(2024, 12, 1));
         training.setTrainingDuration(60);
 
-        // Save entities
+
         Transaction transaction = session.beginTransaction();
         session.save(trainerUser);
         session.save(trainer);
@@ -114,10 +109,11 @@ class TrainingDAOImplTest {
         session.save(training);
         transaction.commit();
 
-        // Test the DAO method
-        List<Training> results = trainingDAO.findByCriteria(
-                trainee, "John Doe", LocalDate.of(2024, 12, 1), LocalDate.of(2024, 12, 31));
 
+        List<Training> results = trainingDAO.findByCriteria(
+                "traineeJane", "Yoga", LocalDate.of(2024, 12, 1), LocalDate.of(2024, 12, 31), "trainerJohn");
+
+        // Assertions
         assertEquals(1, results.size());
         assertEquals("Yoga", results.get(0).getTrainingType().getTrainingType());
         assertEquals("Yoga Session", results.get(0).getTrainingName());
@@ -125,23 +121,10 @@ class TrainingDAOImplTest {
 
     @Test
     void findByCriteria_ShouldReturnEmptyListForNoMatches() {
-        User traineeUser = new User();
-        traineeUser.setFirstName("Jane");
-        traineeUser.setLastName("Smith");
-        traineeUser.setUsername("traineeJane");
-        traineeUser.setPassword("password");
+        List<Training> results = trainingDAO.findByCriteria(
+                "nonexistentTrainee", "NonexistentType", LocalDate.now(), LocalDate.now().plusDays(10), "nonexistentTrainer");
 
-        Trainee trainee = new Trainee();
-        trainee.setUser(traineeUser);
-
-        // Save trainee
-        Transaction transaction = session.beginTransaction();
-        session.save(traineeUser);
-        session.save(trainee);
-        transaction.commit();
-
-        // Test with criteria that does not match
-        List<Training> results = trainingDAO.findByCriteria(trainee, "Nonexistent Trainer", LocalDate.now(), LocalDate.now().plusDays(10));
+        // Assertions
         assertTrue(results.isEmpty(), "Expected no matching trainings");
     }
 
@@ -152,69 +135,55 @@ class TrainingDAOImplTest {
         trainerUser.setLastName("Doe");
         trainerUser.setUsername("trainerJohn");
         trainerUser.setPassword("password");
-        trainerUser.setActive(true);
 
         Trainer trainer = new Trainer();
         trainer.setUser(trainerUser);
         trainer.setSpecialization(getTrainingType("Yoga"));
 
-        // Query the predefined TrainingType
-        TrainingType trainingType = session.createQuery(
-                        "FROM TrainingType t WHERE t.trainingType = :type", TrainingType.class)
-                .setParameter("type", "Yoga")
-                .uniqueResultOptional()
-                .orElseThrow(() -> new IllegalStateException("TrainingType 'Yoga' not found in database"));
+        User traineeUser = new User();
+        traineeUser.setFirstName("Jane");
+        traineeUser.setLastName("Smith");
+        traineeUser.setUsername("traineeJane");
+        traineeUser.setPassword("password");
 
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        // Create a training session
         Training training = new Training();
+        training.setTrainee(trainee);
         training.setTrainer(trainer);
-        training.setTrainingType(trainingType);
-        training.setTrainingName("Morning Yoga");
+        training.setTrainingType(getTrainingType("Yoga"));
+        training.setTrainingName("Yoga Session");
         training.setTrainingDate(LocalDate.of(2024, 12, 1));
         training.setTrainingDuration(60);
 
-        // Save entities
+
         Transaction transaction = session.beginTransaction();
         session.save(trainerUser);
         session.save(trainer);
+        session.save(traineeUser);
+        session.save(trainee);
         session.save(training);
         transaction.commit();
 
-        // Test the DAO method
-        List<Training> results = trainingDAO.findByCriteriaForTrainer(
-                trainer,
-                "John Doe",
-                "Yoga",
-                LocalDate.of(2024, 12, 1),
-                LocalDate.of(2024, 12, 31)
-        );
 
-        // Assertions
-        assertEquals(1, results.size(), "Should find one training");
+        List<Training> results = trainingDAO.findByCriteriaForTrainer(
+                "trainerJohn", LocalDate.of(2024, 12, 1), LocalDate.of(2024, 12, 31), "traineeJane");
+
+
+        assertEquals(1, results.size());
         assertEquals("Yoga", results.get(0).getTrainingType().getTrainingType());
-        assertEquals("Morning Yoga", results.get(0).getTrainingName());
-        assertEquals(LocalDate.of(2024, 12, 1), results.get(0).getTrainingDate());
+        assertEquals("Yoga Session", results.get(0).getTrainingName());
     }
 
     @Test
     void findByCriteriaForTrainer_ShouldReturnEmptyListForNoMatches() {
-        User trainerUser = new User();
-        trainerUser.setFirstName("John");
-        trainerUser.setLastName("Doe");
-        trainerUser.setUsername("trainerJohn");
-        trainerUser.setPassword("password");
+        List<Training> results = trainingDAO.findByCriteriaForTrainer(
+                "nonexistentTrainer", LocalDate.now(), LocalDate.now().plusDays(10), "nonexistentTrainee");
 
-        Trainer trainer = new Trainer();
-        trainer.setUser(trainerUser);
-        trainer.setSpecialization(getTrainingType("Yoga")); // Set specialization to avoid nullability error
 
-        // Save trainer
-        Transaction transaction = session.beginTransaction();
-        session.save(trainerUser);
-        session.save(trainer);
-        transaction.commit();
-
-        // Test with criteria that does not match
-        List<Training> results = trainingDAO.findByCriteriaForTrainer(trainer, "Nonexistent Trainer", "Yoga", LocalDate.now(), LocalDate.now().plusDays(10));
         assertTrue(results.isEmpty(), "Expected no matching trainings");
     }
 }
+

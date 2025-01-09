@@ -1,5 +1,4 @@
-package uz.gym.crm.dao;
-
+package uz.gym.crm.dao.abstr;
 
 import uz.gym.crm.domain.Trainer;
 

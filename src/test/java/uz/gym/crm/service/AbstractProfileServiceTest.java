@@ -3,12 +3,14 @@ package uz.gym.crm.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import uz.gym.crm.dao.BaseDAO;
+import uz.gym.crm.dao.abstr.BaseDAO;
 import uz.gym.crm.dao.TrainingDAOImpl;
 import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.Trainee;
+import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.Training;
 import uz.gym.crm.domain.User;
+import uz.gym.crm.service.abstr.AbstractProfileService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,18 +22,19 @@ import static org.mockito.Mockito.*;
 class AbstractProfileServiceTest {
 
     private BaseDAO<Trainee> mockDao;
+    private BaseDAO<Trainer> mockDao1;
     private UserDAOImpl mockUserDAO;
     private TrainingDAOImpl mockTrainingDAO;
     private AbstractProfileService<Trainee> service;
+
 
     @BeforeEach
     void setUp() {
         mockDao = Mockito.mock(BaseDAO.class);
         mockUserDAO = Mockito.mock(UserDAOImpl.class);
         mockTrainingDAO = Mockito.mock(TrainingDAOImpl.class);
-
-        // Anonymous subclass for testing
-        service = new AbstractProfileService<>(mockDao, mockUserDAO,mockTrainingDAO) {
+        mockDao1 = Mockito.mock(BaseDAO.class);
+        service = new AbstractProfileService<>(mockDao, mockUserDAO, mockTrainingDAO) {
             @Override
             protected User getUser(Trainee entity) {
                 return entity.getUser();
@@ -55,6 +58,10 @@ class AbstractProfileServiceTest {
 
     @Test
     void updateProfile_ShouldUpdateEntity_WhenAuthenticationSucceeds() {
+        User authenticatedUser = new User();
+        authenticatedUser.setUsername("adminUser");
+        authenticatedUser.setPassword("adminPassword");
+
         User user = new User();
         user.setUsername("johndoe");
         user.setPassword("password");
@@ -68,12 +75,13 @@ class AbstractProfileServiceTest {
         User updatedUser = new User();
         updatedUser.setUsername("johndoe");
         updatedTrainee.setUser(updatedUser);
-
+        when(mockUserDAO.findByUsernameAndPassword("adminUser", "adminPassword"))
+                .thenReturn(Optional.of(authenticatedUser));
         when(mockUserDAO.findByUsernameAndPassword("johndoe", "password")).thenReturn(Optional.of(user));
         when(mockDao.findByUsername("johndoe")).thenReturn(Optional.of(existingTrainee));
 
-        service.updateProfile("johndoe", "password", updatedTrainee);
-
+        service.updateProfile("adminUser", "adminPassword","johndoe", updatedTrainee);
+        verify(mockUserDAO, times(1)).findByUsernameAndPassword("adminUser", "adminPassword");
         verify(mockDao, times(1)).save(existingTrainee);
         assertEquals("johndoe", existingTrainee.getUser().getUsername());
     }
@@ -104,23 +112,40 @@ class AbstractProfileServiceTest {
 
     @Test
     void activate_ShouldSetUserActiveToTrue() {
-        User user = new User();
-        user.setUsername("johndoe");
-        user.setActive(false);
+        User authenticatedUser = new User();
+        authenticatedUser.setUsername("adminUser");
+        authenticatedUser.setPassword("adminPassword");
 
-        Trainee trainee = new Trainee();
-        trainee.setUser(user);
+        User userToActivate = new User();
+        userToActivate.setUsername("johndoe");
+        userToActivate.setActive(false);
 
-        when(mockDao.findByUsername("johndoe")).thenReturn(Optional.of(trainee));
+        Trainee traineeToActivate = new Trainee();
+        traineeToActivate.setUser(userToActivate);
 
-        service.activate("johndoe");
+        when(mockUserDAO.findByUsernameAndPassword("adminUser", "adminPassword"))
+                .thenReturn(Optional.of(authenticatedUser));
 
-        assertTrue(user.isActive());
-        verify(mockDao, times(1)).save(trainee);
+
+        when(mockDao.findByUsername("johndoe")).thenReturn(Optional.of(traineeToActivate));
+
+
+        service.activate("adminUser", "johndoe", "adminPassword");
+
+
+        verify(mockUserDAO, times(1)).findByUsernameAndPassword("adminUser", "adminPassword");
+        verify(mockDao, times(1)).findByUsername("johndoe");
+        verify(mockDao, times(1)).save(traineeToActivate);
+
+        assertTrue(userToActivate.isActive(), "The user should be activated.");
     }
 
     @Test
     void deactivate_ShouldSetUserActiveToFalse_WhenAuthenticationSucceeds() {
+        User authenticatedUser = new User();
+        authenticatedUser.setUsername("adminUser");
+        authenticatedUser.setPassword("adminPassword");
+
         User user = new User();
         user.setUsername("johndoe");
         user.setPassword("password");
@@ -129,10 +154,17 @@ class AbstractProfileServiceTest {
         Trainee trainee = new Trainee();
         trainee.setUser(user);
 
-        when(mockUserDAO.findByUsernameAndPassword("johndoe", "password")).thenReturn(Optional.of(user));
+        when(mockUserDAO.findByUsernameAndPassword("adminUser", "adminPassword"))
+                .thenReturn(Optional.of(authenticatedUser));
+
+
         when(mockDao.findByUsername("johndoe")).thenReturn(Optional.of(trainee));
 
-        service.deactivate("johndoe", "password");
+
+        service.deactivate("adminUser", "johndoe", "adminPassword");
+        verify(mockUserDAO, times(1)).findByUsernameAndPassword("adminUser", "adminPassword");
+        verify(mockDao, times(1)).findByUsername("johndoe");
+        verify(mockDao, times(1)).save(trainee);
 
         assertFalse(user.isActive());
         verify(mockDao, times(1)).save(trainee);
@@ -140,30 +172,32 @@ class AbstractProfileServiceTest {
 
     @Test
     void getTrainingListByCriteria_ShouldReturnTrainingList_ForTrainee() {
-        // Mocked User
-        User user = new User();
-        user.setUsername("johndoe");
+        User authenticatedUser = new User();
+        authenticatedUser.setUsername("adminUser");
+        authenticatedUser.setPassword("adminPassword");
 
-        // Mocked Trainee
+        User user = new User();
+        user.setUsername("traineeJohn");
+
         Trainee trainee = new Trainee();
         trainee.setUser(user);
 
-        // Mocked Trainings
         Training training1 = new Training();
         Training training2 = new Training();
 
-        // Mock DAO behavior
-        when(mockDao.findByUsername("johndoe")).thenReturn(Optional.of(trainee));
-        when(mockTrainingDAO.findByCriteria(eq(trainee), any(), any(), any())).thenReturn(List.of(training1, training2));
+        when(mockUserDAO.findByUsernameAndPassword("adminUser", "adminPassword"))
+                .thenReturn(Optional.of(authenticatedUser));
+        when(mockDao.findByUsername("traineeJohn")).thenReturn(Optional.of(trainee));
+        when(mockTrainingDAO.findByCriteria("traineeJohn", "Yoga", LocalDate.now(), LocalDate.now().plusDays(1), "trainerJohn")).thenReturn(List.of(training1, training2));
 
-        // Call the method under test
-        List<Training> trainings = service.getTrainingListByCriteria("johndoe", LocalDate.now(), LocalDate.now().plusDays(1), null, null);
+        List<Training> trainings = service.getTrainingListByCriteria("traineeJohn", LocalDate.now(), LocalDate.now().plusDays(1), "trainerJohn", "Yoga", null,"adminUser","adminPassword");
 
-        // Verify results
         assertEquals(2, trainings.size());
-        verify(mockDao, times(1)).findByUsername("johndoe");
-        verify(mockTrainingDAO, times(1)).findByCriteria(eq(trainee), any(), any(), any());
+        verify(mockUserDAO, times(1)).findByUsernameAndPassword("adminUser", "adminPassword");
+        verify(mockDao, times(1)).findByUsername("traineeJohn");
+        verify(mockTrainingDAO, times(1)).findByCriteria("traineeJohn", "Yoga", LocalDate.now(), LocalDate.now().plusDays(1), "trainerJohn");
     }
+
 }
 
 

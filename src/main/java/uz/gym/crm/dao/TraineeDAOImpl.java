@@ -2,6 +2,7 @@ package uz.gym.crm.dao;
 
 import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
+import uz.gym.crm.dao.abstr.TraineeDAO;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.Training;

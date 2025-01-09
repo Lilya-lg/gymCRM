@@ -43,7 +43,7 @@ class UserDAOImplTest {
         session = sessionFactory.openSession();
         userDAO = new UserDAOImpl(session);
 
-        // Clear the database before each test
+
         Transaction transaction = session.beginTransaction();
         session.createQuery("DELETE FROM User").executeUpdate();
         transaction.commit();
@@ -60,18 +60,18 @@ class UserDAOImplTest {
     @Test
     void findByUsername_ShouldReturnUser() {
         User user = new User();
-        user.setFirstName("Test");       // Required field
-        user.setLastName("User");        // Required field
-        user.setUsername("testUser");    // Required field
-        user.setPassword("testPass");    // Required field
-        user.setActive(true);            // Assuming this is a required field
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setUsername("testUser");
+        user.setPassword("testPass");
+        user.setActive(true);
 
-        // Save the user
+
         Transaction transaction = session.beginTransaction();
         session.save(user);
         transaction.commit();
 
-        // Test the DAO method
+
         Optional<User> result = userDAO.findByUsername("testUser");
         assertTrue(result.isPresent(), "User should be found");
         assertEquals("testUser", result.get().getUsername());
@@ -79,7 +79,7 @@ class UserDAOImplTest {
 
     @Test
     void findByUsername_ShouldReturnEmptyOptional() {
-        // Test the DAO method with a non-existent username
+
         Optional<User> result = userDAO.findByUsername("nonExistentUser");
         assertTrue(result.isEmpty(), "No User should be found for invalid username");
     }
@@ -87,18 +87,17 @@ class UserDAOImplTest {
     @Test
     void findByUsernameAndPassword_ShouldReturnUser() {
         User user = new User();
-        user.setFirstName("Test");       // Required field
-        user.setLastName("User");        // Required field
-        user.setUsername("testUser");   // Required field
-        user.setPassword("testPass");   // Required field
-        user.setActive(true);           // Assuming this is required
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setUsername("testUser");
+        user.setPassword("testPass");
+        user.setActive(true);
 
-        // Save the user
         Transaction transaction = session.beginTransaction();
         session.save(user);
         transaction.commit();
 
-        // Test the DAO method
+
         Optional<User> result = userDAO.findByUsernameAndPassword("testUser", "testPass");
         assertTrue(result.isPresent(), "User should be found");
         assertEquals("testUser", result.get().getUsername());
@@ -106,7 +105,7 @@ class UserDAOImplTest {
 
     @Test
     void findByUsernameAndPassword_ShouldReturnEmptyOptional() {
-        // Test the DAO method with invalid credentials
+
         Optional<User> result = userDAO.findByUsernameAndPassword("nonExistentUser", "wrongPass");
         assertTrue(result.isEmpty(), "No User should be found for invalid credentials");
     }

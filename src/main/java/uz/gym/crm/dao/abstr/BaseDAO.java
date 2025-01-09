@@ -1,4 +1,4 @@
-package uz.gym.crm.dao;
+package uz.gym.crm.dao.abstr;
 
 import java.util.List;
 import java.util.Optional;

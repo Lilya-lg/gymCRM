@@ -1,4 +1,4 @@
-package uz.gym.crm.service;
+package uz.gym.crm.service.abstr;
 
 import java.util.List;
 
@@ -12,5 +12,7 @@ public interface BaseService<T> {
     void delete(Long id);
 
     List<T> getAll();
+
+
 }
 

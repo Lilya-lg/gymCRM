@@ -8,6 +8,8 @@ import uz.gym.crm.domain.Trainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uz.gym.crm.domain.User;
+import uz.gym.crm.service.abstr.AbstractProfileService;
+import uz.gym.crm.service.abstr.TrainerService;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,15 +18,11 @@ import java.util.Optional;
 @Service
 public class TrainerServiceImpl extends AbstractProfileService<Trainer> implements TrainerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrainerServiceImpl.class);
-    private final UserDAOImpl userDAO;
     private final TrainerDAOImpl trainerDAO;
-    private final TrainingDAOImpl trainingDAO;
 
     public TrainerServiceImpl(UserDAOImpl userDAO, TrainerDAOImpl trainerDAO, TrainingDAOImpl trainingDAO) {
-        super(trainerDAO, userDAO,trainingDAO);
-        this.userDAO = userDAO;
+        super(trainerDAO, userDAO, trainingDAO);
         this.trainerDAO = trainerDAO;
-        this.trainingDAO = trainingDAO;
     }
 
 
@@ -36,7 +34,10 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
     }
 
 
-    public Optional<Trainer> findByUsernameAndPassword(String username, String password) {
+    public Optional<Trainer> findByUsernameAndPassword(String usernameAuth, String passwordAuth,String username, String password) {
+        if (!super.authenticate(usernameAuth, passwordAuth)) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
         LOGGER.debug("Attempting to find trainer with username: {} and password: {}", username, password);
         try {
             return trainerDAO.findByUsernameAndPassword(username, password);
@@ -47,15 +48,20 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
     }
 
 
-    public Optional<Trainer> findByUsername(String username) {
-        LOGGER.debug("Searching for profile with username: {}", username);
-        return dao.findByUsername(username);
+    public Optional<Trainer> findByUsername(String username,String password,String usernameToSelect) {
+        if (!super.authenticate(username, password)) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
+        LOGGER.debug("Searching for profile with username: {}", usernameToSelect);
+        return dao.findByUsername(usernameToSelect);
     }
 
 
-    public List<Trainer> getUnassignedTrainersForTrainee(String traineeUsername) {
+    public List<Trainer> getUnassignedTrainersForTrainee(String traineeUsername, String username, String password) {
         LOGGER.debug("Fetching unassigned trainers for trainee with username: {}", traineeUsername);
-
+        if (!super.authenticate(username, password)) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
         List<Trainer> unassignedTrainers = trainerDAO.getUnassignedTrainersByTraineeUsername(traineeUsername);
 
         LOGGER.info("Found {} unassigned trainers for trainee with username: {}", unassignedTrainers.size(), traineeUsername);

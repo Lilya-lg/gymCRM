@@ -2,6 +2,7 @@ package uz.gym.crm.dao;
 
 import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
+import uz.gym.crm.dao.abstr.UserDAO;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.util.DynamicQueryBuilder;
 
@@ -28,9 +29,7 @@ public class UserDAOImpl extends BaseDAOImpl<User> implements UserDAO {
 
     public Optional<User> findByUsernameAndPassword(String username, String password) {
         DynamicQueryBuilder<User> queryBuilder = new DynamicQueryBuilder<>(FIND_BY_USERNAME_AND_PASSWORD);
-        queryBuilder
-                .addCondition("username = :username", "username", username)
-                .addCondition("password = :password", "password", password);
+        queryBuilder.addCondition("username = :username", "username", username).addCondition("password = :password", "password", password);
 
         return Optional.ofNullable(queryBuilder.buildQuery(session, User.class).uniqueResult());
 

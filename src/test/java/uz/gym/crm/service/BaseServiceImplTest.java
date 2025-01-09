@@ -3,10 +3,11 @@ package uz.gym.crm.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import uz.gym.crm.dao.BaseDAO;
+import uz.gym.crm.dao.UserDAOImpl;
+import uz.gym.crm.dao.abstr.BaseDAO;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.User;
-import uz.gym.crm.service.BaseServiceImpl;
+import uz.gym.crm.service.abstr.BaseServiceImpl;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,11 +19,13 @@ class BaseServiceImplTest {
 
     private BaseDAO<Trainee> mockDao;
     private BaseServiceImpl<Trainee> service;
+    private UserDAOImpl mockUserDao;
 
     @BeforeEach
     void setUp() {
         mockDao = Mockito.mock(BaseDAO.class);
-        service = new BaseServiceImpl<>(mockDao) {
+        mockUserDao = Mockito.mock(UserDAOImpl.class);
+        service = new BaseServiceImpl<>(mockDao,mockUserDao) {
         };
     }
 
@@ -152,7 +155,6 @@ class BaseServiceImplTest {
     }
 
 
-
     @Test
     void delete_ShouldLogError_WhenDeleteFails() {
         doThrow(new RuntimeException("Database error")).when(mockDao).delete(1L);
@@ -171,7 +173,6 @@ class BaseServiceImplTest {
         assertTrue(result.isEmpty(), "The result should be an empty list");
         verify(mockDao, times(1)).getAll();
     }
-
 
 
     @Test

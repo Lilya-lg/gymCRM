@@ -3,6 +3,7 @@ package uz.gym.crm.dao;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
+import uz.gym.crm.dao.abstr.BaseDAO;
 import uz.gym.crm.util.DynamicQueryBuilder;
 
 import javax.persistence.Entity;

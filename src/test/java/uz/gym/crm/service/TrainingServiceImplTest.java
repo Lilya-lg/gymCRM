@@ -2,19 +2,17 @@ package uz.gym.crm.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+
 import uz.gym.crm.dao.TraineeDAOImpl;
 import uz.gym.crm.dao.TrainerDAOImpl;
 import uz.gym.crm.dao.TrainingDAOImpl;
-import uz.gym.crm.dao.TrainingTypeDAOImpl;
+
+import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.*;
 
-
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +24,7 @@ class TrainingServiceImplTest {
     private TraineeDAOImpl mockTraineeDAO;
     private TrainerDAOImpl mockTrainerDAO;
     private TrainingDAOImpl mockTrainingDAO;
+    private UserDAOImpl mockUserDAO;
     private TrainingServiceImpl service;
 
     @BeforeEach
@@ -33,77 +32,16 @@ class TrainingServiceImplTest {
         mockTraineeDAO = Mockito.mock(TraineeDAOImpl.class);
         mockTrainerDAO = Mockito.mock(TrainerDAOImpl.class);
         mockTrainingDAO = Mockito.mock(TrainingDAOImpl.class);
-
-        service = new TrainingServiceImpl(mockTraineeDAO, mockTrainerDAO, null, mockTrainingDAO);
+        mockUserDAO = Mockito.mock(UserDAOImpl.class);
+        service = new TrainingServiceImpl(null, mockTrainingDAO,mockUserDAO);
     }
 
-    /*
-        @Test
-        void addTraining_ShouldAddTraining_WhenAllDependenciesExistAndTrainingTypeIsValid() {
-            // Prepare mocks
-            Trainee trainee = new Trainee();
-            trainee.setId(1L);
-
-            Trainer trainer = new Trainer();
-            trainer.setId(2L);
-
-            TrainingType trainingType = new TrainingType();
-            trainingType.setId(1L); // Valid TrainingType ID (Yoga)
-
-            Training training = new Training();
-            training.setTrainee(trainee);
-            training.setTrainer(trainer);
-            training.setTrainingType(trainingType);
-
-            when(mockTraineeDAO.read(1L)).thenReturn(Optional.of(trainee));
-            when(mockTrainerDAO.read(2L)).thenReturn(Optional.of(trainer));
-            doNothing().when(mockTrainingDAO).save(training);
-
-            // Call the method under test
-            service.addTraining(training);
-
-            // Verify interactions
-            verify(mockTraineeDAO, times(1)).read(1L);
-            verify(mockTrainerDAO, times(1)).read(2L);
-            verify(mockTrainingDAO, times(1)).save(training);
-
-            assertEquals("Yoga", training.getTrainingType().getName());
-        }
-
-
-
-        @Test
-        void addTraining_ShouldThrowException_WhenTrainingTypeIsInvalid() {
-            // Prepare mocks
-            Trainee trainee = new Trainee();
-            trainee.setId(1L);
-
-            Trainer trainer = new Trainer();
-            trainer.setId(2L);
-
-            TrainingType trainingType = new TrainingType();
-            trainingType.setId(99L); // Invalid TrainingType ID
-
-            Training training = new Training();
-            training.setTrainee(trainee);
-            training.setTrainer(trainer);
-            training.setTrainingType(trainingType);
-
-            when(mockTraineeDAO.read(1L)).thenReturn(Optional.of(trainee));
-            when(mockTrainerDAO.read(2L)).thenReturn(Optional.of(trainer));
-
-            // Call the method under test and expect exception
-            Exception exception = assertThrows(IllegalArgumentException.class, () -> service.addTraining(training));
-
-            assertEquals("Invalid TrainingType ID: 99", exception.getMessage());
-            verify(mockTraineeDAO, times(1)).read(1L);
-            verify(mockTrainerDAO, times(1)).read(2L);
-            verifyNoInteractions(mockTrainingDAO);
-        }
-     */
     @Test
     void addTraining_ShouldAddTraining_WhenTrainingTypeIsNull() {
-        // Prepare mocks
+        User authenticatedUser = new User();
+        authenticatedUser.setUsername("adminUser");
+        authenticatedUser.setPassword("adminPassword");
+
         Trainee trainee = new Trainee();
         trainee.setId(1L);
 
@@ -117,16 +55,117 @@ class TrainingServiceImplTest {
 
         when(mockTraineeDAO.read(1L)).thenReturn(Optional.of(trainee));
         when(mockTrainerDAO.read(2L)).thenReturn(Optional.of(trainer));
+        when(mockUserDAO.findByUsernameAndPassword("adminUser", "adminPassword"))
+                .thenReturn(Optional.of(authenticatedUser));
         doNothing().when(mockTrainingDAO).save(training);
 
-        // Call the method under test
-        service.addTraining(training);
 
-        // Verify interactions
-        verify(mockTraineeDAO, times(1)).read(1L);
-        verify(mockTrainerDAO, times(1)).read(2L);
+        service.addTraining(training,"adminUser","adminPassword");
+
+
         verify(mockTrainingDAO, times(1)).save(training);
 
         assertNull(training.getTrainingType());
+    }
+    @Test
+    void findByCriteriaForTrainer_ShouldReturnTrainingList_WhenAuthenticated() {
+
+        String username = "adminUser";
+        String password = "adminPassword";
+        String trainerUsername = "trainerJohn";
+        String traineeName = "traineeJane";
+        LocalDate fromDate = LocalDate.now();
+        LocalDate toDate = LocalDate.now().plusDays(10);
+
+        User authenticatedUser = new User();
+        authenticatedUser.setUsername(username);
+        authenticatedUser.setPassword(password);
+
+        Training training1 = new Training();
+        Training training2 = new Training();
+        List<Training> expectedTrainings = List.of(training1, training2);
+
+        when(mockUserDAO.findByUsernameAndPassword(username, password)).thenReturn(Optional.of(authenticatedUser));
+        when(mockTrainingDAO.findByCriteriaForTrainer(trainerUsername, fromDate, toDate, traineeName))
+                .thenReturn(expectedTrainings);
+
+
+        List<Training> actualTrainings = service.findByCriteriaForTrainer(username, password, trainerUsername, fromDate, toDate, traineeName);
+
+
+        assertEquals(expectedTrainings.size(), actualTrainings.size());
+        verify(mockUserDAO, times(1)).findByUsernameAndPassword(username, password);
+        verify(mockTrainingDAO, times(1)).findByCriteriaForTrainer(trainerUsername, fromDate, toDate, traineeName);
+    }
+
+    @Test
+    void findByCriteria_ShouldReturnTrainingList_WhenAuthenticated() {
+
+        String username = "adminUser";
+        String password = "adminPassword";
+        String traineeUsername = "traineeJane";
+        String trainingType = "Yoga";
+        String trainerName = "trainerJohn";
+        LocalDate fromDate = LocalDate.now();
+        LocalDate toDate = LocalDate.now().plusDays(10);
+
+        User authenticatedUser = new User();
+        authenticatedUser.setUsername(username);
+        authenticatedUser.setPassword(password);
+
+        Training training1 = new Training();
+        Training training2 = new Training();
+        List<Training> expectedTrainings = List.of(training1, training2);
+
+        when(mockUserDAO.findByUsernameAndPassword(username, password)).thenReturn(Optional.of(authenticatedUser));
+        when(mockTrainingDAO.findByCriteria(traineeUsername, trainingType, fromDate, toDate, trainerName))
+                .thenReturn(expectedTrainings);
+
+
+        List<Training> actualTrainings = service.findByCriteria(username, password, traineeUsername, trainingType, fromDate, toDate, trainerName);
+
+        assertEquals(expectedTrainings.size(), actualTrainings.size());
+        verify(mockUserDAO, times(1)).findByUsernameAndPassword(username, password);
+        verify(mockTrainingDAO, times(1)).findByCriteria(traineeUsername, trainingType, fromDate, toDate, trainerName);
+    }
+
+    @Test
+    void findByCriteriaForTrainer_ShouldThrowException_WhenNotAuthenticated() {
+
+        String username = "adminUser";
+        String password = "wrongPassword";
+        String trainerUsername = "trainerJohn";
+        String traineeName = "traineeJane";
+        LocalDate fromDate = LocalDate.now();
+        LocalDate toDate = LocalDate.now().plusDays(10);
+
+        when(mockUserDAO.findByUsernameAndPassword(username, password)).thenReturn(Optional.empty());
+
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                service.findByCriteriaForTrainer(username, password, trainerUsername, fromDate, toDate, traineeName));
+        assertEquals("Invalid username or password.", exception.getMessage());
+        verify(mockUserDAO, times(1)).findByUsernameAndPassword(username, password);
+        verify(mockTrainingDAO, never()).findByCriteriaForTrainer(anyString(), any(), any(), anyString());
+    }
+
+    @Test
+    void findByCriteria_ShouldThrowException_WhenNotAuthenticated() {
+
+        String username = "adminUser";
+        String password = "wrongPassword";
+        String traineeUsername = "traineeJane";
+        String trainingType = "Yoga";
+        String trainerName = "trainerJohn";
+        LocalDate fromDate = LocalDate.now();
+        LocalDate toDate = LocalDate.now().plusDays(10);
+
+        when(mockUserDAO.findByUsernameAndPassword(username, password)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                service.findByCriteria(username, password, traineeUsername, trainingType, fromDate, toDate, trainerName));
+        assertEquals("Invalid username or password.", exception.getMessage());
+        verify(mockUserDAO, times(1)).findByUsernameAndPassword(username, password);
+        verify(mockTrainingDAO, never()).findByCriteria(anyString(), anyString(), any(), any(), anyString());
     }
 }
