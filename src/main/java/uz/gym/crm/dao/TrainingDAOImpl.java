@@ -14,8 +14,8 @@ import java.util.List;
 @Repository
 public class TrainingDAOImpl extends BaseDAOImpl<Training> implements TrainingDAO {
     private final Session session;
-    private static final String BASE_QUERY_FOR_TRAINEE = "SELECT t FROM Training t JOIN t.trainee.user traineeUser JOIN t.trainer.user trainerUser WHERE traineeUser.username = :traineeUsername";
-    private static final String BASE_QUERY_FOR_TRAINER = "SELECT t FROM Training t JOIN t.trainer.user trainerUser JOIN t.trainee.user traineeUser WHERE trainerUser.username = :trainerUsername";
+    private static final String BASE_QUERY_FOR_TRAINEE = "SELECT t FROM Training t JOIN t.trainee trainee JOIN t.trainer trainer JOIN trainee.user traineeUser ON trainee.user.id = traineeUser.id JOIN trainer.user trainerUser ON trainer.user.id = trainerUser.id WHERE traineeUser.username = :traineeUsername";
+    private static final String BASE_QUERY_FOR_TRAINER = "SELECT t FROM Training t JOIN t.trainer trainer JOIN t.trainee trainee JOIN trainer.user trainerUser ON trainer.user.id = trainerUser.id  JOIN trainee.user traineeUser ON trainee.user.id = traineeUser.id WHERE trainerUser.username = :trainerUsername";
     private static final String CONDITION_TRAINING_TYPE = "t.trainingType.trainingType = :trainingType";
     private static final String CONDITION_FROM_DATE = "t.trainingDate >= :fromDate";
     private static final String CONDITION_TO_DATE = "t.trainingDate <= :toDate";

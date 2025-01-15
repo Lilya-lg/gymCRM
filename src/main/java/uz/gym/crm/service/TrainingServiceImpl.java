@@ -39,7 +39,7 @@ public class TrainingServiceImpl extends BaseServiceImpl<Training> implements Tr
             TrainingType trainingType = trainingTypeDao.read(training.getTrainingType().getId()).orElseThrow(() -> new IllegalArgumentException("TrainingType not found with ID: " + training.getTrainingType().getId()));
             training.setTrainingType(trainingType);
         }
-        dao.save(training);
+        getDao().save(training);
         LOGGER.info("Training added successfully with ID: {}", training.getId());
     }
 

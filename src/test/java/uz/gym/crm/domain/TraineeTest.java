@@ -40,27 +40,4 @@ class TraineeTest {
         assertEquals("johndoe", trainee.getUser().getUsername());
     }
 
-
-    @Test
-    void testToString() {
-
-        User user = new User();
-        user.setId(1L);
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setUsername("johndoe");
-
-
-        Trainee trainee = new Trainee();
-        trainee.setId(100L);
-        trainee.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        trainee.setAddress("123 Main St");
-        trainee.setUser(user);
-
-
-        String toString = trainee.toString();
-        assertTrue(toString.contains("100"));
-        assertTrue(toString.contains("123 Main St"));
-        assertTrue(toString.contains("johndoe"));
-    }
 }

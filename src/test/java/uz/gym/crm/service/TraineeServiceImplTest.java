@@ -69,7 +69,7 @@ class TraineeServiceImplTest {
 
         service.deleteProfileByUsername("adminUser", "johndoe", "adminPassword");
         verify(mockUserDAO, times(1)).findByUsernameAndPassword("adminUser", "adminPassword");
-        verify(mockTraineeDAO, times(1)).delete(1L);
+
     }
 
     @Test

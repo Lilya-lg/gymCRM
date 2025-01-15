@@ -10,7 +10,7 @@ import java.util.List;
 public abstract class BaseServiceImpl<T> implements BaseService<T> {
     private UserDAOImpl userDAO;
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseServiceImpl.class);
-    protected final BaseDAO<T> dao;
+    private final BaseDAO<T> dao;
 
 
     public BaseServiceImpl(BaseDAO<T> dao, UserDAOImpl userDAO) {
@@ -84,6 +84,11 @@ public abstract class BaseServiceImpl<T> implements BaseService<T> {
     public boolean authenticate(String username, String password) {
         return userDAO.findByUsernameAndPassword(username, password).isPresent();
     }
+
+    public BaseDAO<T> getDao() {
+        return dao;
+    }
+
 
     private Long extractId(T entity) {
         try {

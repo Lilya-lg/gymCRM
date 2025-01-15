@@ -38,11 +38,11 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
         if (!super.authenticate(usernameAuth, passwordAuth)) {
             throw new IllegalArgumentException("Invalid username or password.");
         }
-        LOGGER.debug("Attempting to find trainer with username: {} and password: {}", username, password);
+        LOGGER.debug("Attempting to find trainer with username: {}", username);
         try {
             return trainerDAO.findByUsernameAndPassword(username, password);
         } catch (Exception e) {
-            LOGGER.error("Error finding trainer with username: {} and password: {}", username, password, e);
+            LOGGER.error("Error finding trainer with username: {}", username, e);
             throw e;
         }
     }
@@ -53,7 +53,7 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
             throw new IllegalArgumentException("Invalid username or password.");
         }
         LOGGER.debug("Searching for profile with username: {}", usernameToSelect);
-        return dao.findByUsername(usernameToSelect);
+        return  getDao().findByUsername(usernameToSelect);
     }
 
 

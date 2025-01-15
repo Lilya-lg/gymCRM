@@ -9,6 +9,7 @@ import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.service.abstr.AbstractProfileService;
+import uz.gym.crm.service.abstr.BaseServiceImpl;
 import uz.gym.crm.service.abstr.TraineeService;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.Optional;
 public class TraineeServiceImpl extends AbstractProfileService<Trainee> implements TraineeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TraineeServiceImpl.class);
     private final TraineeDAOImpl traineeDAO;
+
 
 
     public TraineeServiceImpl(UserDAOImpl userDAO, TraineeDAOImpl traineeDAO, TrainingDAOImpl trainingDAO) {
@@ -40,12 +42,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
         if (!super.authenticate(username, password)) {
             throw new IllegalArgumentException("Invalid username or password.");
         }
-        traineeDAO.findByUsername(userToDelete).ifPresentOrElse(trainee -> {
-            dao.delete(trainee.getId());
-            LOGGER.info("Trainee profile and associated user deleted successfully for username: {}", userToDelete);
-        }, () -> {
-            throw new IllegalArgumentException("Trainee not found for username: " + username);
-        });
+        traineeDAO.deleteByUsername(userToDelete);
         LOGGER.info("Trainee profile and associated user deleted successfully for username: {}", username);
     }
 
@@ -55,7 +52,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
             throw new IllegalArgumentException("Invalid username or password.");
         }
         LOGGER.debug("Searching for profile with username: {}", usernameToSelect);
-        return dao.findByUsername(usernameToSelect);
+        return  getDao().findByUsername(usernameToSelect);
     }
 
 
@@ -63,11 +60,11 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
         if (!super.authenticate(usernameAuth, passwordAuth)) {
             throw new IllegalArgumentException("Invalid username or password.");
         }
-        LOGGER.debug("Attempting to find trainer with username: {} and password: {}", username, password);
+        LOGGER.debug("Attempting to find trainer with username: {}", username);
         try {
             return traineeDAO.findByUsernameAndPassword(username, password);
         } catch (Exception e) {
-            LOGGER.error("Error finding trainer with username: {} and password: {}", username, password, e);
+            LOGGER.error("Error finding trainer with username: {}", username, e);
             throw e;
         }
     }

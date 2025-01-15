@@ -40,14 +40,14 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> imple
         ProfileMapper.updateFields(existingEntity, updatedEntity);
 
 
-        dao.save(existingEntity);
+        getDao().save(existingEntity);
         LOGGER.info("Profile updated successfully for username: {}", username);
     }
 
 
     public Optional<T> findByUsername(String username) {
         LOGGER.debug("Searching for profile with username: {}", username);
-        return dao.findByUsername(username);
+        return  getDao().findByUsername(username);
     }
 
     public void changePassword(String username, String oldPassword, String newPassword) {
@@ -72,7 +72,7 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> imple
         User user = getUser(entity);
         user.setActive(true);
 
-        dao.save(entity);
+        getDao().save(entity);
         LOGGER.info("Profile with username {} activated successfully.", username);
     }
 
@@ -87,7 +87,7 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> imple
         User user = getUser(entity);
         user.setActive(false);
 
-        dao.save(entity);
+        getDao().save(entity);
         LOGGER.info("Profile with username {} deactivated successfully.", username);
     }
 

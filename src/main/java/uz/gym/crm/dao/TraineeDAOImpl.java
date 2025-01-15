@@ -20,6 +20,7 @@ public class TraineeDAOImpl extends BaseDAOImpl<Trainee> implements TraineeDAO {
     private static final String FIND_BY_USERNAME_AND_PASSWORD = "SELECT t FROM Trainee t JOIN t.user u WHERE u.username = :username AND u.password = :password";
     private static final String FIND_BY_USERNAME = "SELECT t FROM Trainee t JOIN t.user u WHERE u.username = :username";
     private static final String FETCH_TRAININGS_BY_TRAINEE = "SELECT t FROM Training t WHERE t.trainee.id = :traineeId";
+    private static final String DELETE_BY_PROFILE = "DELETE t FROM trainees t JOIN users u ON t.user_id = u.id WHERE u.username = :username";
 
     public TraineeDAOImpl(Session session) {
         super(Trainee.class, session);
@@ -41,6 +42,22 @@ public class TraineeDAOImpl extends BaseDAOImpl<Trainee> implements TraineeDAO {
         queryBuilder.addCondition("u.username = :username", "username", username);
 
         return Optional.ofNullable(queryBuilder.buildQuery(session, Trainee.class).uniqueResult());
+    }
+    public void deleteByUsername(String username) {
+        String sql = """
+        DELETE t
+        FROM trainees t
+        JOIN users u ON t.user_id = u.id
+        WHERE u.username = :username
+    """;
+
+        int deletedCount = session.createNativeQuery(sql)
+                .setParameter("username", username)
+                .executeUpdate();
+
+        if (deletedCount == 0) {
+            throw new IllegalArgumentException("Trainee not found for username: " + username);
+        }
     }
 
     @Transactional
