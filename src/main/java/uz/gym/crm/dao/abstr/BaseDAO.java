@@ -1,10 +1,10 @@
-package uz.gym.crm.dao;
+package uz.gym.crm.dao.abstr;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface BaseDAO<T> {
-    void create(T entity);
+    void save(T entity);
 
     Optional<T> read(Long id);
 
@@ -13,4 +13,9 @@ public interface BaseDAO<T> {
     void delete(Long id);
 
     List<T> getAll();
+
+    boolean existsById(Long id);
+
+    Optional<T> findByUsername(String username);
+
 }

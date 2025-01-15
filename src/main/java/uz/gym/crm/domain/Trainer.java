@@ -1,17 +1,46 @@
 package uz.gym.crm.domain;
-import jakarta.persistence.*;
+
+import javax.persistence.*;
 
 @Entity
-public class Trainer extends User{
+@Table(name = "trainers")
+public class Trainer {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private String specialization;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "specialization", referencedColumnName = "id")
+    private TrainingType specialization;
 
-    public String getSpecialization() {
+    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
+    private User user;
+
+
+    public TrainingType getSpecialization() {
         return specialization;
     }
 
-    public void setSpecialization(String specialization) {
+    public void setSpecialization(TrainingType specialization) {
         this.specialization = specialization;
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
 
 }

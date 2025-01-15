@@ -1,115 +1,203 @@
 package uz.gym.crm.dao;
 
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.junit.jupiter.api.BeforeEach;
+import org.hibernate.cfg.Configuration;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
+import uz.gym.crm.config.TrainingTypeInitializer;
+import uz.gym.crm.domain.*;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-import org.mockito.MockitoAnnotations;
-import uz.gym.crm.domain.Trainer;
-
-import java.util.*;
-
-
-class TrainerDAOImplTest {
+public class TrainerDAOImplTest {
 
     private TrainerDAOImpl trainerDAO;
-
-    @Mock
-    private Map<Long, Trainer> mockStorage;
+    private SessionFactory sessionFactory;
+    private Session session;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        trainerDAO = new TrainerDAOImpl(mockStorage);
+        // Configure Hibernate with H2 database
+        Configuration configuration = new Configuration();
+        configuration.addAnnotatedClass(Trainer.class);
+        configuration.addAnnotatedClass(User.class);
+        configuration.addAnnotatedClass(Trainee.class);
+        configuration.addAnnotatedClass(TrainingType.class);
+        configuration.addAnnotatedClass(Training.class);
+        configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+        configuration.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
+        configuration.setProperty("hibernate.connection.url", "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
+        configuration.setProperty("hibernate.hbm2ddl.auto", "create-drop");
+        configuration.setProperty("hibernate.show_sql", "true");
+
+        sessionFactory = configuration.buildSessionFactory();
+        if (session != null) {
+            session.close();
+        }
+        session = sessionFactory.openSession();
+        trainerDAO = new TrainerDAOImpl(session);
+
+        // Clear the database before each test
+        Transaction transaction = session.beginTransaction();
+        session.createQuery("DELETE FROM Trainer").executeUpdate();
+        session.createQuery("DELETE FROM User").executeUpdate();
+        transaction.commit();
+        TrainingTypeInitializer.initializeTrainingTypes(sessionFactory);
+
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (session.isOpen()) {
+            session.close();
+        }
+        sessionFactory.close();
     }
 
     @Test
-    void testCreate() {
-        Trainer trainer = createTestTrainer(1L);
-        trainerDAO.create(trainer);
-        verify(mockStorage).put(1L, trainer);
-    }
+    void findByUser_UsernameAndUser_Password_ShouldReturnTrainer() {
+        User user = new User();
+        user.setFirstName("TrainerFirst");
+        user.setLastName("TrainerLast");
+        user.setUsername("trainerUser");
+        user.setPassword("trainerPass");
+        user.setActive(true);
 
-    @Test
-    void testRead_ExistingTrainer() {
-        Trainer trainer = createTestTrainer(1L);
-        when(mockStorage.get(1L)).thenReturn(trainer);
-
-        Optional<Trainer> result = trainerDAO.read(1L);
-
-        assertTrue(result.isPresent());
-        assertEquals(trainer, result.get());
-        verify(mockStorage).get(1L);
-    }
-
-    @Test
-    void testRead_NonExistingTrainer() {
-        when(mockStorage.get(1L)).thenReturn(null);
-
-        Optional<Trainer> result = trainerDAO.read(1L);
-
-        assertFalse(result.isPresent());
-        verify(mockStorage).get(1L);
-    }
-
-    @Test
-    void testUpdate_ExistingTrainer() {
-        Trainer trainer = createTestTrainer(1L);
-        when(mockStorage.containsKey(1L)).thenReturn(true);
-
-        trainerDAO.update(trainer);
-
-        verify(mockStorage).put(1L, trainer);
-    }
-
-    @Test
-    void testUpdate_NonExistingTrainer() {
-        Trainer trainer = createTestTrainer(1L);
-        when(mockStorage.containsKey(1L)).thenReturn(false);
-
-        trainerDAO.update(trainer);
-
-        verify(mockStorage, never()).put(1L, trainer);
-    }
-
-    @Test
-    void testDelete_ExistingTrainer() {
-        when(mockStorage.remove(1L)).thenReturn(createTestTrainer(1L));
-
-        trainerDAO.delete(1L);
-
-        verify(mockStorage).remove(1L);
-    }
-
-    @Test
-    void testDelete_NonExistingTrainer() {
-        when(mockStorage.remove(1L)).thenReturn(null);
-
-        trainerDAO.delete(1L);
-
-        verify(mockStorage).remove(1L);
-    }
-
-    @Test
-    void testGetAll() {
-        Trainer trainer1 = createTestTrainer(1L);
-        Trainer trainer2 = createTestTrainer(2L);
-
-        List<Trainer> trainers = Arrays.asList(trainer1, trainer2);
-        when(mockStorage.values()).thenReturn(new HashSet<>(trainers));
-
-        List<Trainer> result = trainerDAO.getAll();
-
-        assertEquals(2, result.size());
-        assertTrue(result.containsAll(trainers));
-    }
-
-    private Trainer createTestTrainer(Long id) {
+        // Create the Trainer and associate the User
         Trainer trainer = new Trainer();
-        trainer.setId(id);
-        trainer.setSpecialization("Java Trainer");
-        return trainer;
+        trainer.setUser(user);
+        trainer.setSpecialization(getTrainingType("Yoga")); // Example specialization
+
+
+        Transaction transaction = session.beginTransaction();
+        session.save(user);
+        session.save(trainer);
+        transaction.commit();
+
+
+        Optional<Trainer> result = trainerDAO.findByUsernameAndPassword("trainerUser", "trainerPass");
+        assertTrue(result.isPresent(), "Trainer should be found");
+        assertEquals(user.getUsername(), result.get().getUser().getUsername());
     }
+
+    @Test
+    void findByUser_UsernameAndUser_Password_ShouldReturnEmptyOptional() {
+        Optional<Trainer> result = trainerDAO.findByUsernameAndPassword("nonExistentUser", "wrongPass");
+        assertTrue(result.isEmpty(), "No Trainer should be found for invalid credentials");
+    }
+
+    @Test
+    void findByUsername_ShouldReturnTrainer() {
+        User user = new User();
+        user.setFirstName("TrainerFirst");
+        user.setLastName("TrainerLast");
+        user.setUsername("trainerUser");
+        user.setPassword("trainerPass");
+        user.setActive(true);
+
+        // Create the Trainer and associate the User
+        Trainer trainer = new Trainer();
+        trainer.setUser(user);
+        trainer.setSpecialization(getTrainingType("Yoga")); // Example specialization
+
+
+        Transaction transaction = session.beginTransaction();
+        session.save(user);
+        session.save(trainer);
+        transaction.commit();
+
+        // Test the DAO method
+        Optional<Trainer> result = trainerDAO.findByUsername("trainerUser");
+        assertTrue(result.isPresent(), "Trainer should be found");
+        assertEquals(user.getUsername(), result.get().getUser().getUsername());
+    }
+
+    private TrainingType getTrainingType(String type) {
+        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class).setParameter("type", type).uniqueResult();
+    }
+
+    @Test
+    void findByUsername_ShouldReturnEmptyOptional() {
+        Optional<Trainer> result = trainerDAO.findByUsername("nonExistentUser");
+        assertTrue(result.isEmpty(), "No Trainer should be found for invalid username");
+    }
+
+    @Test
+    void testGetUnassignedTrainersByTraineeUsername() {
+        TrainingType yogaType = getTrainingType("Yoga");
+        TrainingType cardioType = getTrainingType("Cardio");
+
+
+        User traineeUser = new User();
+        traineeUser.setFirstName("John");
+        traineeUser.setLastName("Doe");
+        traineeUser.setUsername("traineeUser");
+        traineeUser.setPassword("password");
+        traineeUser.setActive(true);
+
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        // Create trainers
+        User trainerUser1 = new User();
+        trainerUser1.setFirstName("Alice");
+        trainerUser1.setLastName("Smith");
+        trainerUser1.setUsername("trainer1");
+        trainerUser1.setPassword("password");
+        trainerUser1.setActive(true);
+
+        Trainer trainer1 = new Trainer();
+        trainer1.setUser(trainerUser1);
+        trainer1.setSpecialization(yogaType);
+
+        User trainerUser2 = new User();
+        trainerUser2.setFirstName("Bob");
+        trainerUser2.setLastName("Johnson");
+        trainerUser2.setUsername("trainer2");
+        trainerUser2.setPassword("password");
+        trainerUser2.setActive(true);
+
+        Trainer trainer2 = new Trainer();
+        trainer2.setUser(trainerUser2);
+        trainer2.setSpecialization(cardioType);
+
+        // Persist entities
+        Transaction transaction = session.beginTransaction();
+        session.save(traineeUser);
+        session.save(trainee);
+        session.save(trainerUser1);
+        session.save(trainer1);
+        session.save(trainerUser2);
+        session.save(trainer2);
+        transaction.commit();
+
+
+        transaction = session.beginTransaction();
+        Training training = new Training();
+        training.setTrainee(trainee);
+        training.setTrainer(trainer1);
+        training.setTrainingName("Yoga Training");
+        training.setTrainingDate(LocalDate.now());
+        training.setTrainingDuration(60);
+        training.setTrainingType(yogaType);
+        session.save(training);
+        transaction.commit();
+
+        // Fetch unassigned trainers
+        List<Trainer> unassignedTrainers = trainerDAO.getUnassignedTrainersByTraineeUsername("traineeUser");
+
+        // Assertions
+        assertEquals(1, unassignedTrainers.size(), "Only one trainer should be unassigned");
+        assertEquals("Cardio", unassignedTrainers.get(0).getSpecialization().getTrainingType(), "Unassigned trainer should specialize in Cardio");
+
+    }
+
+
 }

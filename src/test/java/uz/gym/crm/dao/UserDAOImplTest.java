@@ -1,121 +1,113 @@
 package uz.gym.crm.dao;
 
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
+import uz.gym.crm.domain.TrainingType;
 import uz.gym.crm.domain.User;
 
-import java.util.*;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.when;
 
-public class UserDAOImplTest {
+class UserDAOImplTest {
+
     private UserDAOImpl userDAO;
-
-    @Mock
-    private Map<Long, User> mockStorage;
+    private SessionFactory sessionFactory;
+    private Session session;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        userDAO = new UserDAOImpl(mockStorage);
+        // Configure Hibernate with H2 database
+        Configuration configuration = new Configuration();
+        configuration.addAnnotatedClass(User.class);
+        configuration.addAnnotatedClass(Trainer.class);
+        configuration.addAnnotatedClass(Trainee.class);
+        configuration.addAnnotatedClass(TrainingType.class);
+        configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+        configuration.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
+        configuration.setProperty("hibernate.connection.url", "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
+        configuration.setProperty("hibernate.hbm2ddl.auto", "create-drop");
+        configuration.setProperty("hibernate.show_sql", "true");
+
+        sessionFactory = configuration.buildSessionFactory();
+        if (session != null) {
+            session.close();
+        }
+        session = sessionFactory.openSession();
+        userDAO = new UserDAOImpl(session);
+
+
+        Transaction transaction = session.beginTransaction();
+        session.createQuery("DELETE FROM User").executeUpdate();
+        transaction.commit();
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (session.isOpen()) {
+            session.close();
+        }
+        sessionFactory.close();
     }
 
     @Test
-    void testCreate() {
-        User user = createTestUser(1L);
-        userDAO.create(user);
-        verify(mockStorage).put(1L, user);
-    }
-
-    @Test
-    void testRead_ExistingUser() {
-        User user = createTestUser(1L);
-        when(mockStorage.get(1L)).thenReturn(user);
-
-        Optional<User> result = userDAO.read(1L);
-
-        assertTrue(result.isPresent());
-        assertEquals(user, result.get());
-        verify(mockStorage).get(1L);
-    }
-
-    @Test
-    void testRead_NonExistingUser() {
-        when(mockStorage.get(1L)).thenReturn(null);
-
-        Optional<User> result = userDAO.read(1L);
-
-        assertFalse(result.isPresent());
-        verify(mockStorage).get(1L);
-    }
-
-    @Test
-    void testUpdate_ExistingUser() {
-        User user = createTestUser(1L);
-        when(mockStorage.containsKey(1L)).thenReturn(true);
-
-        userDAO.update(user);
-
-        verify(mockStorage).put(1L, user);
-    }
-
-    @Test
-    void testUpdate_NonExistingUser() {
-        User user = createTestUser(1L);
-        when(mockStorage.containsKey(1L)).thenReturn(false);
-
-        userDAO.update(user);
-
-        verify(mockStorage, never()).put(1L, user);
-    }
-
-    @Test
-    void testDelete_ExistingUser() {
-        when(mockStorage.remove(1L)).thenReturn(createTestUser(1L));
-
-        userDAO.delete(1L);
-
-        verify(mockStorage).remove(1L);
-    }
-
-    @Test
-    void testDelete_NonExistingUser() {
-        when(mockStorage.remove(1L)).thenReturn(null);
-
-        userDAO.delete(1L);
-
-        verify(mockStorage).remove(1L);
-    }
-
-    @Test
-    void testGetAll() {
-        User user1 = createTestUser(1L);
-        User user2 = createTestUser(2L);
-
-        List<User> users = Arrays.asList(user1, user2);
-        when(mockStorage.values()).thenReturn(new HashSet<>(users));
-
-        List<User> result = userDAO.getAll();
-
-        assertEquals(2, result.size());
-        assertTrue(result.containsAll(users));
-    }
-
-    private User createTestUser(Long id) {
-        Trainer user = new Trainer();
-        user.setId(id);
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setUsername("johndoe");
-        user.setPassword("password");
+    void findByUsername_ShouldReturnUser() {
+        User user = new User();
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setUsername("testUser");
+        user.setPassword("testPass");
         user.setActive(true);
-        return user;
+
+
+        Transaction transaction = session.beginTransaction();
+        session.save(user);
+        transaction.commit();
+
+
+        Optional<User> result = userDAO.findByUsername("testUser");
+        assertTrue(result.isPresent(), "User should be found");
+        assertEquals("testUser", result.get().getUsername());
     }
 
+    @Test
+    void findByUsername_ShouldReturnEmptyOptional() {
+
+        Optional<User> result = userDAO.findByUsername("nonExistentUser");
+        assertTrue(result.isEmpty(), "No User should be found for invalid username");
+    }
+
+    @Test
+    void findByUsernameAndPassword_ShouldReturnUser() {
+        User user = new User();
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setUsername("testUser");
+        user.setPassword("testPass");
+        user.setActive(true);
+
+        Transaction transaction = session.beginTransaction();
+        session.save(user);
+        transaction.commit();
+
+
+        Optional<User> result = userDAO.findByUsernameAndPassword("testUser", "testPass");
+        assertTrue(result.isPresent(), "User should be found");
+        assertEquals("testUser", result.get().getUsername());
+    }
+
+    @Test
+    void findByUsernameAndPassword_ShouldReturnEmptyOptional() {
+
+        Optional<User> result = userDAO.findByUsernameAndPassword("nonExistentUser", "wrongPass");
+        assertTrue(result.isEmpty(), "No User should be found for invalid credentials");
+    }
 }
 

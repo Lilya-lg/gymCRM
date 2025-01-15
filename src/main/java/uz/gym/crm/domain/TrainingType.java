@@ -1,19 +1,32 @@
 package uz.gym.crm.domain;
 
-public enum TrainingType {
-    YOGA("Yoga"),
-    CARDIO("Cardio"),
-    CYCLE("Cycle"),
-    PILATES("Pilates");
+import javax.persistence.*;
 
-    private final String name;
+@Entity
+@Table(name = "training_types")
+public class TrainingType {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    TrainingType(String name) {
-        this.name = name;
+    @Column(name = "training_type", nullable = false, unique = true, updatable = false)
+    private String trainingType;
+
+    protected TrainingType() {
+
     }
 
-    public String getDisplayName() {
-        return name;
+    public TrainingType(String trainingType) {
+        this.trainingType = trainingType;
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getTrainingType() {
+        return trainingType;
+    }
+
 }
 

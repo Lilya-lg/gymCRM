@@ -1,11 +1,22 @@
 package uz.gym.crm.domain;
 
+import javax.persistence.*;
 
-public class User extends BaseEntity {
+@Entity
+@Table(name = "users")
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = "first_name", nullable = false)
     private String firstName;
+    @Column(name = "last_name", nullable = false)
     private String lastName;
+    @Column(nullable = false, unique = true)
     private String username;
+    @Column(nullable = false)
     private String password;
+    @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
     public String getFirstName() {
@@ -46,5 +57,13 @@ public class User extends BaseEntity {
 
     public void setActive(boolean active) {
         isActive = active;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

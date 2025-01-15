@@ -2,160 +2,194 @@ package uz.gym.crm.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import uz.gym.crm.dao.BaseDAO;
-import uz.gym.crm.domain.Trainer;
+import org.mockito.Mockito;
+import uz.gym.crm.dao.UserDAOImpl;
+import uz.gym.crm.dao.abstr.BaseDAO;
+import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.User;
+import uz.gym.crm.service.abstr.BaseServiceImpl;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 class BaseServiceImplTest {
 
-    private static class TestBaseServiceImpl extends BaseServiceImpl<User> {
-        public TestBaseServiceImpl(BaseDAO<User> dao) {
-            super(dao);
-        }
-    }
-
-    private BaseServiceImpl<User> baseService;
-
-    @Mock
-    private BaseDAO<User> mockDao;
+    private BaseDAO<Trainee> mockDao;
+    private BaseServiceImpl<Trainee> service;
+    private UserDAOImpl mockUserDao;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        baseService = new TestBaseServiceImpl(mockDao); // Use concrete subclass
+        mockDao = Mockito.mock(BaseDAO.class);
+        mockUserDao = Mockito.mock(UserDAOImpl.class);
+        service = new BaseServiceImpl<>(mockDao,mockUserDao) {
+        };
     }
 
     @Test
-    void testCreate() {
-        User user = createTestUser(1L);
-
-        baseService.create(user);
-
-        verify(mockDao).create(user);
-    }
-
-    @Test
-    void testRead_ExistingEntity() {
-        User user = createTestUser(1L);
-        when(mockDao.read(1L)).thenReturn(Optional.of(user));
-
-        User result = baseService.read(1L);
-
-        assertNotNull(result);
-        assertEquals(user, result);
-        verify(mockDao).read(1L);
-    }
-
-    @Test
-    void testRead_NonExistingEntity() {
-        when(mockDao.read(1L)).thenReturn(Optional.empty());
-
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> baseService.read(1L));
-
-        assertEquals("Entity not found for ID: 1", exception.getMessage());
-        verify(mockDao).read(1L);
-    }
-
-    @Test
-    void testUpdate() {
-        User user = createTestUser(1L);
-
-        baseService.update(user);
-
-        verify(mockDao).update(user);
-    }
-
-    @Test
-    void testDelete() {
-        baseService.delete(1L);
-
-        verify(mockDao).delete(1L);
-    }
-
-    @Test
-    void testGetAll() {
-        User user1 = createTestUser(1L);
-        User user2 = createTestUser(2L);
-
-        List<User> users = Arrays.asList(user1, user2);
-        when(mockDao.getAll()).thenReturn(users);
-
-        List<User> result = baseService.getAll();
-
-        assertEquals(2, result.size());
-        assertTrue(result.containsAll(users));
-        verify(mockDao).getAll();
-    }
-
-    private User createTestUser(Long id) {
-        Trainer user = new Trainer();
-        user.setId(id);
+    void create_ShouldSaveEntity() {
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
+        User user = new User();
         user.setFirstName("John");
         user.setLastName("Doe");
-        user.setUsername("johndoe");
-        user.setPassword("password");
-        user.setActive(true);
-        return user;
+        trainee.setUser(user);
+
+        service.create(trainee);
+
+        verify(mockDao, times(1)).save(trainee);
     }
+
     @Test
-    void testCreate_ExceptionThrown() {
-        User user = createTestUser(1L);
-        doThrow(new RuntimeException("Database error")).when(mockDao).create(user);
+    void read_ShouldReturnEntity_WhenExists() {
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
+        User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        trainee.setUser(user);
 
-        Exception exception = assertThrows(RuntimeException.class, () -> baseService.create(user));
+        when(mockDao.read(1L)).thenReturn(Optional.of(trainee));
 
+        Trainee result = service.read(1L);
+
+        assertNotNull(result);
+        assertEquals("John", result.getUser().getFirstName());
+        assertEquals("Doe", result.getUser().getLastName());
+        verify(mockDao, times(1)).read(1L);
+    }
+
+    @Test
+    void read_ShouldThrowException_WhenEntityDoesNotExist() {
+        when(mockDao.read(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> service.read(1L));
+        assertEquals("Entity not found for ID: 1", exception.getMessage());
+        verify(mockDao, times(1)).read(1L);
+    }
+
+    @Test
+    void update_ShouldUpdateEntity_WhenEntityExists() {
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
+        User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        trainee.setUser(user);
+
+        when(mockDao.existsById(1L)).thenReturn(true);
+
+        service.update(trainee);
+
+        verify(mockDao, times(1)).existsById(1L);
+        verify(mockDao, times(1)).save(trainee);
+    }
+
+    @Test
+    void update_ShouldThrowException_WhenEntityDoesNotExist() {
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
+        User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        trainee.setUser(user);
+
+        when(mockDao.existsById(1L)).thenReturn(false);
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> service.update(trainee));
+        assertEquals("Entity not found for update: ID=1", exception.getMessage());
+        verify(mockDao, times(1)).existsById(1L);
+        verify(mockDao, times(0)).save(any());
+    }
+
+    @Test
+    void delete_ShouldDeleteEntity() {
+        service.delete(1L);
+
+        verify(mockDao, times(1)).delete(1L);
+    }
+
+    @Test
+    void getAll_ShouldReturnAllEntities() {
+        Trainee trainee1 = new Trainee();
+        trainee1.setId(1L);
+        User user1 = new User();
+        user1.setFirstName("John");
+        user1.setLastName("Doe");
+        trainee1.setUser(user1);
+
+        Trainee trainee2 = new Trainee();
+        trainee2.setId(2L);
+        User user2 = new User();
+        user2.setFirstName("Jane");
+        user2.setLastName("Smith");
+        trainee2.setUser(user2);
+
+        when(mockDao.getAll()).thenReturn(List.of(trainee1, trainee2));
+
+        List<Trainee> result = service.getAll();
+
+        assertEquals(2, result.size());
+        assertEquals("John", result.get(0).getUser().getFirstName());
+        assertEquals("Jane", result.get(1).getUser().getFirstName());
+        verify(mockDao, times(1)).getAll();
+    }
+
+    @Test
+    void create_ShouldLogError_WhenSaveFails() {
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
+        User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        trainee.setUser(user);
+
+        doThrow(new RuntimeException("Database error")).when(mockDao).save(trainee);
+
+        Exception exception = assertThrows(RuntimeException.class, () -> service.create(trainee));
         assertEquals("Database error", exception.getMessage());
-        verify(mockDao).create(user);
+        verify(mockDao, times(1)).save(trainee);
     }
 
-    @Test
-    void testRead_ExceptionThrown() {
-        when(mockDao.read(1L)).thenThrow(new RuntimeException("Database error"));
-
-        Exception exception = assertThrows(RuntimeException.class, () -> baseService.read(1L));
-
-        assertEquals("Database error", exception.getMessage());
-        verify(mockDao).read(1L);
-    }
 
     @Test
-    void testUpdate_ExceptionThrown() {
-        User user = createTestUser(1L);
-        doThrow(new RuntimeException("Database error")).when(mockDao).update(user);
-
-        Exception exception = assertThrows(RuntimeException.class, () -> baseService.update(user));
-
-        assertEquals("Database error", exception.getMessage());
-        verify(mockDao).update(user);
-    }
-
-    @Test
-    void testDelete_ExceptionThrown() {
+    void delete_ShouldLogError_WhenDeleteFails() {
         doThrow(new RuntimeException("Database error")).when(mockDao).delete(1L);
 
-        Exception exception = assertThrows(RuntimeException.class, () -> baseService.delete(1L));
-
+        Exception exception = assertThrows(RuntimeException.class, () -> service.delete(1L));
         assertEquals("Database error", exception.getMessage());
-        verify(mockDao).delete(1L);
+        verify(mockDao, times(1)).delete(1L);
     }
 
     @Test
-    void testGetAll_ExceptionThrown() {
-        when(mockDao.getAll()).thenThrow(new RuntimeException("Database error"));
+    void getAll_ShouldReturnEmptyList_WhenNoEntitiesExist() {
+        when(mockDao.getAll()).thenReturn(List.of());
 
-        Exception exception = assertThrows(RuntimeException.class, () -> baseService.getAll());
+        List<Trainee> result = service.getAll();
 
+        assertTrue(result.isEmpty(), "The result should be an empty list");
+        verify(mockDao, times(1)).getAll();
+    }
+
+
+    @Test
+    void getAll_ShouldLogError_WhenFetchFails() {
+        doThrow(new RuntimeException("Database error")).when(mockDao).getAll();
+
+        Exception exception = assertThrows(RuntimeException.class, () -> service.getAll());
         assertEquals("Database error", exception.getMessage());
-        verify(mockDao).getAll();
+        verify(mockDao, times(1)).getAll();
+    }
+
+    @Test
+    void delete_ShouldHandleNonExistentIdGracefully() {
+        doNothing().when(mockDao).delete(999L);
+
+        assertDoesNotThrow(() -> service.delete(999L));
+        verify(mockDao, times(1)).delete(999L);
     }
 
 }
