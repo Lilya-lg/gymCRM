@@ -28,8 +28,13 @@ public class DynamicQueryBuilder<T> {
         return this;
     }
 
-    public Query<T> buildQuery(Session session, Class<T> resultClass) {
+    public Query<T>     buildQuery(Session session, Class<T> resultClass) {
         Query<T> query = session.createQuery(queryBuilder.toString(), resultClass);
+        parameters.forEach(query::setParameter);
+        return query;
+    }
+    public Query<?> buildUpdateOrDeleteQuery(Session session) {
+        Query<?> query = session.createQuery(queryBuilder.toString());
         parameters.forEach(query::setParameter);
         return query;
     }

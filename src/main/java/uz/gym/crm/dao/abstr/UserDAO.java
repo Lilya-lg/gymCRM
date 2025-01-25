@@ -8,4 +8,6 @@ public interface UserDAO extends BaseDAO<User> {
     Optional<User> findByUsername(String username);
 
     Optional<User> findByUsernameAndPassword(String username, String password);
+
+    void updateUser(User user);
 }

@@ -73,7 +73,7 @@ public class UsernameGeneratorTest {
         }
 
         private User createTestUser(Long id, String firstName, String lastName, String username) {
-            User user = new User() {}; // Anonymous User subclass for testing
+            User user = new User() {};
             user.setId(id);
             user.setFirstName(firstName);
             user.setLastName(lastName);

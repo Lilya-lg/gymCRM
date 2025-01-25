@@ -1,13 +1,8 @@
 package uz.gym.crm.service.abstr;
-
-import uz.gym.crm.domain.Training;
-
-import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 public interface ProfileService<T> {
-    void updateProfile(String username, String password,String usernameToUpdate, T updatedEntity);
+    void updateProfile(String username, T updatedEntity);
 
     Optional<T> findByUsername(String username);
 
@@ -15,7 +10,7 @@ public interface ProfileService<T> {
 
     void changePassword(String username, String oldPassword, String newPassword);
 
-    void activate(String username,String usernameToActive,String password);
+    void activate(String username);
 
-    void deactivate(String username,String usernameToDeactive, String password);
+    void deactivate(String username);
 }

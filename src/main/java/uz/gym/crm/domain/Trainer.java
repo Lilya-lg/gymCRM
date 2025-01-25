@@ -9,6 +9,7 @@ public class Trainer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "specialization", referencedColumnName = "id")
     private TrainingType specialization;
@@ -17,6 +18,13 @@ public class Trainer {
     @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
     private User user;
 
+    public Trainer(TrainingType specialization, User user) {
+        this.specialization = specialization;
+        this.user = user;
+    }
+
+    public Trainer() {
+    }
 
     public TrainingType getSpecialization() {
         return specialization;

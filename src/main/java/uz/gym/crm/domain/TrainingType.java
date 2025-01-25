@@ -9,14 +9,16 @@ public class TrainingType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "training_type", nullable = false, unique = true, updatable = false)
-    private String trainingType;
 
-    protected TrainingType() {
+
+    @Enumerated(EnumType.STRING)
+    private PredefinedTrainingType trainingType;
+
+    public TrainingType() {
 
     }
 
-    public TrainingType(String trainingType) {
+    public TrainingType(PredefinedTrainingType trainingType) {
         this.trainingType = trainingType;
     }
 
@@ -24,8 +26,11 @@ public class TrainingType {
         return id;
     }
 
-    public String getTrainingType() {
+    public PredefinedTrainingType getTrainingType() {
         return trainingType;
+    }
+    public void setTrainingType(PredefinedTrainingType trainingType) {
+        this.trainingType = trainingType;
     }
 
 }

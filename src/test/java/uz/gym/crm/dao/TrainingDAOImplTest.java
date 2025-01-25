@@ -7,7 +7,7 @@ import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uz.gym.crm.config.TrainingTypeInitializer;
+import org.springframework.transaction.annotation.Transactional;
 import uz.gym.crm.domain.*;
 
 import java.time.LocalDate;
@@ -36,7 +36,6 @@ class TrainingDAOImplTest {
         configuration.setProperty("hibernate.hbm2ddl.auto", "create-drop");
         configuration.setProperty("hibernate.show_sql", "true");
 
-
         sessionFactory = configuration.buildSessionFactory();
         if (session != null) {
             session.close();
@@ -51,15 +50,16 @@ class TrainingDAOImplTest {
         session.createQuery("DELETE FROM User").executeUpdate();
         session.createQuery("DELETE FROM TrainingType").executeUpdate();
         transaction.commit();
-        TrainingTypeInitializer.initializeTrainingTypes(sessionFactory);
-        trainingDAO = new TrainingDAOImpl(session);
+        trainingDAO = new TrainingDAOImpl(sessionFactory);
+        session = sessionFactory.openSession();
+        seedTrainingTypes();
     }
 
     private TrainingType getTrainingType(String type) {
-        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class)
-                .setParameter("type", type)
+        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class).setParameter("type", PredefinedTrainingType.fromName(type)) // Convert string to enum
                 .uniqueResult();
     }
+
 
     @AfterEach
     void tearDown() {
@@ -91,7 +91,6 @@ class TrainingDAOImplTest {
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
 
-
         Training training = new Training();
         training.setTrainee(trainee);
         training.setTrainer(trainer);
@@ -99,7 +98,6 @@ class TrainingDAOImplTest {
         training.setTrainingName("Yoga Session");
         training.setTrainingDate(LocalDate.of(2024, 12, 1));
         training.setTrainingDuration(60);
-
 
         Transaction transaction = session.beginTransaction();
         session.save(trainerUser);
@@ -110,26 +108,18 @@ class TrainingDAOImplTest {
         transaction.commit();
 
 
-        List<Training> results = trainingDAO.findByCriteria(
-                "traineeJane", "Yoga", LocalDate.of(2024, 12, 1), LocalDate.of(2024, 12, 31), "trainerJohn");
+        List<Training> results = trainingDAO.findByCriteria("traineeJane", PredefinedTrainingType.YOGA, LocalDate.of(2024, 12, 1), LocalDate.of(2024, 12, 31), "trainerJohn");
 
-        // Assertions
+
         assertEquals(1, results.size());
-        assertEquals("Yoga", results.get(0).getTrainingType().getTrainingType());
+        assertEquals("Yoga", results.get(0).getTrainingType().getTrainingType().getDisplayName());
         assertEquals("Yoga Session", results.get(0).getTrainingName());
     }
 
-    @Test
-    void findByCriteria_ShouldReturnEmptyListForNoMatches() {
-        List<Training> results = trainingDAO.findByCriteria(
-                "nonexistentTrainee", "NonexistentType", LocalDate.now(), LocalDate.now().plusDays(10), "nonexistentTrainer");
-
-        // Assertions
-        assertTrue(results.isEmpty(), "Expected no matching trainings");
-    }
 
     @Test
     void findByCriteriaForTrainer_ShouldReturnMatchingTrainings() {
+
         User trainerUser = new User();
         trainerUser.setFirstName("John");
         trainerUser.setLastName("Doe");
@@ -149,7 +139,6 @@ class TrainingDAOImplTest {
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
 
-        // Create a training session
         Training training = new Training();
         training.setTrainee(trainee);
         training.setTrainer(trainer);
@@ -157,7 +146,6 @@ class TrainingDAOImplTest {
         training.setTrainingName("Yoga Session");
         training.setTrainingDate(LocalDate.of(2024, 12, 1));
         training.setTrainingDuration(60);
-
 
         Transaction transaction = session.beginTransaction();
         session.save(trainerUser);
@@ -168,22 +156,143 @@ class TrainingDAOImplTest {
         transaction.commit();
 
 
-        List<Training> results = trainingDAO.findByCriteriaForTrainer(
-                "trainerJohn", LocalDate.of(2024, 12, 1), LocalDate.of(2024, 12, 31), "traineeJane");
+        List<Training> results = trainingDAO.findByCriteriaForTrainer("trainerJohn", LocalDate.of(2024, 12, 1), LocalDate.of(2024, 12, 31), "traineeJane");
 
 
         assertEquals(1, results.size());
-        assertEquals("Yoga", results.get(0).getTrainingType().getTrainingType());
+        assertEquals("Yoga", results.get(0).getTrainingType().getTrainingType().getDisplayName());
         assertEquals("Yoga Session", results.get(0).getTrainingName());
     }
 
     @Test
     void findByCriteriaForTrainer_ShouldReturnEmptyListForNoMatches() {
-        List<Training> results = trainingDAO.findByCriteriaForTrainer(
-                "nonexistentTrainer", LocalDate.now(), LocalDate.now().plusDays(10), "nonexistentTrainee");
+
+        List<Training> results = trainingDAO.findByCriteriaForTrainer("nonexistentTrainer", LocalDate.now(), LocalDate.now().plusDays(10), "nonexistentTrainee");
 
 
         assertTrue(results.isEmpty(), "Expected no matching trainings");
     }
+
+    private void seedTrainingTypes() {
+        Transaction transaction = session.beginTransaction();
+        for (PredefinedTrainingType type : PredefinedTrainingType.values()) {
+            TrainingType trainingType = new TrainingType();
+            trainingType.setTrainingType(type);
+            session.save(trainingType);
+        }
+        transaction.commit();
+    }
+
+    @Test
+    void findTrainersByTraineeId_ShouldReturnMatchingTrainers() {
+
+        User trainerUser = new User();
+        trainerUser.setFirstName("Trainer");
+        trainerUser.setLastName("One");
+        trainerUser.setUsername("trainer1");
+        trainerUser.setPassword("password");
+
+        Trainer trainer = new Trainer();
+        trainer.setUser(trainerUser);
+        trainer.setSpecialization(getTrainingType("Yoga"));
+
+        User traineeUser = new User();
+        traineeUser.setFirstName("Trainee");
+        traineeUser.setLastName("One");
+        traineeUser.setUsername("trainee1");
+        traineeUser.setPassword("password");
+
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        Training training = new Training();
+        training.setTrainer(trainer);
+        training.setTrainee(trainee);
+        training.setTrainingType(getTrainingType("Yoga"));
+        training.setTrainingName("Yoga Training");
+        training.setTrainingDate(LocalDate.now());
+        training.setTrainingDuration(60);
+
+        Transaction transaction = session.beginTransaction();
+        session.save(trainerUser);
+        session.save(trainer);
+        session.save(traineeUser);
+        session.save(trainee);
+        session.save(training);
+        transaction.commit();
+
+
+        List<Trainer> trainers = trainingDAO.findTrainersByTraineeId(trainee.getId());
+
+
+        assertEquals(1, trainers.size(), "Expected one matching trainer");
+        assertEquals("Trainer", trainers.get(0).getUser().getFirstName());
+    }
+
+    @Test
+    void findTrainersByTraineeId_ShouldReturnEmptyListForInvalidTraineeId() {
+
+        List<Trainer> trainers = trainingDAO.findTrainersByTraineeId(999L);
+
+
+        assertTrue(trainers.isEmpty(), "Expected no trainers for invalid trainee ID");
+    }
+
+    @Test
+    void findTraineesByTrainerId_ShouldReturnMatchingTrainees() {
+
+        User trainerUser = new User();
+        trainerUser.setFirstName("Trainer");
+        trainerUser.setLastName("Two");
+        trainerUser.setUsername("trainer2");
+        trainerUser.setPassword("password");
+
+        Trainer trainer = new Trainer();
+        trainer.setUser(trainerUser);
+        trainer.setSpecialization(getTrainingType("Cardio"));
+
+        User traineeUser = new User();
+        traineeUser.setFirstName("Trainee");
+        traineeUser.setLastName("Two");
+        traineeUser.setUsername("trainee2");
+        traineeUser.setPassword("password");
+
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        Training training = new Training();
+        training.setTrainer(trainer);
+        training.setTrainee(trainee);
+        training.setTrainingType(getTrainingType("Cardio"));
+        training.setTrainingName("Cardio Training");
+        training.setTrainingDate(LocalDate.now());
+        training.setTrainingDuration(60);
+
+        Transaction transaction = session.beginTransaction();
+        session.save(trainerUser);
+        session.save(trainer);
+        session.save(traineeUser);
+        session.save(trainee);
+        session.save(training);
+        transaction.commit();
+
+
+        List<Trainee> trainees = trainingDAO.findTraineesByTrainerId(trainer.getId());
+
+
+        assertEquals(1, trainees.size(), "Expected one matching trainee");
+        assertEquals("Trainee", trainees.get(0).getUser().getFirstName());
+    }
+
+    @Test
+    void findTraineesByTrainerId_ShouldReturnEmptyListForInvalidTrainerId() {
+
+        List<Trainee> trainees = trainingDAO.findTraineesByTrainerId(999L);
+
+
+        assertTrue(trainees.isEmpty(), "Expected no trainees for invalid trainer ID");
+    }
+
+
 }
 

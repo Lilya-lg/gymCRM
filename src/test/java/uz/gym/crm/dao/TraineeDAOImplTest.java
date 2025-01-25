@@ -7,25 +7,30 @@ import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uz.gym.crm.config.TrainingTypeInitializer;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import uz.gym.crm.domain.*;
 
 import javax.transaction.Transactional;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class TraineeDAOImplTest {
+    private TrainerDAOImpl trainerDAO;
     private TraineeDAOImpl traineeDAO;
     private SessionFactory sessionFactory;
     private Session session;
+    private TrainingTypeDAOImpl trainingTypeDAO;
 
     @BeforeEach
     void setUp() {
-        // Configure Hibernate with H2 database
         Configuration configuration = new Configuration();
         configuration.addAnnotatedClass(Trainee.class);
         configuration.addAnnotatedClass(User.class);
@@ -44,7 +49,12 @@ public class TraineeDAOImplTest {
             session.close();
         }
         session = sessionFactory.openSession();
-        traineeDAO = new TraineeDAOImpl(session);
+
+        // Mock the dependencies
+        trainerDAO = mock(TrainerDAOImpl.class); // Mocked TrainerDAOImpl
+        trainingTypeDAO = mock(TrainingTypeDAOImpl.class); // Mocked TrainingTypeDAOImpl
+
+        traineeDAO = new TraineeDAOImpl(sessionFactory, trainerDAO, trainingTypeDAO);
 
         // Clear the database before each test
         Transaction transaction = session.beginTransaction();
@@ -54,7 +64,7 @@ public class TraineeDAOImplTest {
         session.createQuery("DELETE FROM User").executeUpdate();
         session.createQuery("DELETE FROM TrainingType").executeUpdate();
         transaction.commit();
-        TrainingTypeInitializer.initializeTrainingTypes(sessionFactory);
+
     }
 
     @AfterEach
@@ -116,7 +126,6 @@ public class TraineeDAOImplTest {
         session.save(trainee);
         transaction.commit();
 
-        // Test the DAO method
         Optional<Trainee> result = traineeDAO.findByUsername("testUser");
         assertTrue(result.isPresent(), "Trainee should be found");
         assertEquals(user.getUsername(), result.get().getUser().getUsername());
@@ -145,13 +154,12 @@ public class TraineeDAOImplTest {
         Trainee trainee = new Trainee();
         trainee.setUser(user);
 
-        // Save the trainee
         Transaction transaction = session.beginTransaction();
         session.save(user);
         session.save(trainee);
         transaction.commit();
 
-        // Test the DAO method
+
         Optional<Trainee> result = traineeDAO.findByUsername("testUser");
         assertTrue(result.isPresent(), "Trainee should be found");
         assertEquals(user.getUsername(), result.get().getUser().getUsername());
@@ -167,7 +175,7 @@ public class TraineeDAOImplTest {
         TrainingType yogaType = getTrainingType("Yoga");
         TrainingType cardioType = getTrainingType("Cardio");
 
-        // Create trainee
+
         User traineeUser = new User();
         traineeUser.setFirstName("Trainee");
         traineeUser.setLastName("One");
@@ -201,7 +209,7 @@ public class TraineeDAOImplTest {
         trainer2.setUser(trainerUser2);
         trainer2.setSpecialization(cardioType);
 
-        // Save entities
+
         Transaction transaction = session.beginTransaction();
         session.save(traineeUser);
         session.save(trainee);
@@ -211,10 +219,10 @@ public class TraineeDAOImplTest {
         session.save(trainer2);
         transaction.commit();
 
-        // Update trainee's trainer list
-        traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of(trainer1.getId(), trainer2.getId()));
 
-        // Verify updated associations
+        traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of(trainer1.getUser().getUsername()));
+
+
         List<Training> updatedTrainings = session.createQuery("SELECT t FROM Training t WHERE t.trainee.id = :traineeId", Training.class).setParameter("traineeId", trainee.getId()).list();
 
         assertEquals(2, updatedTrainings.size(), "Trainee should have two trainings");
@@ -248,7 +256,7 @@ public class TraineeDAOImplTest {
         traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of());
         session.getTransaction().commit();
 
-        // Fetch updated trainings for the trainee
+
         List<Training> updatedTrainings = session.createQuery("SELECT t FROM Training t WHERE t.trainee.id = :traineeId", Training.class).setParameter("traineeId", trainee.getId()).list();
 
 
@@ -261,7 +269,7 @@ public class TraineeDAOImplTest {
 
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            traineeDAO.updateTraineeTrainerList(invalidTraineeId, List.of(1L, 2L));
+            traineeDAO.updateTraineeTrainerList(invalidTraineeId, List.of("a", "b"));
         });
 
 
@@ -280,20 +288,25 @@ public class TraineeDAOImplTest {
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
 
-        // Save trainee
         Transaction transaction = session.beginTransaction();
         session.save(traineeUser);
         session.save(trainee);
         transaction.commit();
 
 
+        when(trainerDAO.findByUsername("invalidTrainerId")).thenReturn(Optional.empty());
+
+
+
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of(999L));
+            traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of("invalidTrainerId"));
         });
 
 
-        assertEquals("Trainer with ID 999 not found", exception.getMessage());
+        assertEquals("Trainer not found with username: invalidTrainerId", exception.getMessage());
+        verify(trainerDAO, times(1)).findByUsername("invalidTrainerId"); // Ensure the method was called
     }
+
 
     @Test
     void findByUsername_ShouldHandleCaseSensitivity() {
@@ -313,11 +326,11 @@ public class TraineeDAOImplTest {
         session.save(trainee);
         transaction.commit();
 
-        // Test with exact case
+
         Optional<Trainee> resultExact = traineeDAO.findByUsername("CaseSensitiveUser");
         assertTrue(resultExact.isPresent(), "Trainee should be found with exact case");
 
-        // Test with different case
+
         Optional<Trainee> resultDifferentCase = traineeDAO.findByUsername("casesensitiveuser");
         assertTrue(resultDifferentCase.isEmpty(), "Trainee should not be found with different case if case-sensitive");
     }
@@ -382,5 +395,170 @@ public class TraineeDAOImplTest {
         assertTrue(trainings.isEmpty(), "Trainee should have no associated trainings");
     }
 
+
+
+    @Test
+    void updateTraineeTrainerList_ShouldHandleNullTrainer() {
+        User traineeUser = new User();
+        traineeUser.setFirstName("Trainee");
+        traineeUser.setLastName("One");
+        traineeUser.setUsername("trainee1");
+        traineeUser.setPassword("password");
+        traineeUser.setActive(true);
+
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        Transaction transaction = session.beginTransaction();
+        session.save(traineeUser);
+        session.save(trainee);
+        transaction.commit();
+
+
+        when(trainerDAO.findByUsername("nonexistentTrainer")).thenReturn(Optional.empty());
+
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of("nonexistentTrainer"));
+        });
+
+
+
+        assertEquals("Trainer not found with username: nonexistentTrainer", exception.getMessage(), "Exception reason should match");
+
+    }
+    @Test
+    void updateTraineeTrainerList_ShouldIgnoreDuplicateTrainers() {
+        User traineeUser = new User();
+        traineeUser.setFirstName("Trainee");
+        traineeUser.setLastName("One");
+        traineeUser.setUsername("trainee1");
+        traineeUser.setPassword("password");
+        traineeUser.setActive(true);
+
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        User trainerUser = new User();
+        trainerUser.setFirstName("Trainer");
+        trainerUser.setLastName("One");
+        trainerUser.setUsername("trainer1");
+        trainerUser.setPassword("password");
+        trainerUser.setActive(true);
+
+        TrainingType trainingType = new TrainingType();
+        trainingType.setTrainingType(PredefinedTrainingType.fromName("Yoga"));
+
+        Trainer trainer = new Trainer();
+        trainer.setUser(trainerUser);
+        trainer.setSpecialization(trainingType); // Ensure specialization is set
+
+        Training existingTraining = new Training();
+        existingTraining.setTrainee(trainee);
+        existingTraining.setTrainer(trainer);
+        existingTraining.setTrainingType(trainingType); // Set a valid training type
+        existingTraining.setTrainingDate(LocalDate.now());
+        existingTraining.setTrainingName("Yoga Training");
+        existingTraining.setTrainingDuration(60);
+
+        Transaction transaction = session.beginTransaction();
+        session.save(trainingType); // Save training type to ensure persistence
+        session.save(traineeUser);
+        session.save(trainee);
+        session.save(trainerUser);
+        session.save(trainer);
+        session.save(existingTraining);
+        transaction.commit();
+
+        traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of("trainer1"));
+
+        List<Training> updatedTrainings = session.createQuery(
+                        "SELECT t FROM Training t WHERE t.trainee.id = :traineeId", Training.class)
+                .setParameter("traineeId", trainee.getId())
+                .list();
+
+        assertEquals(1, updatedTrainings.size(), "Trainee should have one training for the same trainer");
+        assertEquals(trainer.getId(), updatedTrainings.get(0).getTrainer().getId(), "Trainer should remain unchanged");
+    }
+    @Test
+    void findByUsername_ShouldThrowExceptionForNullUsername() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            traineeDAO.findByUsername(null);
+        });
+
+        assertEquals("Username cannot be null", exception.getMessage(), "Exception message should match");
+    }
+    @Test
+    void updateTraineeTrainerList_ShouldHandleEmptyTrainerIds() {
+        User traineeUser = new User();
+        traineeUser.setFirstName("Trainee");
+        traineeUser.setLastName("One");
+        traineeUser.setUsername("trainee1");
+        traineeUser.setPassword("password");
+        traineeUser.setActive(true);
+
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        Transaction transaction = session.beginTransaction();
+        session.save(traineeUser);
+        session.save(trainee);
+        transaction.commit();
+
+
+        traineeDAO.updateTraineeTrainerList(trainee.getId(), Collections.emptyList());
+
+
+        List<Training> updatedTrainings = session.createQuery(
+                        "SELECT t FROM Training t WHERE t.trainee.id = :traineeId", Training.class)
+                .setParameter("traineeId", trainee.getId())
+                .list();
+
+        assertTrue(updatedTrainings.isEmpty(), "No trainings should exist for an empty trainer list");
+    }
+    @Test
+    void updateTraineeTrainerList_ShouldThrowExceptionForMissingTrainerSpecialization() {
+        User traineeUser = new User();
+        traineeUser.setFirstName("Trainee");
+        traineeUser.setLastName("One");
+        traineeUser.setUsername("trainee1");
+        traineeUser.setPassword("password");
+        traineeUser.setActive(true);
+
+        Trainee trainee = new Trainee();
+        trainee.setUser(traineeUser);
+
+        User trainerUser = new User();
+        trainerUser.setFirstName("Trainer");
+        trainerUser.setLastName("One");
+        trainerUser.setUsername("trainer1");
+        trainerUser.setPassword("password");
+        trainerUser.setActive(true);
+
+        Trainer trainer = new Trainer();
+        trainer.setUser(trainerUser);
+        trainer.setSpecialization(null);
+
+
+        Transaction transaction = session.beginTransaction();
+        session.save(traineeUser);
+        session.save(trainee);
+        session.save(trainerUser);
+        transaction.commit();
+
+
+        when(trainerDAO.findByUsername("trainer1")).thenReturn(Optional.of(trainer));
+
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            traineeDAO.updateTraineeTrainerList(trainee.getId(), List.of("trainer1"));
+        });
+
+
+        assertEquals("Trainer specialization is missing", exception.getMessage(), "Exception message should match");
+
+
+        verify(trainerDAO, times(1)).findByUsername("trainer1");
+    }
 
 }

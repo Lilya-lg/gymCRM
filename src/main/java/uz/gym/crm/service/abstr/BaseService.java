@@ -13,6 +13,6 @@ public interface BaseService<T> {
 
     List<T> getAll();
 
-
+    boolean authenticate(String username, String password);
 }
 

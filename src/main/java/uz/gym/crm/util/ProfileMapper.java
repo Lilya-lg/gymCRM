@@ -1,5 +1,6 @@
 package uz.gym.crm.util;
 
+import net.bytebuddy.description.modifier.SynchronizationState;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 
@@ -27,6 +28,7 @@ public class ProfileMapper {
         if (updated.getDateOfBirth() != null) {
             existing.setDateOfBirth(updated.getDateOfBirth());
         }
+            existing.getUser().setActive(updated.getUser().isActive());
     }
 
     private static void updateTrainerFields(Trainer existing, Trainer updated) {
