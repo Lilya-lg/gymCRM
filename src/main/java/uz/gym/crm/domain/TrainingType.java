@@ -10,7 +10,6 @@ public class TrainingType {
     private Long id;
 
 
-
     @Enumerated(EnumType.STRING)
     private PredefinedTrainingType trainingType;
 
@@ -29,6 +28,7 @@ public class TrainingType {
     public PredefinedTrainingType getTrainingType() {
         return trainingType;
     }
+
     public void setTrainingType(PredefinedTrainingType trainingType) {
         this.trainingType = trainingType;
     }

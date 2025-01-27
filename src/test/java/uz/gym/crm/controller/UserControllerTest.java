@@ -101,26 +101,13 @@ class UserControllerTest {
         doNothing().when(userService).updateUser(username, oldPassword, newPassword);
 
 
-        ResponseEntity<String> response = userController.changePassword(username, oldPassword, newPassword, authHeader);
+        ResponseEntity<String> response = userController.changePassword(username, oldPassword, newPassword);
 
         assertEquals(OK, response.getStatusCode());
         assertEquals("Password updated successfully", response.getBody());
     }
 
-    @Test
-    void changePassword_ShouldReturnUnauthorized_WhenAuthHeaderIsInvalid() {
 
-        String username = "validUser";
-        String oldPassword = "oldPassword";
-        String newPassword = "newPassword";
-        String authHeader = null;
-
-
-        ResponseEntity<String> response = userController.changePassword(username, oldPassword, newPassword, authHeader);
-
-        assertEquals(UNAUTHORIZED, response.getStatusCode());
-        assertEquals("Missing or invalid Authorization header", response.getBody());
-    }
 
     @Test
     void changePassword_ShouldReturnBadRequest_WhenServiceThrowsException() {
@@ -133,7 +120,7 @@ class UserControllerTest {
         doThrow(new IllegalArgumentException("Invalid password")).when(userService).updateUser(username, oldPassword, newPassword);
 
 
-        ResponseEntity<String> response = userController.changePassword(username, oldPassword, newPassword, authHeader);
+        ResponseEntity<String> response = userController.changePassword(username, oldPassword, newPassword);
 
 
         assertEquals(BAD_REQUEST, response.getStatusCode());

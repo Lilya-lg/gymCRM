@@ -17,6 +17,7 @@ public class Trainee {
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "user_id", unique = true, nullable = false)
     private User user;
+
     public Trainee(LocalDate dateOfBirth, String address, User user) {
         this.dateOfBirth = dateOfBirth;
         this.address = address;
@@ -57,7 +58,6 @@ public class Trainee {
     public void setUser(User user) {
         this.user = user;
     }
-
 
 
     @Override

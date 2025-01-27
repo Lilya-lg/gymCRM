@@ -2,6 +2,8 @@ package uz.gym.crm.dao;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import uz.gym.crm.dao.abstr.UserDAO;
@@ -14,6 +16,7 @@ import java.util.Optional;
 
 @Repository
 public class UserDAOImpl extends BaseDAOImpl<User> implements UserDAO {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserDAOImpl.class);
     private static final String FIND_BY_USERNAME = "FROM User WHERE username = :username";
     private static final String FIND_BY_USERNAME_AND_PASSWORD = "FROM User WHERE username = :username AND password = :password";
     private final SessionFactory sessionFactory;
@@ -23,6 +26,7 @@ public class UserDAOImpl extends BaseDAOImpl<User> implements UserDAO {
         super(User.class, sessionFactory);
         this.sessionFactory = sessionFactory;
     }
+
     public Optional<User> findByUsername(String username) {
         DynamicQueryBuilder<User> queryBuilder = new DynamicQueryBuilder<>(FIND_BY_USERNAME);
         queryBuilder.addCondition("username = :username", "username", username);
@@ -40,9 +44,14 @@ public class UserDAOImpl extends BaseDAOImpl<User> implements UserDAO {
 
     @Override
     public void updateUser(User user) {
-        Session session = this.sessionFactory.getCurrentSession();
-        session.saveOrUpdate(user);
+        try {
+            Session session = this.sessionFactory.getCurrentSession();
+            session.saveOrUpdate(user);
+        } catch (Exception e) {
+            LOGGER.error("Can't update user", e);
+        }
     }
+
     private Session getSession() {
         return sessionFactory.openSession();
     }

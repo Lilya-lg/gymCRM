@@ -56,8 +56,6 @@ public class Mapper {
         if (traineeDTO.getAddress() != null) {
             trainee.setAddress(traineeDTO.getAddress());
         }
-        trainee.getUser().setActive(Boolean.parseBoolean(traineeDTO.getIsActive()));
-
 
     }
 
@@ -74,7 +72,6 @@ public class Mapper {
             trainer.setSpecialization(trainingTypeDAO.getOrCreateTrainingType(trainingType));
         }
 
-        trainer.getUser().setActive(trainerDTO.getIsActive());
 
     }
 

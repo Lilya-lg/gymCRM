@@ -12,6 +12,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.validation.Validator;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -106,6 +108,11 @@ public class WebConfig implements WebMvcConfigurer {
                 .licenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html")
                 .version("0.0.1-SNAPSHOT")
                 .build();
+    }
+
+    @Bean
+    public Validator validator() {
+        return new LocalValidatorFactoryBean();
     }
 
 

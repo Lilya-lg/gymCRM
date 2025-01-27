@@ -11,7 +11,6 @@ import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.dto.abstr.BaseTrainerDTO;
 import uz.gym.crm.mapper.Mapper;
-import uz.gym.crm.service.abstr.AbstractProfileService;
 import uz.gym.crm.service.abstr.ProfileService;
 import uz.gym.crm.service.abstr.TrainerService;
 
@@ -26,6 +25,7 @@ public class TrainerController {
     @Autowired
     private TrainerService trainerService;
     @Autowired
+    @Qualifier("trainerServiceImpl")
     private ProfileService<Trainer> abstractProfileService;
 
     @Autowired
@@ -62,6 +62,7 @@ public class TrainerController {
         try {
             trainerService.updateTrainerProfile(username, trainerDTO);
             TrainerProfileDTO trainerProfile = trainerService.getTrainerProfile(username);
+
             ResponseWrapper<TrainerProfileDTO> response = new ResponseWrapper<>(username, trainerProfile);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {

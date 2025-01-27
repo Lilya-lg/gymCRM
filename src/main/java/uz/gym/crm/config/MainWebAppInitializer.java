@@ -33,6 +33,7 @@ public class MainWebAppInitializer extends AbstractAnnotationConfigDispatcherSer
         FilterRegistration.Dynamic characterEncoding = aContext.addFilter("characterEncoding", characterEncodingFilter);
         characterEncoding.addMappingForUrlPatterns(dispatcherTypes, true, "/*");
     }
+
     private void registerJwtFilter(ServletContext aContext) {
         EnumSet<DispatcherType> dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD);
 
@@ -40,6 +41,7 @@ public class MainWebAppInitializer extends AbstractAnnotationConfigDispatcherSer
         FilterRegistration.Dynamic jwtFilterRegistration = aContext.addFilter("jwtFilter", jwtFilter);
         jwtFilterRegistration.addMappingForUrlPatterns(dispatcherTypes, true, "/*"); // Применение ко всем URL
     }
+
     @Override
     protected Class<?>[] getRootConfigClasses() {
         return new Class[]{WebConfig.class};

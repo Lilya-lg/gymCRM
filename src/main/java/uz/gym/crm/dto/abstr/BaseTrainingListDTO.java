@@ -4,7 +4,7 @@ import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 
 public abstract class BaseTrainingListDTO {
-    @NotBlank(message ="Username is required")
+    @NotBlank(message = "Username is required")
     private String username;
     private LocalDate periodFrom;
     private LocalDate periodTo;

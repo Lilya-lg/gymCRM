@@ -1,11 +1,9 @@
 package uz.gym.crm.dao;
 
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import uz.gym.crm.domain.PredefinedTrainingType;
 import uz.gym.crm.domain.TrainingType;

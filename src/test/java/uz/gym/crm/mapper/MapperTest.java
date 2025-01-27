@@ -112,7 +112,6 @@ class MapperTest {
         assertEquals("UpdatedLastName", user.getLastName(), "Last name should be updated");
         assertEquals(LocalDate.of(1995, 5, 15), trainee.getDateOfBirth(), "Date of birth should be updated");
         assertEquals("Updated Address", trainee.getAddress(), "Address should be updated");
-        assertTrue(user.isActive(), "Active status should be updated");
     }
 
     @Test
@@ -139,7 +138,6 @@ class MapperTest {
         assertEquals("UpdatedFirstName", user.getFirstName(), "First name should be updated");
         assertEquals("UpdatedLastName", user.getLastName(), "Last name should be updated");
         assertEquals(trainingType, trainer.getSpecialization(), "Specialization should be updated");
-        assertTrue(user.isActive(), "Active status should be updated");
         verify(mockTrainingTypeService, times(1)).getOrCreateTrainingType(PredefinedTrainingType.fromName("Cardio"));
     }
 

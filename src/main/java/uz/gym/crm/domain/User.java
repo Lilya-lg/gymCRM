@@ -43,7 +43,9 @@ public class User {
         this.firstName = firstName;
         this.lastName = lastName;
     }
-    public User(){}
+
+    public User() {
+    }
 
 
     public void setUsername(String username) {
@@ -58,11 +60,11 @@ public class User {
         this.password = password;
     }
 
-    public boolean isActive() {
+    public boolean getIsActive() {
         return isActive;
     }
 
-    public void setActive(boolean active) {
+    public void setIsActive(boolean active) {
         isActive = active;
     }
 

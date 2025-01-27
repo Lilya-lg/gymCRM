@@ -9,7 +9,7 @@ import uz.gym.crm.dao.abstr.TrainingDAO;
 import uz.gym.crm.dao.abstr.UserDAO;
 import uz.gym.crm.domain.*;
 import uz.gym.crm.util.PasswordGenerator;
-import uz.gym.crm.util.ProfileMapper;
+import uz.gym.crm.mapper.ProfileMapper;
 import uz.gym.crm.util.UsernameGenerator;
 
 import java.time.LocalDate;
@@ -45,7 +45,7 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> imple
     }
 
     public void changePassword(String username, String oldPassword, String newPassword) {
-        User user = userDAO.findByUsernameAndPassword(username,oldPassword).orElseThrow(() -> new IllegalArgumentException("Invalid username or password."));
+        User user = userDAO.findByUsernameAndPassword(username, oldPassword).orElseThrow(() -> new IllegalArgumentException("Invalid username or password."));
         user.setPassword(newPassword);
         userDAO.updateUser(user);
     }
@@ -54,11 +54,11 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> imple
     public void activate(String username) {
         LOGGER.debug("Activating profile with username: {}", username);
         User user = userDAO.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
-        user.setActive(true);
+        user.setIsActive(true);
         try {
             userDAO.updateUser(user);
         } catch (Exception e) {
-            LOGGER.error("Can not update user",e);
+            LOGGER.error("Can not update user", e);
         }
         LOGGER.info("Profile with username {} activated successfully.", username);
     }
@@ -67,9 +67,9 @@ public abstract class AbstractProfileService<T> extends BaseServiceImpl<T> imple
     public void deactivate(String usernameToDeactive) {
         LOGGER.debug("Deactivating  profile with username: {}", usernameToDeactive);
 
-            User user = userDAO.findByUsername(usernameToDeactive).orElseThrow(() -> new IllegalArgumentException("User not found for username: " + usernameToDeactive));
-            user.setActive(false);
-            userDAO.updateUser(user);
+        User user = userDAO.findByUsername(usernameToDeactive).orElseThrow(() -> new IllegalArgumentException("User not found for username: " + usernameToDeactive));
+        user.setIsActive(false);
+        userDAO.updateUser(user);
         LOGGER.info("Profile with username {} deactivated successfully.", usernameToDeactive);
     }
 

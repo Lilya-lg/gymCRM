@@ -115,7 +115,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
         profileDTO.setSecondName(trainee.getUser().getLastName());
         profileDTO.setDateOfBirth(trainee.getDateOfBirth());
         profileDTO.setAddress(trainee.getAddress());
-        profileDTO.setActive(trainee.getUser().isActive());
+        profileDTO.setActive(trainee.getUser().getIsActive());
 
         // Fetch associated trainers and map to DTO
         List<Trainer> trainers = trainingDAO.findTrainersByTraineeId(trainee.getId());
@@ -143,9 +143,16 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
         Optional<Trainee> optionalTrainee = findByUsername(username);
         Trainee trainee = optionalTrainee.orElseThrow(() ->
                 new IllegalArgumentException("Trainee with username '" + username + "' does not exist"));
-
+        if (trainee.getUser().getIsActive() != Boolean.valueOf(traineeDTO.getIsActive())) {
+            if (Boolean.valueOf(traineeDTO.getIsActive())) {
+                traineeService.activate(username);
+            } else {
+                traineeService.deactivate(username);
+            }
+        }
         mapper.updateTraineeFromDTO(traineeDTO, trainee);
         updateProfile(username, trainee);
+
     }
 
     @Override
@@ -157,6 +164,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
     public void deactivate(String username) {
         super.deactivate(username);
     }
+
     @Override
     protected User getUser(Trainee entity) {
         return entity.getUser();

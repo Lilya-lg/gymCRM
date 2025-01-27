@@ -1,9 +1,10 @@
-package uz.gym.crm.util;
+package uz.gym.crm.mapper;
 
 import org.junit.jupiter.api.Test;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.User;
+import uz.gym.crm.mapper.ProfileMapper;
 
 import java.time.LocalDate;
 
@@ -15,7 +16,7 @@ class ProfileMapperTest {
     void updateFields_ShouldUpdateTraineeFields() {
         // Arrange
         User existingUser = new User();
-        existingUser.setActive(false);
+        existingUser.setIsActive(false);
 
         Trainee existingTrainee = new Trainee();
         existingTrainee.setAddress("Old Address");
@@ -23,7 +24,7 @@ class ProfileMapperTest {
         existingTrainee.setUser(existingUser);
 
         User updatedUser = new User();
-        updatedUser.setActive(true);
+        updatedUser.setIsActive(true);
 
         Trainee updatedTrainee = new Trainee();
         updatedTrainee.setAddress("New Address");
@@ -35,7 +36,7 @@ class ProfileMapperTest {
 
         assertEquals("New Address", existingTrainee.getAddress());
         assertEquals(LocalDate.of(1995, 5, 15), existingTrainee.getDateOfBirth());
-        assertTrue(existingTrainee.getUser().isActive());
+        assertTrue(existingTrainee.getUser().getIsActive());
     }
 
 

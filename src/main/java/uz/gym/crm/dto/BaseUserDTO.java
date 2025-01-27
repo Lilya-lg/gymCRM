@@ -3,6 +3,7 @@ package uz.gym.crm.dto;
 public class BaseUserDTO {
     private String username;
     private String password;
+
     public String getUsername() {
         return username;
     }

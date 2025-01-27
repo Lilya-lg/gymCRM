@@ -1,11 +1,11 @@
 package uz.gym.crm.dto;
 
-import javax.validation.constraints.NotNull;
 
 public class UserDTO {
     private String firstName;
     private String secondName;
     private String username;
+
     public String getFirstName() {
         return firstName;
     }

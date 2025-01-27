@@ -52,7 +52,7 @@ class BaseDAOImplTest {
         user.setLastName("Doe");
         user.setUsername("johndoe");
         user.setPassword("password");
-        user.setActive(true);
+        user.setIsActive(true);
 
         session.beginTransaction();
         session.save(user);
@@ -71,7 +71,7 @@ class BaseDAOImplTest {
         user.setLastName("Doe");
         user.setUsername("janedoe");
         user.setPassword("password");
-        user.setActive(true);
+        user.setIsActive(true);
 
         session.beginTransaction();
         session.save(user);
@@ -89,14 +89,14 @@ class BaseDAOImplTest {
         user1.setLastName("Smith");
         user1.setUsername("alicesmith");
         user1.setPassword("password");
-        user1.setActive(true);
+        user1.setIsActive(true);
 
         User user2 = new User();
         user2.setFirstName("Bob");
         user2.setLastName("Johnson");
         user2.setUsername("bobjohnson");
         user2.setPassword("password");
-        user2.setActive(true);
+        user2.setIsActive(true);
 
         session.beginTransaction();
         session.save(user1);
@@ -114,7 +114,7 @@ class BaseDAOImplTest {
         user.setLastName("Brown");
         user.setUsername("charliebrown");
         user.setPassword("password");
-        user.setActive(true);
+        user.setIsActive(true);
 
         session.beginTransaction();
         session.save(user);
@@ -135,7 +135,7 @@ class BaseDAOImplTest {
         user.setLastName("Taylor");
         user.setUsername("evetaylor");
         user.setPassword("password");
-        user.setActive(true);
+        user.setIsActive(true);
 
         session.beginTransaction();
         session.save(user);
@@ -151,7 +151,7 @@ class BaseDAOImplTest {
         user.setLastName("Moore");
         user.setUsername("frankmoore");
         user.setPassword("password");
-        user.setActive(true);
+        user.setIsActive(true);
 
         session.beginTransaction();
         session.save(user);

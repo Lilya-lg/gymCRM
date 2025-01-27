@@ -42,7 +42,7 @@ class AbstractProfileServiceTest {
 
         User userToActivate = new User();
         userToActivate.setUsername("johndoe");
-        userToActivate.setActive(false);
+        userToActivate.setIsActive(false);
 
         Trainee traineeToActivate = new Trainee();
         traineeToActivate.setUser(userToActivate);
@@ -56,7 +56,7 @@ class AbstractProfileServiceTest {
 
         verify(mockUserDAO, times(1)).findByUsername("johndoe");
         verify(mockUserDAO, times(1)).updateUser(userToActivate);
-        assertTrue(userToActivate.isActive(), "The user should be activated.");
+        assertTrue(userToActivate.getIsActive(), "The user should be activated.");
     }
 
     @Test
@@ -64,7 +64,7 @@ class AbstractProfileServiceTest {
 
         User userToDeactivate = new User();
         userToDeactivate.setUsername("johndoe");
-        userToDeactivate.setActive(true);
+        userToDeactivate.setIsActive(true);
 
         Trainee traineeToDeactivate = new Trainee();
         traineeToDeactivate.setUser(userToDeactivate);
@@ -78,7 +78,7 @@ class AbstractProfileServiceTest {
 
         verify(mockUserDAO, times(1)).findByUsername("johndoe");
         verify(mockUserDAO, times(1)).updateUser(userToDeactivate);
-        assertFalse(userToDeactivate.isActive(), "The user should be deactivated.");
+        assertFalse(userToDeactivate.getIsActive(), "The user should be deactivated.");
     }
 
     @Test

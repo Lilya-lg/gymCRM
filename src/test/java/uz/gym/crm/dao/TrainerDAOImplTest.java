@@ -69,7 +69,7 @@ public class TrainerDAOImplTest {
         user.setLastName("TrainerLast");
         user.setUsername("trainerUser");
         user.setPassword("trainerPass");
-        user.setActive(true);
+        user.setIsActive(true);
 
         // Create the Trainer and associate the User
         Trainer trainer = new Trainer();
@@ -101,7 +101,7 @@ public class TrainerDAOImplTest {
         user.setLastName("TrainerLast");
         user.setUsername("trainerUser");
         user.setPassword("trainerPass");
-        user.setActive(true);
+        user.setIsActive(true);
 
 
         Trainer trainer = new Trainer();
@@ -141,7 +141,7 @@ public class TrainerDAOImplTest {
         traineeUser.setLastName("Doe");
         traineeUser.setUsername("traineeUser");
         traineeUser.setPassword("password");
-        traineeUser.setActive(true);
+        traineeUser.setIsActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
@@ -152,7 +152,7 @@ public class TrainerDAOImplTest {
         trainerUser1.setLastName("Smith");
         trainerUser1.setUsername("trainer1");
         trainerUser1.setPassword("password");
-        trainerUser1.setActive(true);
+        trainerUser1.setIsActive(true);
 
         Trainer trainer1 = new Trainer();
         trainer1.setUser(trainerUser1);
@@ -163,7 +163,7 @@ public class TrainerDAOImplTest {
         trainerUser2.setLastName("Johnson");
         trainerUser2.setUsername("trainer2");
         trainerUser2.setPassword("password");
-        trainerUser2.setActive(true);
+        trainerUser2.setIsActive(true);
 
         Trainer trainer2 = new Trainer();
         trainer2.setUser(trainerUser2);

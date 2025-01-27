@@ -30,8 +30,6 @@ public class UserController {
 
     @PostMapping(value = "/login")
     public String login(@RequestParam("username") String username, @RequestParam("password") String password) {
-
-        System.out.println(password);
         if (userService.authenticate(username, password)) {
             return JwtUtil.generateToken(username);
         } else {
@@ -43,13 +41,9 @@ public class UserController {
     @ResponseBody
     public ResponseEntity<String> changePassword(@RequestParam("username") String username,
                                                  @RequestParam("oldPassword") String oldPassword,
-                                                 @RequestParam("newPassword") String newPassword, @RequestHeader("Authorization") String authHeader) {
+                                                 @RequestParam("newPassword") String newPassword) {
         {
             try {
-                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
-                }
                 userService.updateUser(username, oldPassword, newPassword);
                 return ResponseEntity.ok("Password updated successfully");
             } catch (IllegalArgumentException e) {

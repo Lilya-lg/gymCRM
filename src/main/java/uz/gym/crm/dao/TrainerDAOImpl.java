@@ -40,12 +40,12 @@ public class TrainerDAOImpl extends BaseDAOImpl<Trainer> implements TrainerDAO {
 
     @Override
     public List<Trainer> getUnassignedTrainersByTraineeUsername(String traineeUsername) {
-        System.out.println(GET_UNASSIGNED_TRAINERS);
         DynamicQueryBuilder<Trainer> queryBuilder = new DynamicQueryBuilder<>(GET_UNASSIGNED_TRAINERS);
         queryBuilder.addCondition("1=1", "username", traineeUsername);
 
         return queryBuilder.buildQuery(getSession(), Trainer.class).getResultList();
     }
+
     private Session getSession() {
         return sessionFactory.openSession();
     }

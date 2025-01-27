@@ -2,6 +2,7 @@ package uz.gym.crm.dao;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,6 @@ import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.Training;
 import org.springframework.transaction.annotation.Transactional;
-import uz.gym.crm.service.TraineeServiceImpl;
 import uz.gym.crm.util.DynamicQueryBuilder;
 
 
@@ -32,13 +32,16 @@ public class TraineeDAOImpl extends BaseDAOImpl<Trainee> implements TraineeDAO {
     private static final String FETCH_TRAININGS_BY_TRAINEE = "SELECT t FROM Training t WHERE t.trainee.id = :traineeId";
     private final SessionFactory sessionFactory;
     private final TrainerDAOImpl trainerDAO;
-    private final TrainingTypeDAOImpl trainingDAO;
+    private final TrainingTypeDAOImpl trainingTypeDAO;
+    private final TrainingDAOImpl trainingDAO;
+
 
     @Autowired
-    public TraineeDAOImpl(SessionFactory sessionFactory, TrainerDAOImpl trainerDAO, TrainingTypeDAOImpl trainingDAO) {
+    public TraineeDAOImpl(SessionFactory sessionFactory, TrainerDAOImpl trainerDAO, TrainingTypeDAOImpl trainingTypeDAO, TrainingDAOImpl trainingDAO) {
         super(Trainee.class, sessionFactory);
         this.sessionFactory = sessionFactory;
         this.trainerDAO = trainerDAO;
+        this.trainingTypeDAO = trainingTypeDAO;
         this.trainingDAO = trainingDAO;
     }
 
@@ -67,15 +70,20 @@ public class TraineeDAOImpl extends BaseDAOImpl<Trainee> implements TraineeDAO {
     }
 
     public void deleteByUsername(String username) {
-        String deleteTraineeQuery = "DELETE FROM Trainee t WHERE t.user.id = (SELECT u.id FROM User u WHERE u.username = :username)";
-        Query<?> traineeQuery = getSession().createQuery(deleteTraineeQuery);
-        traineeQuery.setParameter("username", username);
-        traineeQuery.executeUpdate();
+        try (Session session = getSession()) {
+            String hql = "FROM Trainee t WHERE t.user.username = :username";
+            Query<Trainee> query = session.createQuery(hql, Trainee.class);
+            query.setParameter("username", username);
+            Trainee trainee = query.uniqueResult();
 
-        String deleteUserQuery = "DELETE FROM User u WHERE u.username = :username";
-        Query<?> userQuery = getSession().createQuery(deleteUserQuery);
-        userQuery.setParameter("username", username);
-        userQuery.executeUpdate();
+            if (trainee != null) {
+                session.delete(trainee);
+            } else {
+                throw new IllegalArgumentException("No Trainee found with username: " + username);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -114,7 +122,6 @@ public class TraineeDAOImpl extends BaseDAOImpl<Trainee> implements TraineeDAO {
             boolean exists = existingTrainings.stream().anyMatch(training -> training.getTrainer().getUser().getUsername().equals(trainerId));
 
             if (!exists) {
-
                 Optional<Trainer> optionalTrainer = trainerDAO.findByUsername(trainerId);
                 Trainer trainer = optionalTrainer.orElseThrow(() -> new IllegalArgumentException("Trainer not found with username: " + trainerId));
                 if (trainer.getSpecialization() == null) {
@@ -133,7 +140,7 @@ public class TraineeDAOImpl extends BaseDAOImpl<Trainee> implements TraineeDAO {
                     newTraining.setTrainingDuration(60);
                     newTraining.setTrainingType(trainer.getSpecialization());
                     try {
-                        getSession().persist(newTraining);
+                        getSession().save(newTraining);
                     } catch (Exception e) {
                         LOGGER.error("Error persisting new training", e);
                     }

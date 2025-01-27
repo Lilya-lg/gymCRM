@@ -7,6 +7,7 @@ import java.util.List;
 public class TraineeProfileDTO extends BaseTraineeDTO {
     private boolean isActive;
     private List<TrainerDTO> trainers;
+
     public boolean isActive() {
         return isActive;
     }
@@ -14,6 +15,7 @@ public class TraineeProfileDTO extends BaseTraineeDTO {
     public void setActive(boolean active) {
         isActive = active;
     }
+
     public List<TrainerDTO> getTrainers() {
         return trainers;
     }

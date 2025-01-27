@@ -8,16 +8,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 import uz.gym.crm.domain.*;
+import uz.gym.crm.service.TrainingServiceImpl;
+import uz.gym.crm.service.abstr.TrainingService;
 
-import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -28,6 +26,8 @@ public class TraineeDAOImplTest {
     private SessionFactory sessionFactory;
     private Session session;
     private TrainingTypeDAOImpl trainingTypeDAO;
+    private TrainingDAOImpl trainingDAO;
+    private TrainingServiceImpl trainingService;
 
     @BeforeEach
     void setUp() {
@@ -37,7 +37,7 @@ public class TraineeDAOImplTest {
         configuration.addAnnotatedClass(Trainer.class);
         configuration.addAnnotatedClass(TrainingType.class);
         configuration.addAnnotatedClass(Training.class);
-
+        configuration.addAnnotatedClass(TrainingServiceImpl.class);
         configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
         configuration.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
         configuration.setProperty("hibernate.connection.url", "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
@@ -53,8 +53,10 @@ public class TraineeDAOImplTest {
         // Mock the dependencies
         trainerDAO = mock(TrainerDAOImpl.class); // Mocked TrainerDAOImpl
         trainingTypeDAO = mock(TrainingTypeDAOImpl.class); // Mocked TrainingTypeDAOImpl
+        trainingDAO = mock(TrainingDAOImpl.class);
+        trainingService= mock(TrainingServiceImpl.class);
 
-        traineeDAO = new TraineeDAOImpl(sessionFactory, trainerDAO, trainingTypeDAO);
+        traineeDAO = new TraineeDAOImpl(sessionFactory, trainerDAO, trainingTypeDAO, trainingDAO);
 
         // Clear the database before each test
         Transaction transaction = session.beginTransaction();
@@ -82,7 +84,7 @@ public class TraineeDAOImplTest {
         user.setLastName("User");
         user.setUsername("testUser");
         user.setPassword("testPass");
-        user.setActive(true);
+        user.setIsActive(true);
 
 
         Trainee trainee = new Trainee();
@@ -114,7 +116,7 @@ public class TraineeDAOImplTest {
         user.setLastName("User");
         user.setUsername("testUser");
         user.setPassword("testPass");
-        user.setActive(true);
+        user.setIsActive(true);
 
 
         Trainee trainee = new Trainee();
@@ -148,7 +150,7 @@ public class TraineeDAOImplTest {
         user.setLastName("User");
         user.setUsername("testUser");
         user.setPassword("testPass");
-        user.setActive(true);
+        user.setIsActive(true);
 
 
         Trainee trainee = new Trainee();
@@ -181,7 +183,7 @@ public class TraineeDAOImplTest {
         traineeUser.setLastName("One");
         traineeUser.setUsername("trainee1");
         traineeUser.setPassword("password");
-        traineeUser.setActive(true);
+        traineeUser.setIsActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
@@ -192,7 +194,7 @@ public class TraineeDAOImplTest {
         trainerUser1.setLastName("One");
         trainerUser1.setUsername("trainer1");
         trainerUser1.setPassword("password");
-        trainerUser1.setActive(true);
+        trainerUser1.setIsActive(true);
 
         Trainer trainer1 = new Trainer();
         trainer1.setUser(trainerUser1);
@@ -203,7 +205,7 @@ public class TraineeDAOImplTest {
         trainerUser2.setLastName("Two");
         trainerUser2.setUsername("trainer2");
         trainerUser2.setPassword("password");
-        trainerUser2.setActive(true);
+        trainerUser2.setIsActive(true);
 
         Trainer trainer2 = new Trainer();
         trainer2.setUser(trainerUser2);
@@ -241,7 +243,7 @@ public class TraineeDAOImplTest {
         traineeUser.setLastName("One");
         traineeUser.setUsername("uniqueTrainee1"); // Use a unique username
         traineeUser.setPassword("password");
-        traineeUser.setActive(true);
+        traineeUser.setIsActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
@@ -283,7 +285,7 @@ public class TraineeDAOImplTest {
         traineeUser.setLastName("One");
         traineeUser.setUsername("trainee1");
         traineeUser.setPassword("password");
-        traineeUser.setActive(true);
+        traineeUser.setIsActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
@@ -316,7 +318,7 @@ public class TraineeDAOImplTest {
         user.setLastName("User");
         user.setUsername("CaseSensitiveUser");
         user.setPassword("password");
-        user.setActive(true);
+        user.setIsActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(user);
@@ -343,14 +345,14 @@ public class TraineeDAOImplTest {
         user1.setLastName("User1");
         user1.setUsername("duplicateUser");
         user1.setPassword("password");
-        user1.setActive(true);
+        user1.setIsActive(true);
 
         User user2 = new User();
         user2.setFirstName("Trainee2");
         user2.setLastName("User2");
         user2.setUsername("duplicateUser"); // Duplicate username
         user2.setPassword("password");
-        user2.setActive(true);
+        user2.setIsActive(true);
 
         Trainee trainee1 = new Trainee();
         trainee1.setUser(user1);
@@ -376,7 +378,7 @@ public class TraineeDAOImplTest {
         user.setLastName("NoTrainer");
         user.setUsername("noTrainerUser");
         user.setPassword("password");
-        user.setActive(true);
+        user.setIsActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(user);
@@ -404,7 +406,7 @@ public class TraineeDAOImplTest {
         traineeUser.setLastName("One");
         traineeUser.setUsername("trainee1");
         traineeUser.setPassword("password");
-        traineeUser.setActive(true);
+        traineeUser.setIsActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
@@ -434,7 +436,7 @@ public class TraineeDAOImplTest {
         traineeUser.setLastName("One");
         traineeUser.setUsername("trainee1");
         traineeUser.setPassword("password");
-        traineeUser.setActive(true);
+        traineeUser.setIsActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
@@ -444,7 +446,7 @@ public class TraineeDAOImplTest {
         trainerUser.setLastName("One");
         trainerUser.setUsername("trainer1");
         trainerUser.setPassword("password");
-        trainerUser.setActive(true);
+        trainerUser.setIsActive(true);
 
         TrainingType trainingType = new TrainingType();
         trainingType.setTrainingType(PredefinedTrainingType.fromName("Yoga"));
@@ -495,7 +497,7 @@ public class TraineeDAOImplTest {
         traineeUser.setLastName("One");
         traineeUser.setUsername("trainee1");
         traineeUser.setPassword("password");
-        traineeUser.setActive(true);
+        traineeUser.setIsActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
@@ -523,7 +525,7 @@ public class TraineeDAOImplTest {
         traineeUser.setLastName("One");
         traineeUser.setUsername("trainee1");
         traineeUser.setPassword("password");
-        traineeUser.setActive(true);
+        traineeUser.setIsActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
@@ -533,7 +535,7 @@ public class TraineeDAOImplTest {
         trainerUser.setLastName("One");
         trainerUser.setUsername("trainer1");
         trainerUser.setPassword("password");
-        trainerUser.setActive(true);
+        trainerUser.setIsActive(true);
 
         Trainer trainer = new Trainer();
         trainer.setUser(trainerUser);

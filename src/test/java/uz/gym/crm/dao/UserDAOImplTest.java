@@ -65,7 +65,7 @@ class UserDAOImplTest {
         user.setLastName("User");
         user.setUsername("testUser");
         user.setPassword("testPass");
-        user.setActive(true);
+        user.setIsActive(true);
 
 
         Transaction transaction = session.beginTransaction();
@@ -92,7 +92,7 @@ class UserDAOImplTest {
         user.setLastName("User");
         user.setUsername("testUser");
         user.setPassword("testPass");
-        user.setActive(true);
+        user.setIsActive(true);
 
         Transaction transaction = session.beginTransaction();
         session.save(user);

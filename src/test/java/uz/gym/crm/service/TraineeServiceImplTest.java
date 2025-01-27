@@ -137,7 +137,7 @@ class TraineeServiceImplTest {
         User user = new User();
         user.setFirstName("John");
         user.setLastName("Doe");
-        user.setActive(true);
+        user.setIsActive(true);
         trainee.setUser(user);
 
         when(mockTraineeDAO.findByUsername(username)).thenReturn(Optional.of(trainee));

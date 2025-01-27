@@ -34,7 +34,6 @@ public class TrainingDAOImpl extends BaseDAOImpl<Training> implements TrainingDA
     }
 
 
-
     @Override
     public List<Training> findByCriteria(String traineeUsername, PredefinedTrainingType trainingType, LocalDate fromDate, LocalDate toDate, String trainerName) {
         DynamicQueryBuilder<Training> queryBuilder = new DynamicQueryBuilder<>(BASE_QUERY_FOR_TRAINEE);
@@ -74,6 +73,7 @@ public class TrainingDAOImpl extends BaseDAOImpl<Training> implements TrainingDA
         query.setParameter("trainerId", trainerId);
         return query.getResultList();
     }
+
     private Session getSession() {
         return sessionFactory.openSession();
     }

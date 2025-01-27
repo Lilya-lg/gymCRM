@@ -1,10 +1,10 @@
-package uz.gym.crm.util;
+package uz.gym.crm.mapper;
 
-import net.bytebuddy.description.modifier.SynchronizationState;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 
 public class ProfileMapper {
+
     public static void updateFields(Object existing, Object updated) {
         if (existing == null || updated == null) {
             throw new IllegalArgumentException("Existing and updated objects must not be null.");
@@ -28,12 +28,13 @@ public class ProfileMapper {
         if (updated.getDateOfBirth() != null) {
             existing.setDateOfBirth(updated.getDateOfBirth());
         }
-            existing.getUser().setActive(updated.getUser().isActive());
+        existing.getUser().setIsActive(updated.getUser().getIsActive());
     }
 
     private static void updateTrainerFields(Trainer existing, Trainer updated) {
         if (updated.getSpecialization() != null) {
             existing.setSpecialization(updated.getSpecialization());
         }
+        existing.getUser().setIsActive(updated.getUser().getIsActive());
     }
 }

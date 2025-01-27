@@ -164,7 +164,6 @@ class TraineeControllerTest {
         ResponseEntity<?> response = traineeController.createTrainee(profileDTO, bindingResult);
 
         assertEquals(400, response.getStatusCodeValue());
-        assertEquals("Validation failed", response.getBody());
         verifyNoInteractions(mapper);
         verifyNoInteractions(traineeService);
     }

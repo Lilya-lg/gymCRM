@@ -97,7 +97,7 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
         profileDTO.setFirstName(trainer.getUser().getFirstName());
         profileDTO.setSecondName(trainer.getUser().getLastName());
         profileDTO.setSpecialization(trainer.getSpecialization().getTrainingType().getDisplayName());
-        profileDTO.setIsActive(trainer.getUser().isActive());
+        profileDTO.setIsActive(trainer.getUser().getIsActive());
         profileDTO.setTrainees(mapTraineesToProfileDTOs(trainees));
         return profileDTO;
     }
@@ -119,14 +119,16 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
         Optional<Trainer> optionalTrainer = findByUsername(username);
         Trainer trainer = optionalTrainer.orElseThrow(() ->
                 new IllegalArgumentException("Trainer with username '" + username + "' does not exist"));
-
-
-
+        if (trainer.getUser().getIsActive() != Boolean.valueOf(trainerDTO.getIsActive())) {
+            if (Boolean.valueOf(trainerDTO.getIsActive())) {
+                super.activate(username);
+            } else {
+                super.deactivate(username);
+            }
+        }
         mapper.updateTrainerFromDTO(trainerDTO, trainer);
-
         super.updateProfile(username, trainer);
     }
-
 
 
     @Override

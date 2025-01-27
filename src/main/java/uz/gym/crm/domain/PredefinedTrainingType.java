@@ -15,6 +15,7 @@ public enum PredefinedTrainingType {
     public String getDisplayName() {
         return displayName;
     }
+
     public static PredefinedTrainingType fromName(String name) {
         for (PredefinedTrainingType type : values()) {
             if (type.getDisplayName().equalsIgnoreCase(name)) {

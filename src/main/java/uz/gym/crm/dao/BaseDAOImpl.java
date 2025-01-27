@@ -68,7 +68,21 @@ public class BaseDAOImpl<T> implements BaseDAO<T> {
     @Override
     public void update(T entity) {
 
-        getSession().update(entity);
+        Transaction transaction = null;
+        try {
+            if (getSession().getTransaction().isActive()) {
+                getSession().merge(entity);
+            } else {
+                transaction = getSession().beginTransaction();
+                getSession().merge(entity);
+                transaction.commit();
+            }
+        } catch (Exception e) {
+            if (transaction != null && transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw e;
+        }
 
     }
 
