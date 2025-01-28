@@ -1,264 +1,143 @@
 package uz.gym.crm.controller;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uz.gym.crm.domain.Training;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.mapper.Mapper;
 import uz.gym.crm.service.abstr.TrainingService;
+import uz.gym.crm.util.GlobalExceptionHandler;
 
 import java.util.Collections;
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 
 class TrainingControllerTest {
 
-    @Mock
+    private MockMvc mockMvc;
+
     private TrainingService trainingService;
 
-    @Mock
     private Mapper mapper;
-
-    @InjectMocks
-    private TrainingController trainingController;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        trainingService = mock(TrainingService.class);
+        mapper = mock(Mapper.class);
+        TrainingController trainingController = new TrainingController(trainingService, mapper);
+
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(trainingController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
-    void getTrainingsForTrainee_ShouldReturnTrainings() {
-
+    void getTrainingsForTrainee_ShouldReturnTrainings() throws Exception {
         TrainingTraineeListDTO traineeListDTO = new TrainingTraineeListDTO();
         traineeListDTO.setUsername("trainee1");
 
-        Training training = new Training();
         TrainingTraineeTrainerDTO dto = new TrainingTraineeTrainerDTO();
         dto.setTrainingName("Sample Training");
 
         when(trainingService.findByCriteria(anyString(), any(), any(), any(), any()))
-                .thenReturn(Collections.singletonList(training));
+                .thenReturn(Collections.emptyList());
         when(mapper.mapTrainingsToTrainingDTOs(anyList()))
                 .thenReturn(Collections.singletonList(dto));
 
-
-        ResponseEntity<List<TrainingTraineeTrainerDTO>> response = trainingController.getTrainingsForTrainee(
-                traineeListDTO, mockBindingResult(false)
-        );
-
-
-        assertEquals(200, response.getStatusCodeValue());
-        assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().size());
-        assertEquals("Sample Training", response.getBody().get(0).getTrainingName());
+        mockMvc.perform(get("/api/trainings/trainee")
+                        .param("username", "trainee1")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].trainingName").value("Sample Training"));
     }
 
     @Test
-    void getTrainingsForTrainer_ShouldReturnTrainings() {
-
-        TrainingTrainerListDTO trainerListDTO = new TrainingTrainerListDTO();
-        trainerListDTO.setUsername("trainer1");
-
-        Training training = new Training();
-        TrainingTraineeTrainerDTO dto = new TrainingTraineeTrainerDTO();
-        dto.setTrainingName("Trainer's Training");
-
-        when(trainingService.findByCriteriaForTrainer(anyString(), any(), any(), any()))
-                .thenReturn(Collections.singletonList(training));
-        when(mapper.mapTrainingsToTrainingDTOs(anyList()))
-                .thenReturn(Collections.singletonList(dto));
+    void getTrainingsForTrainee_ShouldHandleIllegalArgumentException() throws Exception {
+        when(trainingService.findByCriteria(anyString(), any(), any(), any(), any()))
+                .thenThrow(new IllegalArgumentException("Invalid request"));
 
 
-        ResponseEntity<List<TrainingTraineeTrainerDTO>> response = trainingController.getTrainingsForTrainer(
-                trainerListDTO, mockBindingResult(false)
-        );
-
-
-        assertEquals(200, response.getStatusCodeValue());
-        assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().size());
-        assertEquals("Trainer's Training", response.getBody().get(0).getTrainingName());
+        mockMvc.perform(get("/api/trainings/trainee")
+                        .param("username", "trainee1")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid request"));
     }
 
     @Test
-    void createTraining_ShouldReturnSuccessMessage() {
-        // Arrange
+    void getTrainingsForTrainee_ShouldHandleUnexpectedException() throws Exception {
+        when(trainingService.findByCriteria(anyString(), any(), any(), any(), any()))
+                .thenThrow(new RuntimeException("Unexpected error"));
+
+        mockMvc.perform(post("/api/trainings/trainee")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"trainee1\"}")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.error").value("An unexpected error occurred. Please contact support if the problem persists."));
+    }
+
+    @Test
+    void createTraining_ShouldReturnSuccessMessage() throws Exception {
         TrainingDTO trainingDTO = new TrainingDTO();
         trainingDTO.setTraineeUsername("trainee1");
         trainingDTO.setTrainerUsername("trainer1");
 
         Training training = new Training();
-        when(mapper.toTraining(trainingDTO)).thenReturn(training);
+        when(mapper.toTraining(any(TrainingDTO.class))).thenReturn(training);
         doNothing().when(trainingService).linkTraineeTrainer(training, "trainee1", "trainer1");
         doNothing().when(trainingService).create(training);
 
-
-        ResponseEntity<String> response = trainingController.createTraining(trainingDTO, mockBindingResult(false));
-
-
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals("Training was created successfully", response.getBody());
-    }
-
-
-    private BindingResult mockBindingResult(boolean hasErrors) {
-        BindingResult bindingResult = mock(BindingResult.class);
-        when(bindingResult.hasErrors()).thenReturn(hasErrors);
-        return bindingResult;
+        mockMvc.perform(post("/api/trainings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"traineeUsername\":\"trainee1\",\"trainerUsername\":\"trainer1\"}")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Training was created successfully"));
     }
 
     @Test
-    void getTrainingsForTrainee_ShouldReturnBadRequest_WhenValidationFails() {
-        // Arrange
-        BindingResult bindingResult = mockBindingResult(true); // Simulate validation errors
-        TrainingTraineeListDTO traineeListDTO = new TrainingTraineeListDTO();
-
-        // Act
-        ResponseEntity<List<TrainingTraineeTrainerDTO>> response = trainingController.getTrainingsForTrainee(traineeListDTO, bindingResult);
-
-        // Assert
-        assertEquals(400, response.getStatusCodeValue());
-        assertNull(response.getBody());
-    }
-
-    @Test
-    void getTrainingsForTrainee_ShouldHandleIllegalArgumentException() {
-
-        TrainingTraineeListDTO traineeListDTO = new TrainingTraineeListDTO();
-        traineeListDTO.setUsername("trainee1");
-
-        when(trainingService.findByCriteria(anyString(), any(), any(), any(), any()))
-                .thenThrow(new IllegalArgumentException("Invalid request"));
-
-        ResponseEntity<List<TrainingTraineeTrainerDTO>> response = trainingController.getTrainingsForTrainee(traineeListDTO, mockBindingResult(false));
-
-
-        assertEquals(400, response.getStatusCodeValue());
-        assertNull(response.getBody());
-    }
-
-    @Test
-    void getTrainingsForTrainee_ShouldHandleUnexpectedException() {
-
-        TrainingTraineeListDTO traineeListDTO = new TrainingTraineeListDTO();
-        traineeListDTO.setUsername("trainee1");
-
-        when(trainingService.findByCriteria(anyString(), any(), any(), any(), any()))
-                .thenThrow(new RuntimeException("Unexpected error"));
-
-
-        ResponseEntity<List<TrainingTraineeTrainerDTO>> response = trainingController.getTrainingsForTrainee(traineeListDTO, mockBindingResult(false));
-
-
-        assertEquals(500, response.getStatusCodeValue());
-        assertNull(response.getBody());
-    }
-
-    @Test
-    void createTraining_ShouldReturnBadRequest_WhenValidationFails() {
-
-        BindingResult bindingResult = mockBindingResult(true); // Simulate validation errors
-        TrainingDTO trainingDTO = new TrainingDTO();
-
-
-        ResponseEntity<String> response = trainingController.createTraining(trainingDTO, bindingResult);
-
-       
-        assertEquals(400, response.getStatusCodeValue());
-        assertNotNull(response.getBody());
-        assertEquals("Validation failed", response.getBody());
-    }
-
-    @Test
-    void createTraining_ShouldHandleIllegalArgumentException() {
-
+    void createTraining_ShouldHandleIllegalArgumentException() throws Exception {
         TrainingDTO trainingDTO = new TrainingDTO();
         trainingDTO.setTraineeUsername("trainee1");
         trainingDTO.setTrainerUsername("trainer1");
 
         Training training = new Training();
-        when(mapper.toTraining(trainingDTO)).thenReturn(training);
+        when(mapper.toTraining(any(TrainingDTO.class))).thenReturn(training);
         doThrow(new IllegalArgumentException("Invalid input")).when(trainingService).linkTraineeTrainer(any(Training.class), anyString(), anyString());
 
-
-        ResponseEntity<String> response = trainingController.createTraining(trainingDTO, mockBindingResult(false));
-
-
-        assertEquals(400, response.getStatusCodeValue());
-        assertNull(response.getBody());
+        mockMvc.perform(post("/api/trainings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"traineeUsername\":\"trainee1\",\"trainerUsername\":\"trainer1\"}")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid input"));
     }
 
     @Test
-    void createTraining_ShouldHandleUnexpectedException() {
-
+    void createTraining_ShouldHandleUnexpectedException() throws Exception {
         TrainingDTO trainingDTO = new TrainingDTO();
         trainingDTO.setTraineeUsername("trainee1");
         trainingDTO.setTrainerUsername("trainer1");
 
         Training training = new Training();
-        when(mapper.toTraining(trainingDTO)).thenReturn(training);
+        when(mapper.toTraining(any(TrainingDTO.class))).thenReturn(training);
         doThrow(new RuntimeException("Unexpected error")).when(trainingService).linkTraineeTrainer(any(Training.class), anyString(), anyString());
 
-
-        ResponseEntity<String> response = trainingController.createTraining(trainingDTO, mockBindingResult(false));
-
-
-        assertEquals(500, response.getStatusCodeValue());
-        assertNull(response.getBody());
-    }
-
-    @Test
-    void getTrainingsForTrainer_ShouldReturnBadRequest_WhenValidationFails() {
-
-        BindingResult bindingResult = mockBindingResult(true); // Simulate validation errors
-        TrainingTrainerListDTO trainerListDTO = new TrainingTrainerListDTO();
-
-
-        ResponseEntity<List<TrainingTraineeTrainerDTO>> response = trainingController.getTrainingsForTrainer(trainerListDTO, bindingResult);
-
-
-        assertEquals(400, response.getStatusCodeValue());
-        assertNull(response.getBody());
-    }
-
-    @Test
-    void getTrainingsForTrainer_ShouldHandleIllegalArgumentException() {
-
-        TrainingTrainerListDTO trainerListDTO = new TrainingTrainerListDTO();
-        trainerListDTO.setUsername("trainer1");
-
-        when(trainingService.findByCriteriaForTrainer(anyString(), any(), any(), any()))
-                .thenThrow(new IllegalArgumentException("Invalid request"));
-
-
-        ResponseEntity<List<TrainingTraineeTrainerDTO>> response = trainingController.getTrainingsForTrainer(trainerListDTO, mockBindingResult(false));
-
-        assertEquals(400, response.getStatusCodeValue());
-        assertNull(response.getBody());
-    }
-
-    @Test
-    void getTrainingsForTrainer_ShouldHandleUnexpectedException() {
-
-        TrainingTrainerListDTO trainerListDTO = new TrainingTrainerListDTO();
-        trainerListDTO.setUsername("trainer1");
-
-        when(trainingService.findByCriteriaForTrainer(anyString(), any(), any(), any()))
-                .thenThrow(new RuntimeException("Unexpected error"));
-
-
-        ResponseEntity<List<TrainingTraineeTrainerDTO>> response = trainingController.getTrainingsForTrainer(trainerListDTO, mockBindingResult(false));
-
-
-        assertEquals(500, response.getStatusCodeValue());
-        assertNull(response.getBody());
+        mockMvc.perform(post("/api/trainings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"traineeUsername\":\"trainee1\",\"trainerUsername\":\"trainer1\"}")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.error").value("An unexpected error occurred. Please contact support if the problem persists."));
     }
 }

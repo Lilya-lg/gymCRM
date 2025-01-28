@@ -1,10 +1,8 @@
 package uz.gym.crm.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import uz.gym.crm.domain.Training;
@@ -14,6 +12,7 @@ import uz.gym.crm.service.abstr.TrainingService;
 
 
 import javax.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -32,62 +31,44 @@ public class TrainingController {
 
     @GetMapping("/trainee")
     @ResponseBody
-    public ResponseEntity<List<TrainingTraineeTrainerDTO>> getTrainingsForTrainee(@Valid @RequestBody TrainingTraineeListDTO traineeListDTO, BindingResult result) {
-        if (result.hasErrors()) {
-            return ResponseEntity.badRequest().body(null);
-        }
-        try {
+    public ResponseEntity<List<TrainingTraineeTrainerDTO>> getTrainingsForTrainee(
+            @RequestParam String username,
+            @RequestParam(required = false) String trainingType,
+            @RequestParam(required = false) String periodFrom,
+            @RequestParam(required = false) String periodTo,
+            @RequestParam(required = false) String trainerName
+    ) {
+        LocalDate fromDate = (periodFrom != null && !periodFrom.isEmpty()) ? LocalDate.parse(periodFrom) : null;
+        LocalDate toDate = (periodTo != null && !periodTo.isEmpty()) ? LocalDate.parse(periodTo) : null;
 
-            List<Training> trainings = trainingService.findByCriteria(traineeListDTO.getUsername(), traineeListDTO.getTrainingType(), traineeListDTO.getPeriodFrom(), traineeListDTO.getPeriodTo(), traineeListDTO.getTrainerName());
-            List<TrainingTraineeTrainerDTO> trainingTrainee = mapper.mapTrainingsToTrainingDTOs(trainings);
-            return ResponseEntity.ok(trainingTrainee);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-
+        List<Training> trainings = trainingService.findByCriteria(
+                username, trainingType, fromDate, toDate, trainerName
+        );
+        List<TrainingTraineeTrainerDTO> trainingTrainee = mapper.mapTrainingsToTrainingDTOs(trainings);
+        return ResponseEntity.ok(trainingTrainee);
     }
 
 
     @GetMapping("/trainer")
     @ResponseBody
-    public ResponseEntity<List<TrainingTraineeTrainerDTO>> getTrainingsForTrainer(@Valid @RequestBody TrainingTrainerListDTO trainerListDTO, BindingResult result) {
-        if (result.hasErrors()) {
-            return ResponseEntity.badRequest().body(null);
-        }
-        try {
-            List<Training> trainings = trainingService.findByCriteriaForTrainer(trainerListDTO.getUsername(), trainerListDTO.getPeriodFrom(), trainerListDTO.getPeriodTo(), trainerListDTO.getTraineeName());
+    public ResponseEntity<List<TrainingTraineeTrainerDTO>> getTrainingsForTrainer(  @RequestParam String username,
+                                                                                    @RequestParam(required = false) String periodFrom,
+                                                                                    @RequestParam(required = false) String periodTo,
+                                                                                    @RequestParam(required = false) String traineeName) {
+            LocalDate fromDate = (periodFrom != null && !periodFrom.isEmpty()) ? LocalDate.parse(periodFrom) : null;
+            LocalDate toDate = (periodTo != null && !periodTo.isEmpty()) ? LocalDate.parse(periodTo) : null;
+            List<Training> trainings = trainingService.findByCriteriaForTrainer(username, fromDate, toDate, traineeName);
             List<TrainingTraineeTrainerDTO> trainingTrainee = mapper.mapTrainingsToTrainingDTOs(trainings);
             return ResponseEntity.ok(trainingTrainee);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-
     }
 
-    @PostMapping("/new")
+    @PostMapping
     @ResponseBody
-    public ResponseEntity<String> createTraining(@Valid @RequestBody TrainingDTO trainingDTO, BindingResult result) {
-        if (result.hasErrors()) {
-            String errorMessage = result.getAllErrors().isEmpty()
-                    ? "Validation failed"
-                    : result.getAllErrors().get(0).getDefaultMessage();
-            return ResponseEntity.badRequest().body(errorMessage);
-        }
-        try {
+    public ResponseEntity<String> createTraining(@Valid @RequestBody TrainingDTO trainingDTO) {
             Training training = mapper.toTraining(trainingDTO);
             trainingService.linkTraineeTrainer(training, trainingDTO.getTraineeUsername(), trainingDTO.getTrainerUsername());
             trainingService.create(training);
             return ResponseEntity.ok("Training was created successfully");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-
     }
 
 }

@@ -32,9 +32,8 @@ class JwtFilterTest {
 
     @Test
     void testFilterAllowsExcludedUrls() throws Exception {
-        // Test URLs that are excluded
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRequestURI("/api/trainees/new");
+        request.setRequestURI("/api/users/login");
 
         MockHttpServletResponse response = new MockHttpServletResponse();
 

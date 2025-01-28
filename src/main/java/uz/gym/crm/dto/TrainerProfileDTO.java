@@ -2,10 +2,13 @@ package uz.gym.crm.dto;
 
 import uz.gym.crm.dto.abstr.BaseTrainerDTO;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 public class TrainerProfileDTO extends BaseTrainerDTO {
-
+    @NotNull(message = "Username is required")
+    private String username;
+    @NotNull(message = "Active status is required")
     private boolean isActive;
     private List<UserDTO> trainees;
 
@@ -23,5 +26,13 @@ public class TrainerProfileDTO extends BaseTrainerDTO {
 
     public void setTrainees(List<UserDTO> trainees) {
         this.trainees = trainees;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

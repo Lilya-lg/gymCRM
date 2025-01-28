@@ -20,7 +20,6 @@ public class JwtFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
 
-        // Исключения для определённых URL
         if (isExcluded(request)) {
             filterChain.doFilter(request, response);
             return;
@@ -31,7 +30,7 @@ public class JwtFilter extends OncePerRequestFilter {
             try {
                 // Validate the token to ensure it is valid and not expired
                 JwtUtil.validateToken(token);
-            } catch (IllegalArgumentException e) {
+            } catch (Exception e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Invalid or expired token");
                 return;
@@ -47,8 +46,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private boolean isExcluded(HttpServletRequest request) {
         String requestURI = request.getRequestURI();
-        return pathMatcher.match("/api/trainees/new", requestURI) ||
-                pathMatcher.match("/api/trainers/new", requestURI) ||
-                pathMatcher.match("/api/users/login", requestURI);
+        String requestMethod = request.getMethod();
+        if ("POST".equalsIgnoreCase(requestMethod)) {
+            return pathMatcher.match("/api/trainees", requestURI) ||
+                    pathMatcher.match("/api/trainers", requestURI)||
+                    pathMatcher.match("/api/users/login", requestURI);
+        }
+
+        return pathMatcher.match("/api/users/login", requestURI) ||
+                pathMatcher.match("/swagger-ui.html",requestURI)||
+                pathMatcher.match("/v2/api-docs",requestURI)||
+                pathMatcher.match("/swagger-ui/index.html",requestURI);
     }
 }

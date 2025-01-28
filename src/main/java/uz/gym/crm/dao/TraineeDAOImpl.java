@@ -71,6 +71,7 @@ public class TraineeDAOImpl extends BaseDAOImpl<Trainee> implements TraineeDAO {
 
     public void deleteByUsername(String username) {
         try (Session session = getSession()) {
+            Transaction transaction = session.beginTransaction();
             String hql = "FROM Trainee t WHERE t.user.username = :username";
             Query<Trainee> query = session.createQuery(hql, Trainee.class);
             query.setParameter("username", username);
@@ -78,7 +79,9 @@ public class TraineeDAOImpl extends BaseDAOImpl<Trainee> implements TraineeDAO {
 
             if (trainee != null) {
                 session.delete(trainee);
+                transaction.commit();
             } else {
+                transaction.rollback();
                 throw new IllegalArgumentException("No Trainee found with username: " + username);
             }
         } catch (Exception e) {

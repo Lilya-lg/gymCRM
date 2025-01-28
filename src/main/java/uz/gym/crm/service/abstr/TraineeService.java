@@ -25,8 +25,5 @@ public interface TraineeService extends BaseService<Trainee> {
 
     void updateTraineeProfile(String username, TraineeUpdateDTO traineeDTO);
 
-    void activate(String username);
-
-    void deactivate(String username);
 }
 

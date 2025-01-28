@@ -1,7 +1,6 @@
 package uz.gym.crm.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,15 +23,8 @@ public class TrainingTypeController {
 
     @GetMapping
     public ResponseEntity<List<TrainingTypeDTO>> getTrainingTypes() {
-        try {
             List<TrainingTypeDTO> trainingTypes = trainingTypeService.getAllTrainingTypes();
             return ResponseEntity.ok(trainingTypes);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-
     }
 }
 

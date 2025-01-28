@@ -56,7 +56,7 @@ class TrainerControllerTest {
         doNothing().when(trainerService).create(trainer);
 
 
-        ResponseEntity<?> response = trainerController.createTrainer(trainerDTO, mockBindingResult(false));
+        ResponseEntity<?> response = trainerController.createTrainer(trainerDTO);
 
 
         assertEquals(200, response.getStatusCodeValue());
@@ -65,24 +65,6 @@ class TrainerControllerTest {
         assertEquals("trainer1", responseBody.getUsername());
     }
 
-    @Test
-    void updateTrainerProfile_ShouldReturnUpdatedProfile() {
-
-        String username = "trainer1";
-        TrainerProfileDTO trainerProfileDTO = new TrainerProfileDTO();
-        trainerProfileDTO.setFirstName(username);
-
-        when(trainerService.getTrainerProfile(username)).thenReturn(trainerProfileDTO);
-
-
-        ResponseEntity<ResponseWrapper<TrainerProfileDTO>> response = trainerController.updateTrainerProfile(username, trainerProfileDTO, mockBindingResult(false));
-
-
-        assertEquals(200, response.getStatusCodeValue());
-        ResponseWrapper<TrainerProfileDTO> responseBody = response.getBody();
-        assertNotNull(responseBody);
-        assertEquals(username, responseBody.getUsername());
-    }
 
     @Test
     void getTrainerProfile_ShouldReturnProfile() {
@@ -94,7 +76,7 @@ class TrainerControllerTest {
         when(trainerService.getTrainerProfile(username)).thenReturn(trainerProfileDTO);
 
 
-        ResponseEntity<BaseTrainerDTO> response = trainerController.getTrainerProfile(username, null);
+        ResponseEntity<BaseTrainerDTO> response = trainerController.getTrainerProfile(username);
 
         assertEquals(200, response.getStatusCodeValue());
         assertNotNull(response.getBody());
@@ -112,7 +94,7 @@ class TrainerControllerTest {
         when(mapper.mapTrainersToProfileDTOs(anyList())).thenReturn(Collections.singletonList(trainerDTO));
 
 
-        ResponseEntity<List<TrainerDTO>> response = trainerController.getUnassignedTrainee(username, null);
+        ResponseEntity<List<TrainerDTO>> response = trainerController.getUnassignedTrainee(username);
 
 
         assertEquals(200, response.getStatusCodeValue());
@@ -120,22 +102,6 @@ class TrainerControllerTest {
         assertEquals(1, response.getBody().size());
         assertEquals("trainer1", response.getBody().get(0).getUsername());
     }
-
-    @Test
-    void updateTrainerStatus_ShouldActivateTrainer() {
-
-        String username = "trainer1";
-
-
-        doNothing().when(trainerService).activate(username);
-
-
-        ResponseEntity<Void> response = trainerController.updateTrainerStatus(username, true);
-
-        assertEquals(200, response.getStatusCodeValue(), "Response should have status 200");
-        verify(abstractProfileService, times(1)).activate(username); // Ensure the activate method was called once
-    }
-
 
     private BindingResult mockBindingResult(boolean hasErrors) {
         BindingResult bindingResult = mock(BindingResult.class);

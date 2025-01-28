@@ -2,10 +2,7 @@ package uz.gym.crm.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.dto.*;
@@ -14,7 +11,6 @@ import uz.gym.crm.mapper.Mapper;
 import uz.gym.crm.service.abstr.ProfileService;
 import uz.gym.crm.service.abstr.TrainerService;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -38,13 +34,10 @@ public class TrainerController {
         this.abstractProfileService = profileService;
     }
 
-    @PostMapping("/new")
+    @PostMapping
     @ResponseBody
     public ResponseEntity<?> createTrainer
-            (@Valid @RequestBody TrainerDTO trainerDTO, BindingResult result) {
-        if (result.hasErrors()) {
-            return ResponseEntity.badRequest().body(result.getAllErrors().get(0).getDefaultMessage());
-        }
+            (@Valid @RequestBody TrainerDTO trainerDTO) {
         Trainer trainer = mapper.toTrainer(trainerDTO);
         trainerService.create(trainer);
         BaseUserDTO userDTO = new BaseUserDTO(trainer.getUser().getUsername(), trainer.getUser().getPassword());
@@ -53,74 +46,28 @@ public class TrainerController {
 
     @PutMapping(value = "/update-profile", consumes = "application/json", produces = "application/json")
     public ResponseEntity<ResponseWrapper<TrainerProfileDTO>> updateTrainerProfile(
-            @RequestParam("username") String username,
-            @Valid @RequestBody TrainerProfileDTO trainerDTO,
-            BindingResult result) {
-        if (result.hasErrors()) {
-            return ResponseEntity.badRequest().body(null);
-        }
-        try {
-            trainerService.updateTrainerProfile(username, trainerDTO);
-            TrainerProfileDTO trainerProfile = trainerService.getTrainerProfile(username);
+            @Valid @RequestBody TrainerProfileDTO trainerDTO) {
+        trainerService.updateTrainerProfile(trainerDTO.getUsername(), trainerDTO);
+        TrainerProfileDTO trainerProfile = trainerService.getTrainerProfile(trainerDTO.getUsername());
 
-            ResponseWrapper<TrainerProfileDTO> response = new ResponseWrapper<>(username, trainerProfile);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        ResponseWrapper<TrainerProfileDTO> response = new ResponseWrapper<>(trainerDTO.getUsername(), trainerProfile);
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping(value = "/profile", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/profiles/{username}")
     public ResponseEntity<BaseTrainerDTO> getTrainerProfile(
-            @RequestParam("username") String username,
-            HttpServletRequest request) {
-
-        try {
-            BaseTrainerDTO trainerProfile = trainerService.getTrainerProfile(username);
-            return ResponseEntity.ok(trainerProfile);
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+            @PathVariable("username") String username) {
+        BaseTrainerDTO trainerProfile = trainerService.getTrainerProfile(username);
+        return ResponseEntity.ok(trainerProfile);
     }
 
     @GetMapping(value = "/unassigned-active-trainers")
     public ResponseEntity<List<TrainerDTO>> getUnassignedTrainee(
-            @RequestParam("username") String username,
-            HttpServletRequest request
+            @RequestParam("username") String username
     ) {
-        try {
-            List<TrainerDTO> trainers = mapper.mapTrainersToProfileDTOs(trainerService.getUnassignedTrainersForTrainee(username));
-            return ResponseEntity.ok(trainers);
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        List<TrainerDTO> trainers = mapper.mapTrainersToProfileDTOs(trainerService.getUnassignedTrainersForTrainee(username));
+        return ResponseEntity.ok(trainers);
     }
 
-    @PatchMapping("/activate")
-    public ResponseEntity<Void> updateTrainerStatus(
-            @RequestParam String username,
-            @RequestParam boolean isActive) {
-        try {
-            if (isActive) {
-                abstractProfileService.activate(username);
-            } else {
-                abstractProfileService.deactivate(username);
-            }
-
-            return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-    }
 }
 

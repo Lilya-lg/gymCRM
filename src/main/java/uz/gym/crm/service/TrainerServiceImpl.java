@@ -32,12 +32,14 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
     private final TrainerDAO trainerDAO;
     private final TrainingDAO trainingDAO;
     private final Mapper mapper;
+    private final UserDAOImpl userDAO;
 
     public TrainerServiceImpl(UserDAOImpl userDAO, TrainerDAO trainerDAO, TrainingDAO trainingDAO, Mapper mapper) {
         super(trainerDAO, userDAO, trainingDAO);
         this.trainerDAO = trainerDAO;
         this.trainingDAO = trainingDAO;
         this.mapper = mapper;
+        this.userDAO = userDAO;
     }
 
 
@@ -126,6 +128,11 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
                 super.deactivate(username);
             }
         }
+        User user = trainer.getUser();
+        user.setIsActive(Boolean.valueOf(trainerDTO.getIsActive()));
+        user.setLastName(trainerDTO.getSecondName());
+        System.out.println(trainerDTO.getSecondName());
+        userDAO.update(user);
         mapper.updateTrainerFromDTO(trainerDTO, trainer);
         super.updateProfile(username, trainer);
     }

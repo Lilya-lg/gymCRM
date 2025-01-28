@@ -1,32 +1,21 @@
 package uz.gym.crm.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import uz.gym.crm.dto.BaseUserDTO;
+import uz.gym.crm.dto.ChangePasswordDTO;
 import uz.gym.crm.service.abstr.*;
 import uz.gym.crm.util.JwtUtil;
 
-import javax.validation.Valid;
+import java.util.HashMap;
+import java.util.Map;
+
 
 @RestController
 @RequestMapping(value = "api/users", produces = {"application/JSON", "application/XML"})
 public class UserController {
     @Autowired
     private UserService userService;
-
-    @GetMapping()
-    public ResponseEntity<String> auth(@Valid @RequestBody BaseUserDTO userDTO, BindingResult result) {
-        {
-            if (userService.authenticate(userDTO.getUsername(), userDTO.getPassword())) {
-                return ResponseEntity.ok("Login successful");
-            }
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
-        }
-
-    }
 
     @PostMapping(value = "/login")
     public String login(@RequestParam("username") String username, @RequestParam("password") String password) {
@@ -39,19 +28,28 @@ public class UserController {
 
     @PutMapping("/change-password")
     @ResponseBody
-    public ResponseEntity<String> changePassword(@RequestParam("username") String username,
-                                                 @RequestParam("oldPassword") String oldPassword,
-                                                 @RequestParam("newPassword") String newPassword) {
+    public ResponseEntity<Map<String, Object>> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO) {
         {
-            try {
-                userService.updateUser(username, oldPassword, newPassword);
-                return ResponseEntity.ok("Password updated successfully");
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-            } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
-            }
-
+            String username = changePasswordDTO.getUsername();
+            String oldPassword = changePasswordDTO.getOldPassword();
+            String newPassword = changePasswordDTO.getNewPassword();
+            userService.updateUser(username, oldPassword, newPassword);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Password updated successfully");
+            return ResponseEntity.ok(response);
         }
+    }
+
+    @PatchMapping("/activate")
+    public ResponseEntity<Void> updateTraineeStatus(
+            @RequestParam String username,
+            @RequestParam boolean isActive) {
+        if (isActive) {
+            userService.activate(username);
+        } else {
+            userService.deactivate(username);
+        }
+        return ResponseEntity.ok().build();
     }
 }

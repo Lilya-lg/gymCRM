@@ -3,9 +3,7 @@ package uz.gym.crm.util;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.Base64;
 import java.util.Date;
 
 public class JwtUtil {

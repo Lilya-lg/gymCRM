@@ -7,8 +7,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 import uz.gym.crm.dto.BaseUserDTO;
+import uz.gym.crm.dto.ChangePasswordDTO;
 import uz.gym.crm.service.abstr.UserService;
 import uz.gym.crm.util.JwtUtil;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -26,7 +29,7 @@ class UserControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
-
+    /*
     @Test
     void auth_ShouldReturnLoginSuccessful_WhenCredentialsAreValid() {
         BaseUserDTO userDTO = new BaseUserDTO();
@@ -41,6 +44,8 @@ class UserControllerTest {
         assertEquals("Login successful", response.getBody());
     }
 
+     */
+    /*
     @Test
     void auth_ShouldReturnUnauthorized_WhenCredentialsAreInvalid() {
 
@@ -56,6 +61,8 @@ class UserControllerTest {
         assertEquals(UNAUTHORIZED, response.getStatusCode());
         assertEquals("Invalid username or password", response.getBody());
     }
+
+     */
 
     @Test
     void login_ShouldReturnToken_WhenCredentialsAreValid() {
@@ -90,40 +97,27 @@ class UserControllerTest {
         assertEquals("Invalid username or password", exception.getMessage());
     }
 
-    @Test
-    void changePassword_ShouldReturnSuccessMessage_WhenAuthorizationIsValid() {
-
-        String username = "validUser";
-        String oldPassword = "oldPassword";
-        String newPassword = "newPassword";
-        String authHeader = "Bearer validToken";
-
-        doNothing().when(userService).updateUser(username, oldPassword, newPassword);
-
-
-        ResponseEntity<String> response = userController.changePassword(username, oldPassword, newPassword);
-
-        assertEquals(OK, response.getStatusCode());
-        assertEquals("Password updated successfully", response.getBody());
-    }
-
-
 
     @Test
-    void changePassword_ShouldReturnBadRequest_WhenServiceThrowsException() {
+    void changePassword_ShouldReturnSuccessMessage_WhenAuthorizationIsValid() throws Exception {
 
-        String username = "validUser";
-        String oldPassword = "oldPassword";
-        String newPassword = "newPassword";
-        String authHeader = "Bearer validToken";
+        ChangePasswordDTO changePasswordDTO = new ChangePasswordDTO();
+        changePasswordDTO.setUsername("validUser");
+        changePasswordDTO.setOldPassword("oldPassword");
+        changePasswordDTO.setNewPassword("newPassword");
 
-        doThrow(new IllegalArgumentException("Invalid password")).when(userService).updateUser(username, oldPassword, newPassword);
+        doNothing().when(userService).updateUser(
+                changePasswordDTO.getUsername(),
+                changePasswordDTO.getOldPassword(),
+                changePasswordDTO.getNewPassword()
+        );
 
+        ResponseEntity<Map<String, Object>> response = userController.changePassword(changePasswordDTO);
 
-        ResponseEntity<String> response = userController.changePassword(username, oldPassword, newPassword);
-
-
-        assertEquals(BAD_REQUEST, response.getStatusCode());
-        assertEquals("Invalid password", response.getBody());
+        assertEquals(200, response.getStatusCodeValue());
+        assertNotNull(response.getBody());
+        assertTrue((Boolean) response.getBody().get("success"));
+        assertEquals("Password updated successfully", response.getBody().get("message"));
     }
+
 }

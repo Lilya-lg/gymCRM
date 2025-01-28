@@ -18,6 +18,5 @@ public interface TrainerService extends BaseService<Trainer> {
 
     void updateTrainerProfile(String username, TrainerProfileDTO trainerDTO);
 
-    void activate(String username);
 
 }

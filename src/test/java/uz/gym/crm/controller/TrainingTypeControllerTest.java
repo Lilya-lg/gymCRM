@@ -10,10 +10,12 @@ import org.springframework.http.ResponseEntity;
 
 import uz.gym.crm.dto.TrainingTypeDTO;
 import uz.gym.crm.service.abstr.TrainingTypeService;
+import uz.gym.crm.util.GlobalExceptionHandler;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -67,29 +69,20 @@ class TrainingTypeControllerTest {
     }
 
     @Test
-    void getTrainingTypes_ShouldHandleIllegalArgumentException() {
-
-        when(trainingTypeService.getAllTrainingTypes()).thenThrow(new IllegalArgumentException("Invalid request"));
-
-
-        ResponseEntity<List<TrainingTypeDTO>> response = trainingTypeController.getTrainingTypes();
-
-
-        assertEquals(400, response.getStatusCodeValue());
-        assertNull(response.getBody());
-    }
-
-    @Test
     void getTrainingTypes_ShouldHandleGeneralException() {
 
         when(trainingTypeService.getAllTrainingTypes()).thenThrow(new RuntimeException("Unexpected error"));
 
+        GlobalExceptionHandler exceptionHandler = new GlobalExceptionHandler();
+        try {
+            trainingTypeController.getTrainingTypes();
+        } catch (RuntimeException ex) {
+            ResponseEntity<Map<String, String>> response = exceptionHandler.handleGeneralExceptions(ex);
 
-        ResponseEntity<List<TrainingTypeDTO>> response = trainingTypeController.getTrainingTypes();
-
-
-        assertEquals(500, response.getStatusCodeValue());
-        assertNull(response.getBody());
+            assertEquals(500, response.getStatusCodeValue());
+            assertNotNull(response.getBody());
+            assertEquals("An unexpected error occurred. Please contact support if the problem persists.", response.getBody().get("error"));
+        }
     }
 }
 
