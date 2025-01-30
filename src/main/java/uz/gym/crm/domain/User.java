@@ -39,6 +39,15 @@ public class User {
         return username;
     }
 
+    public User(String firstName, String lastName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
+    public User() {
+    }
+
+
     public void setUsername(String username) {
         this.username = username;
     }
@@ -51,11 +60,11 @@ public class User {
         this.password = password;
     }
 
-    public boolean isActive() {
+    public boolean getIsActive() {
         return isActive;
     }
 
-    public void setActive(boolean active) {
+    public void setIsActive(boolean active) {
         isActive = active;
     }
 

@@ -6,8 +6,10 @@ import org.mockito.Mockito;
 import uz.gym.crm.dao.TrainerDAOImpl;
 import uz.gym.crm.dao.TrainingDAOImpl;
 import uz.gym.crm.dao.UserDAOImpl;
-import uz.gym.crm.domain.Trainer;
-import uz.gym.crm.domain.User;
+import uz.gym.crm.domain.*;
+import uz.gym.crm.dto.TrainerProfileDTO;
+import uz.gym.crm.dto.UserDTO;
+import uz.gym.crm.mapper.Mapper;
 
 
 import java.util.List;
@@ -22,6 +24,7 @@ class TrainerServiceImplTest {
     private TrainerDAOImpl mockTrainerDAO;
     private TrainerServiceImpl service;
     private TrainingDAOImpl mockTrainingDAO;
+    private Mapper mockMapper;
 
 
     @BeforeEach
@@ -29,7 +32,8 @@ class TrainerServiceImplTest {
         mockUserDAO = Mockito.mock(UserDAOImpl.class);
         mockTrainerDAO = Mockito.mock(TrainerDAOImpl.class);
         mockTrainingDAO = Mockito.mock(TrainingDAOImpl.class);
-        service = new TrainerServiceImpl(mockUserDAO, mockTrainerDAO, mockTrainingDAO);
+        mockMapper = Mockito.mock(Mapper.class);
+        service = new TrainerServiceImpl(mockUserDAO, mockTrainerDAO, mockTrainingDAO,mockMapper);
     }
 
     @Test
@@ -128,6 +132,7 @@ class TrainerServiceImplTest {
 
     @Test
     void getUnassignedTrainersForTrainee_ShouldReturnListOfTrainers() {
+
         User authenticatedUser = new User();
         authenticatedUser.setUsername("adminUser");
         authenticatedUser.setPassword("adminPassword");
@@ -141,12 +146,14 @@ class TrainerServiceImplTest {
 
         when(mockTrainerDAO.getUnassignedTrainersByTraineeUsername("trainee1")).thenReturn(List.of(trainer1, trainer2));
 
-        List<Trainer> result = service.getUnassignedTrainersForTrainee("trainee1","adminUser", "adminPassword");
+        List<Trainer> result = service.getUnassignedTrainersForTrainee("trainee1");
 
         assertEquals(2, result.size(), "Should return two unassigned trainers");
         assertTrue(result.contains(trainer1) && result.contains(trainer2), "Returned trainers should match expected");
         verify(mockTrainerDAO, times(1)).getUnassignedTrainersByTraineeUsername("trainee1");
-        verify(mockUserDAO, times(1)).findByUsernameAndPassword("adminUser", "adminPassword");
+
+
+
     }
 
     @Test
@@ -158,10 +165,109 @@ class TrainerServiceImplTest {
                 .thenReturn(Optional.of(authenticatedUser));
         when(mockTrainerDAO.getUnassignedTrainersByTraineeUsername("trainee1")).thenReturn(List.of());
 
-        List<Trainer> result = service.getUnassignedTrainersForTrainee("trainee1","adminUser", "adminPassword");
+        List<Trainer> result = service.getUnassignedTrainersForTrainee("trainee1");
 
         assertTrue(result.isEmpty(), "No trainers should be found for unassigned trainers query");
         verify(mockTrainerDAO, times(1)).getUnassignedTrainersByTraineeUsername("trainee1");
+    }
+
+
+
+    @Test
+    void getTrainerProfile_ShouldThrowException_WhenTrainerNotFound() {
+        when(mockTrainerDAO.findByUsername("nonexistent")).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> service.getTrainerProfile("nonexistent"));
+
+        assertEquals("Trainee not found", exception.getMessage());
+    }
+
+    @Test
+    void updateTrainerProfile_ShouldUpdateProfile() {
+        Trainer trainer = new Trainer();
+        trainer.setUser(new User());
+        trainer.getUser().setUsername("trainer1");
+
+        TrainerProfileDTO profileDTO = new TrainerProfileDTO();
+        profileDTO.setFirstName("UpdatedFirstName");
+
+        when(mockTrainerDAO.findByUsername("trainer1")).thenReturn(Optional.of(trainer));
+        doNothing().when(mockMapper).updateTrainerFromDTO(profileDTO, trainer);
+
+        service.updateTrainerProfile("trainer1", profileDTO);
+
+        verify(mockMapper, times(1)).updateTrainerFromDTO(profileDTO, trainer);
+        verify(mockTrainerDAO, times(1)).update(trainer);
+    }
+
+    @Test
+    void updateTrainerProfile_ShouldThrowException_WhenTrainerNotFound() {
+        when(mockTrainerDAO.findByUsername("nonexistent")).thenReturn(Optional.empty());
+
+        TrainerProfileDTO profileDTO = new TrainerProfileDTO();
+        profileDTO.setFirstName("UpdatedFirstName");
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> service.updateTrainerProfile("nonexistent", profileDTO));
+
+        assertEquals("Trainer with username 'nonexistent' does not exist", exception.getMessage());
+    }
+
+    @Test
+    void mapToTrainerProfileDTO_ShouldReturnMappedProfileDTO() {
+
+        Trainer trainer = new Trainer();
+        trainer.setId(1L);
+        trainer.setUser(new User());
+        trainer.getUser().setFirstName("John");
+        trainer.getUser().setLastName("Doe");
+
+
+        TrainingType trainingType = new TrainingType();
+        trainingType.setTrainingType(PredefinedTrainingType.YOGA);
+        trainer.setSpecialization(trainingType);
+
+        Trainee trainee1 = new Trainee();
+        trainee1.setUser(new User());
+        trainee1.getUser().setFirstName("Trainee1");
+
+        Trainee trainee2 = new Trainee();
+        trainee2.setUser(new User());
+        trainee2.getUser().setFirstName("Trainee2");
+
+
+        when(mockTrainerDAO.findByUsername("johndoe")).thenReturn(Optional.of(trainer));
+        when(mockTrainingDAO.findTraineesByTrainerId(trainer.getId())).thenReturn(List.of(trainee1, trainee2));
+
+
+        TrainerProfileDTO result = service.getTrainerProfile("johndoe");
+
+
+        assertNotNull(result);
+        assertEquals("John", result.getFirstName());
+        assertEquals("Doe", result.getSecondName());
+        assertEquals("Yoga", result.getSpecialization());
+        assertEquals(2, result.getTrainees().size());
+        assertEquals("Trainee1", result.getTrainees().get(0).getFirstName());
+        assertEquals("Trainee2", result.getTrainees().get(1).getFirstName());
+    }
+
+
+    @Test
+    void mapTraineesToProfileDTOs_ShouldReturnMappedList() {
+        Trainee trainee1 = new Trainee();
+        trainee1.setUser(new User());
+        trainee1.getUser().setFirstName("Trainee1");
+
+        Trainee trainee2 = new Trainee();
+        trainee2.setUser(new User());
+        trainee2.getUser().setFirstName("Trainee2");
+
+        List<UserDTO> result = service.mapTraineesToProfileDTOs(List.of(trainee1, trainee2));
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals("Trainee1", result.get(0).getFirstName());
+        assertEquals("Trainee2", result.get(1).getFirstName());
     }
 }
 

@@ -9,7 +9,9 @@ import java.util.Optional;
 public interface TraineeDAO extends BaseDAO<Trainee> {
     Optional<Trainee> findByUsernameAndPassword(String username, String password);
 
-    void updateTraineeTrainerList(Long traineeId, List<Long> newTrainerIds);
+    void updateTraineeTrainerList(Long traineeId, List<String> trainerIds);
 
     Optional<Trainee> findByUsername(String username);
+
+    void deleteByUsername(String username);
 }

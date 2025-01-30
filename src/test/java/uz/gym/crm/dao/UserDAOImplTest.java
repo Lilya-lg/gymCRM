@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UserDAOImplTest {
 
+
     private UserDAOImpl userDAO;
     private SessionFactory sessionFactory;
     private Session session;
@@ -41,7 +42,7 @@ class UserDAOImplTest {
             session.close();
         }
         session = sessionFactory.openSession();
-        userDAO = new UserDAOImpl(session);
+        userDAO = new UserDAOImpl(sessionFactory);
 
 
         Transaction transaction = session.beginTransaction();
@@ -64,7 +65,7 @@ class UserDAOImplTest {
         user.setLastName("User");
         user.setUsername("testUser");
         user.setPassword("testPass");
-        user.setActive(true);
+        user.setIsActive(true);
 
 
         Transaction transaction = session.beginTransaction();
@@ -91,7 +92,7 @@ class UserDAOImplTest {
         user.setLastName("User");
         user.setUsername("testUser");
         user.setPassword("testPass");
-        user.setActive(true);
+        user.setIsActive(true);
 
         Transaction transaction = session.beginTransaction();
         session.save(user);
@@ -109,5 +110,7 @@ class UserDAOImplTest {
         Optional<User> result = userDAO.findByUsernameAndPassword("nonExistentUser", "wrongPass");
         assertTrue(result.isEmpty(), "No User should be found for invalid credentials");
     }
+
+
 }
 

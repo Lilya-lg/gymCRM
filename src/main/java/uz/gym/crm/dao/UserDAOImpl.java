@@ -1,38 +1,60 @@
 package uz.gym.crm.dao;
 
 import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import uz.gym.crm.dao.abstr.UserDAO;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.util.DynamicQueryBuilder;
+
 
 import java.util.Optional;
 
 
 @Repository
 public class UserDAOImpl extends BaseDAOImpl<User> implements UserDAO {
-    private final Session session;
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserDAOImpl.class);
     private static final String FIND_BY_USERNAME = "FROM User WHERE username = :username";
     private static final String FIND_BY_USERNAME_AND_PASSWORD = "FROM User WHERE username = :username AND password = :password";
+    private final SessionFactory sessionFactory;
 
-    public UserDAOImpl(Session session) {
-        super(User.class, session);
-        this.session = session;
+    @Autowired
+    public UserDAOImpl(SessionFactory sessionFactory) {
+        super(User.class, sessionFactory);
+        this.sessionFactory = sessionFactory;
     }
 
     public Optional<User> findByUsername(String username) {
         DynamicQueryBuilder<User> queryBuilder = new DynamicQueryBuilder<>(FIND_BY_USERNAME);
         queryBuilder.addCondition("username = :username", "username", username);
 
-        return Optional.ofNullable(queryBuilder.buildQuery(session, User.class).uniqueResult());
+        return Optional.ofNullable(queryBuilder.buildQuery(getSession(), User.class).uniqueResult());
     }
 
+    @Override
     public Optional<User> findByUsernameAndPassword(String username, String password) {
         DynamicQueryBuilder<User> queryBuilder = new DynamicQueryBuilder<>(FIND_BY_USERNAME_AND_PASSWORD);
         queryBuilder.addCondition("username = :username", "username", username).addCondition("password = :password", "password", password);
 
-        return Optional.ofNullable(queryBuilder.buildQuery(session, User.class).uniqueResult());
-
+        return Optional.ofNullable(queryBuilder.buildQuery(getSession(), User.class).uniqueResult());
     }
+
+    @Override
+    public void updateUser(User user) {
+        try {
+            Session session = this.sessionFactory.getCurrentSession();
+            session.saveOrUpdate(user);
+        } catch (Exception e) {
+            LOGGER.error("Can't update user", e);
+        }
+    }
+
+    private Session getSession() {
+        return sessionFactory.openSession();
+    }
+
 }
 

@@ -1,3 +1,4 @@
+
 package uz.gym.crm.dao;
 
 import org.hibernate.Session;
@@ -7,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import uz.gym.crm.config.TrainingTypeInitializer;
 import uz.gym.crm.domain.*;
 
 import java.time.LocalDate;
@@ -42,14 +42,15 @@ public class TrainerDAOImplTest {
             session.close();
         }
         session = sessionFactory.openSession();
-        trainerDAO = new TrainerDAOImpl(session);
+        trainerDAO = new TrainerDAOImpl(sessionFactory);
 
         // Clear the database before each test
         Transaction transaction = session.beginTransaction();
         session.createQuery("DELETE FROM Trainer").executeUpdate();
         session.createQuery("DELETE FROM User").executeUpdate();
         transaction.commit();
-        TrainingTypeInitializer.initializeTrainingTypes(sessionFactory);
+        seedTrainingTypes();
+
 
     }
 
@@ -68,7 +69,7 @@ public class TrainerDAOImplTest {
         user.setLastName("TrainerLast");
         user.setUsername("trainerUser");
         user.setPassword("trainerPass");
-        user.setActive(true);
+        user.setIsActive(true);
 
         // Create the Trainer and associate the User
         Trainer trainer = new Trainer();
@@ -100,9 +101,9 @@ public class TrainerDAOImplTest {
         user.setLastName("TrainerLast");
         user.setUsername("trainerUser");
         user.setPassword("trainerPass");
-        user.setActive(true);
+        user.setIsActive(true);
 
-        // Create the Trainer and associate the User
+
         Trainer trainer = new Trainer();
         trainer.setUser(user);
         trainer.setSpecialization(getTrainingType("Yoga")); // Example specialization
@@ -113,14 +114,14 @@ public class TrainerDAOImplTest {
         session.save(trainer);
         transaction.commit();
 
-        // Test the DAO method
+
         Optional<Trainer> result = trainerDAO.findByUsername("trainerUser");
         assertTrue(result.isPresent(), "Trainer should be found");
         assertEquals(user.getUsername(), result.get().getUser().getUsername());
     }
 
     private TrainingType getTrainingType(String type) {
-        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class).setParameter("type", type).uniqueResult();
+        return session.createQuery("FROM TrainingType WHERE trainingType = :type", TrainingType.class).setParameter("type", PredefinedTrainingType.fromName(type)).uniqueResult();
     }
 
     @Test
@@ -140,7 +141,7 @@ public class TrainerDAOImplTest {
         traineeUser.setLastName("Doe");
         traineeUser.setUsername("traineeUser");
         traineeUser.setPassword("password");
-        traineeUser.setActive(true);
+        traineeUser.setIsActive(true);
 
         Trainee trainee = new Trainee();
         trainee.setUser(traineeUser);
@@ -151,7 +152,7 @@ public class TrainerDAOImplTest {
         trainerUser1.setLastName("Smith");
         trainerUser1.setUsername("trainer1");
         trainerUser1.setPassword("password");
-        trainerUser1.setActive(true);
+        trainerUser1.setIsActive(true);
 
         Trainer trainer1 = new Trainer();
         trainer1.setUser(trainerUser1);
@@ -162,13 +163,13 @@ public class TrainerDAOImplTest {
         trainerUser2.setLastName("Johnson");
         trainerUser2.setUsername("trainer2");
         trainerUser2.setPassword("password");
-        trainerUser2.setActive(true);
+        trainerUser2.setIsActive(true);
 
         Trainer trainer2 = new Trainer();
         trainer2.setUser(trainerUser2);
         trainer2.setSpecialization(cardioType);
 
-        // Persist entities
+
         Transaction transaction = session.beginTransaction();
         session.save(traineeUser);
         session.save(trainee);
@@ -190,13 +191,23 @@ public class TrainerDAOImplTest {
         session.save(training);
         transaction.commit();
 
-        // Fetch unassigned trainers
+
         List<Trainer> unassignedTrainers = trainerDAO.getUnassignedTrainersByTraineeUsername("traineeUser");
 
-        // Assertions
-        assertEquals(1, unassignedTrainers.size(), "Only one trainer should be unassigned");
-        assertEquals("Cardio", unassignedTrainers.get(0).getSpecialization().getTrainingType(), "Unassigned trainer should specialize in Cardio");
 
+        assertEquals(1, unassignedTrainers.size(), "Only one trainer should be unassigned");
+        assertEquals("Cardio", unassignedTrainers.get(0).getSpecialization().getTrainingType().getDisplayName(), "Unassigned trainer should specialize in Cardio");
+
+    }
+
+    private void seedTrainingTypes() {
+        Transaction transaction = session.beginTransaction();
+        for (PredefinedTrainingType type : PredefinedTrainingType.values()) {
+            TrainingType trainingType = new TrainingType();
+            trainingType.setTrainingType(type);
+            session.save(trainingType);
+        }
+        transaction.commit();
     }
 
 

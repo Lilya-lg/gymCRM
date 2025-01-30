@@ -2,18 +2,18 @@ package uz.gym.crm.service.abstr;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uz.gym.crm.dao.UserDAOImpl;
 import uz.gym.crm.dao.abstr.BaseDAO;
+import uz.gym.crm.dao.abstr.UserDAO;
 
 import java.util.List;
 
 public abstract class BaseServiceImpl<T> implements BaseService<T> {
-    private UserDAOImpl userDAO;
+    private UserDAO userDAO;
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseServiceImpl.class);
     private final BaseDAO<T> dao;
 
 
-    public BaseServiceImpl(BaseDAO<T> dao, UserDAOImpl userDAO) {
+    public BaseServiceImpl(BaseDAO<T> dao, UserDAO userDAO) {
         this.dao = dao;
         this.userDAO = userDAO;
     }
@@ -80,7 +80,7 @@ public abstract class BaseServiceImpl<T> implements BaseService<T> {
         }
     }
 
-
+    @Override
     public boolean authenticate(String username, String password) {
         return userDAO.findByUsernameAndPassword(username, password).isPresent();
     }

@@ -33,4 +33,10 @@ public class DynamicQueryBuilder<T> {
         parameters.forEach(query::setParameter);
         return query;
     }
+
+    public Query<?> buildUpdateOrDeleteQuery(Session session) {
+        Query<?> query = session.createQuery(queryBuilder.toString());
+        parameters.forEach(query::setParameter);
+        return query;
+    }
 }
