@@ -1,19 +1,15 @@
 package uz.gym.crm;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import uz.gym.crm.domain.Trainee;
-import uz.gym.crm.domain.Trainer;
-import uz.gym.crm.domain.Training;
-import uz.gym.crm.service.TraineeServiceImpl;
-import uz.gym.crm.service.TrainerServiceImpl;
-import uz.gym.crm.service.TrainingServiceImpl;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Map;
-
-
-
+@SpringBootTest
 class AppTest {
 
+    @Test
+    void contextLoads() {
+        assertTrue(true, "Spring Boot context loaded successfully");
+    }
 }

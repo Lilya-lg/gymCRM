@@ -1,6 +1,7 @@
 package uz.gym.crm.domain;
 
-import javax.persistence.*;
+
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "training_types")
@@ -13,16 +14,13 @@ public class TrainingType {
     @Enumerated(EnumType.STRING)
     private PredefinedTrainingType trainingType;
 
-    public TrainingType() {
-
-    }
-
-    public TrainingType(PredefinedTrainingType trainingType) {
-        this.trainingType = trainingType;
-    }
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public PredefinedTrainingType getTrainingType() {

@@ -1,35 +1,42 @@
 package uz.gym.crm.config;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import uz.gym.crm.util.JwtUtil;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
-public class JwtFilter extends OncePerRequestFilter {
+public class JwtFilter extends OncePerRequestFilter{
+
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
-
+        String token = null;
         if (isExcluded(request)) {
             filterChain.doFilter(request, response);
             return;
         }
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+            token = authHeader.substring(7);
             try {
                 // Validate the token to ensure it is valid and not expired
                 JwtUtil.validateToken(token);
+                UsernamePasswordAuthenticationToken authenticationToken =
+                        new UsernamePasswordAuthenticationToken(null, null, null);
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             } catch (Exception e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Invalid or expired token");
@@ -56,6 +63,9 @@ public class JwtFilter extends OncePerRequestFilter {
         return pathMatcher.match("/api/users/login", requestURI) ||
                 pathMatcher.match("/swagger-ui.html",requestURI)||
                 pathMatcher.match("/v2/api-docs",requestURI)||
-                pathMatcher.match("/swagger-ui/index.html",requestURI);
+                pathMatcher.match("/swagger-ui/index.html",requestURI)||
+                pathMatcher.match("/actuator/**",requestURI);
     }
+
+
 }

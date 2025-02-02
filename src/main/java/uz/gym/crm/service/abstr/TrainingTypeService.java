@@ -6,7 +6,7 @@ import uz.gym.crm.dto.TrainingTypeDTO;
 
 import java.util.List;
 
-public interface TrainingTypeService extends BaseService<TrainingType> {
+public interface TrainingTypeService {
     TrainingType getOrCreateTrainingType(PredefinedTrainingType predefinedType);
 
     List<TrainingTypeDTO> getAllTrainingTypes();

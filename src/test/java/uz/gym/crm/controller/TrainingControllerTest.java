@@ -1,143 +1,117 @@
 package uz.gym.crm.controller;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import uz.gym.crm.domain.Training;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.mapper.Mapper;
 import uz.gym.crm.service.abstr.TrainingService;
-import uz.gym.crm.util.GlobalExceptionHandler;
 
-import java.util.Collections;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ExtendWith(MockitoExtension.class)
+public class TrainingControllerTest {
 
-class TrainingControllerTest {
-
-    private MockMvc mockMvc;
-
+    @Mock
     private TrainingService trainingService;
 
+    @Mock
     private Mapper mapper;
+
+    @InjectMocks
+    private TrainingController trainingController;
+
+    private TrainingTraineeListDTO trainingTraineeListDTO;
+    private TrainingTrainerListDTO trainingTrainerListDTO;
+    private TrainingDTO trainingDTO;
+    private TrainingTraineeTrainerDTO trainingTraineeTrainerDTO;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        trainingService = mock(TrainingService.class);
-        mapper = mock(Mapper.class);
-        TrainingController trainingController = new TrainingController(trainingService, mapper);
 
-        mockMvc = MockMvcBuilders
-                .standaloneSetup(trainingController)
-                .setControllerAdvice(new GlobalExceptionHandler())
-                .build();
-    }
+        trainingTraineeListDTO = new TrainingTraineeListDTO();
+        trainingTraineeListDTO.setUsername("trainee1");
+        trainingTraineeListDTO.setPeriodFrom(LocalDate.of(2023, 1, 1));
+        trainingTraineeListDTO.setPeriodTo(LocalDate.of(2023, 12, 31));
+        trainingTraineeListDTO.setTrainerName("trainer1");
+        trainingTraineeListDTO.setTrainingType("Fitness");
 
-    @Test
-    void getTrainingsForTrainee_ShouldReturnTrainings() throws Exception {
-        TrainingTraineeListDTO traineeListDTO = new TrainingTraineeListDTO();
-        traineeListDTO.setUsername("trainee1");
+        trainingTrainerListDTO = new TrainingTrainerListDTO();
+        trainingTrainerListDTO.setUsername("trainer1");
+        trainingTrainerListDTO.setPeriodFrom(LocalDate.of(2023, 1, 1));
+        trainingTrainerListDTO.setPeriodTo(LocalDate.of(2023, 12, 31));
+        trainingTrainerListDTO.setTraineeName("trainee1");
 
-        TrainingTraineeTrainerDTO dto = new TrainingTraineeTrainerDTO();
-        dto.setTrainingName("Sample Training");
-
-        when(trainingService.findByCriteria(anyString(), any(), any(), any(), any()))
-                .thenReturn(Collections.emptyList());
-        when(mapper.mapTrainingsToTrainingDTOs(anyList()))
-                .thenReturn(Collections.singletonList(dto));
-
-        mockMvc.perform(get("/api/trainings/trainee")
-                        .param("username", "trainee1")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].trainingName").value("Sample Training"));
-    }
-
-    @Test
-    void getTrainingsForTrainee_ShouldHandleIllegalArgumentException() throws Exception {
-        when(trainingService.findByCriteria(anyString(), any(), any(), any(), any()))
-                .thenThrow(new IllegalArgumentException("Invalid request"));
-
-
-        mockMvc.perform(get("/api/trainings/trainee")
-                        .param("username", "trainee1")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Invalid request"));
-    }
-
-    @Test
-    void getTrainingsForTrainee_ShouldHandleUnexpectedException() throws Exception {
-        when(trainingService.findByCriteria(anyString(), any(), any(), any(), any()))
-                .thenThrow(new RuntimeException("Unexpected error"));
-
-        mockMvc.perform(post("/api/trainings/trainee")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\":\"trainee1\"}")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("An unexpected error occurred. Please contact support if the problem persists."));
-    }
-
-    @Test
-    void createTraining_ShouldReturnSuccessMessage() throws Exception {
-        TrainingDTO trainingDTO = new TrainingDTO();
+        trainingDTO = new TrainingDTO();
         trainingDTO.setTraineeUsername("trainee1");
         trainingDTO.setTrainerUsername("trainer1");
+        trainingDTO.setTrainingDate(LocalDate.of(2023, 10, 1));
+
+
+        trainingTraineeTrainerDTO = new TrainingTraineeTrainerDTO();
+        trainingTraineeTrainerDTO.setTrainerName("trainer1");
+        trainingTraineeTrainerDTO.setTrainingType("Fitness");
+    }
+
+    @Test
+    void testGetTrainingsForTrainee() {
+
+        List<Training> trainings = Arrays.asList(new Training(), new Training());
+        when(trainingService.findByCriteria("trainee1", "Fitness", LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), "trainer1"))
+                .thenReturn(trainings);
+        when(mapper.mapTrainingsToTrainingDTOs(trainings)).thenReturn(Arrays.asList(trainingTraineeTrainerDTO, trainingTraineeTrainerDTO));
+
+
+        ResponseEntity<List<TrainingTraineeTrainerDTO>> response = trainingController.getTrainingsForTrainee(trainingTraineeListDTO);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(2, response.getBody().size());
+        verify(trainingService, times(1)).findByCriteria("trainee1", "Fitness", LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), "trainer1");
+        verify(mapper, times(1)).mapTrainingsToTrainingDTOs(trainings);
+    }
+
+    @Test
+    void testGetTrainingsForTrainer() {
+
+        List<Training> trainings = Arrays.asList(new Training(), new Training());
+        when(trainingService.findByCriteriaForTrainer("trainer1", LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), "trainee1"))
+                .thenReturn(trainings);
+        when(mapper.mapTrainingsToTrainingDTOs(trainings)).thenReturn(Arrays.asList(trainingTraineeTrainerDTO, trainingTraineeTrainerDTO));
+
+
+        ResponseEntity<List<TrainingTraineeTrainerDTO>> response = trainingController.getTrainingsForTrainer(trainingTrainerListDTO);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(2, response.getBody().size());
+        verify(trainingService, times(1)).findByCriteriaForTrainer("trainer1", LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), "trainee1");
+        verify(mapper, times(1)).mapTrainingsToTrainingDTOs(trainings);
+    }
+
+    @Test
+    void testCreateTraining() {
 
         Training training = new Training();
-        when(mapper.toTraining(any(TrainingDTO.class))).thenReturn(training);
+        when(mapper.toTraining(trainingDTO)).thenReturn(training);
         doNothing().when(trainingService).linkTraineeTrainer(training, "trainee1", "trainer1");
         doNothing().when(trainingService).create(training);
 
-        mockMvc.perform(post("/api/trainings")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"traineeUsername\":\"trainee1\",\"trainerUsername\":\"trainer1\"}")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Training was created successfully"));
-    }
+        ResponseEntity<String> response = trainingController.createTraining(trainingDTO);
 
-    @Test
-    void createTraining_ShouldHandleIllegalArgumentException() throws Exception {
-        TrainingDTO trainingDTO = new TrainingDTO();
-        trainingDTO.setTraineeUsername("trainee1");
-        trainingDTO.setTrainerUsername("trainer1");
 
-        Training training = new Training();
-        when(mapper.toTraining(any(TrainingDTO.class))).thenReturn(training);
-        doThrow(new IllegalArgumentException("Invalid input")).when(trainingService).linkTraineeTrainer(any(Training.class), anyString(), anyString());
-
-        mockMvc.perform(post("/api/trainings")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"traineeUsername\":\"trainee1\",\"trainerUsername\":\"trainer1\"}")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Invalid input"));
-    }
-
-    @Test
-    void createTraining_ShouldHandleUnexpectedException() throws Exception {
-        TrainingDTO trainingDTO = new TrainingDTO();
-        trainingDTO.setTraineeUsername("trainee1");
-        trainingDTO.setTrainerUsername("trainer1");
-
-        Training training = new Training();
-        when(mapper.toTraining(any(TrainingDTO.class))).thenReturn(training);
-        doThrow(new RuntimeException("Unexpected error")).when(trainingService).linkTraineeTrainer(any(Training.class), anyString(), anyString());
-
-        mockMvc.perform(post("/api/trainings")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"traineeUsername\":\"trainee1\",\"trainerUsername\":\"trainer1\"}")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("An unexpected error occurred. Please contact support if the problem persists."));
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Training was created successfully", response.getBody());
+        verify(trainingService, times(1)).linkTraineeTrainer(training, "trainee1", "trainer1");
+        verify(trainingService, times(1)).create(training);
     }
 }

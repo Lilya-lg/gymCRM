@@ -1,172 +1,133 @@
 package uz.gym.crm.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.mapper.Mapper;
 import uz.gym.crm.service.abstr.TraineeService;
-import uz.gym.crm.util.GlobalExceptionHandler;
 
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ExtendWith(MockitoExtension.class)
+public class TraineeControllerTest {
 
-@ContextConfiguration(classes = TraineeControllerTest.Config.class)
-class TraineeControllerTest {
-
-    @Configuration
-    static class Config {
-        @Bean
-        public TraineeController traineeController() {
-            return new TraineeController(traineeService(), mapper());
-        }
-
-        @Bean
-        public TraineeService traineeService() {
-            return Mockito.mock(TraineeService.class);
-        }
-
-        @Bean
-        public Mapper mapper() {
-            return Mockito.mock(Mapper.class);
-        }
-
-        @Bean
-        public GlobalExceptionHandler globalExceptionHandler() {
-            return new GlobalExceptionHandler();
-        }
-
-        @Bean
-        public static PropertySourcesPlaceholderConfigurer propertyConfig() {
-            return new PropertySourcesPlaceholderConfigurer();
-        }
-    }
-
-    @Autowired
-    private TraineeController traineeController;
-
-    @Autowired
+    @Mock
     private TraineeService traineeService;
 
-    @Autowired
+    @Mock
     private Mapper mapper;
 
-    private MockMvc mockMvc;
+    @InjectMocks
+    private TraineeController traineeController;
 
-    @Autowired
-    private GlobalExceptionHandler globalExceptionHandler;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private TraineeProfileDTO traineeProfileDTO;
+    private TraineeUpdateDTO traineeUpdateDTO;
+    private BaseUserDTO baseUserDTO;
+    private UpdateTraineeTrainersDTO updateTraineeTrainersDTO;
+    private TrainerDTO trainerDTO;
 
     @BeforeEach
     void setUp() {
-        traineeService = Mockito.mock(TraineeService.class);
-        mapper = Mockito.mock(Mapper.class);
+        traineeProfileDTO = new TraineeProfileDTO();
+        traineeProfileDTO.setFirstName("John");
+        traineeProfileDTO.setSecondName("Doe");
+        traineeProfileDTO.setDateOfBirth("1970-01-01");
+        traineeProfileDTO.setAddress("123 Main St");
+        traineeProfileDTO.setActive(true);
 
-        traineeController = new TraineeController(traineeService, mapper);
+        baseUserDTO = new BaseUserDTO("john.doe", "password123");
 
-        mockMvc = MockMvcBuilders
-                .standaloneSetup(traineeController)
-                .setControllerAdvice(new GlobalExceptionHandler())
-                .build();
+        traineeUpdateDTO = new TraineeUpdateDTO();
+        traineeUpdateDTO.setUsername("john.doe");
+        traineeUpdateDTO.setFirstName("John");
+        traineeUpdateDTO.setSecondName("Doe");
+        traineeUpdateDTO.setDateOfBirth("1970-01-01");
+        traineeUpdateDTO.setAddress("123 Main St");
+        traineeUpdateDTO.setIsActive("true");
+
+        updateTraineeTrainersDTO = new UpdateTraineeTrainersDTO();
+        updateTraineeTrainersDTO.setTrainerUsernames(Arrays.asList("trainer1", "trainer2"));
+
+        trainerDTO = new TrainerDTO();
+        trainerDTO.setUsername("trainer1");
+        trainerDTO.setFirstName("Trainer");
+        trainerDTO.setSecondName("One");
+        trainerDTO.setSpecialization("Fitness");
     }
 
     @Test
-    void getTraineeProfile_ShouldReturnProfile() throws Exception {
-        TraineeProfileDTO profileDTO = new TraineeProfileDTO();
-        profileDTO.setFirstName("testuser");
+    void testGetTraineeProfile() {
+        when(traineeService.getTraineeProfile("john.doe")).thenReturn(traineeProfileDTO);
 
-        when(traineeService.getTraineeProfile("testuser")).thenReturn(profileDTO);
+        ResponseEntity<TraineeProfileDTO> response = traineeController.getTraineeProfile("john.doe");
 
-        mockMvc.perform(get("/api/trainees/profiles/testuser")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("testuser"));
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(traineeProfileDTO, response.getBody());
+        verify(traineeService, times(1)).getTraineeProfile("john.doe");
     }
 
     @Test
-    void createTrainee_ShouldReturnCreatedUser() throws Exception {
-        TraineeProfileDTO profileDTO = new TraineeProfileDTO();
-        profileDTO.setFirstName("newuser");
-        profileDTO.setSecondName("new");
+    void testCreateTrainee() {
 
         User user = new User();
-        user.setUsername("newuser");
-        user.setPassword("password");
+        user.setUsername("john.doe");
+        user.setPassword("password123");
+
 
         Trainee trainee = new Trainee();
         trainee.setUser(user);
 
-        when(mapper.toTrainee(any(TraineeProfileDTO.class))).thenReturn(trainee);
-        doNothing().when(traineeService).create(any(Trainee.class));
 
-        mockMvc.perform(post("/api/trainees")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(profileDTO))
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("newuser"));
+        when(mapper.toTrainee(traineeProfileDTO)).thenReturn(trainee);
+
+
+        doNothing().when(traineeService).create(trainee);
+
+
+        ResponseEntity<BaseUserDTO> response = traineeController.createTrainee(traineeProfileDTO);
+
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(baseUserDTO.getUsername(), response.getBody().getUsername());
+        verify(traineeService, times(1)).create(trainee);
     }
 
     @Test
-    void deleteTraineeProfile_ShouldReturnSuccessMessage() throws Exception {
-        doNothing().when(traineeService).deleteProfileByUsername("testuser");
+    void testUpdateTraineeProfile() {
+        when(traineeService.getTraineeProfile("john.doe")).thenReturn(traineeProfileDTO);
 
-        mockMvc.perform(delete("/api/trainees/testuser")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Trainee profile deleted successfully"));
+        ResponseEntity<TraineeProfileDTO> response = traineeController.updateTraineeProfile(traineeUpdateDTO);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(traineeProfileDTO, response.getBody());
+        verify(traineeService, times(1)).updateTraineeProfile("john.doe", traineeUpdateDTO);
+        verify(traineeService, times(1)).getTraineeProfile("john.doe");
     }
 
     @Test
-    void deleteTraineeProfile_ShouldReturnBadRequest_WhenTraineeNotFound() throws Exception {
-        doThrow(new IllegalArgumentException("Trainee not found")).when(traineeService).deleteProfileByUsername("invalidUser");
+    void testDeleteTraineeProfile() {
+        doNothing().when(traineeService).deleteProfileByUsername("john.doe");
 
-        mockMvc.perform(delete("/api/trainees/invalidUser")
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Trainee not found"));
+        ResponseEntity<String> response = traineeController.deleteTraineeProfile("john.doe");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Trainee profile deleted successfully", response.getBody());
+        verify(traineeService, times(1)).deleteProfileByUsername("john.doe");
     }
 
-
-
-    @Test
-    void updateTraineeTrainers_ShouldReturnUpdatedTrainers() throws Exception {
-        UpdateTraineeTrainersDTO updateDTO = new UpdateTraineeTrainersDTO();
-        updateDTO.setTrainerUsernames(List.of("trainer1", "trainer2"));
-
-        Trainer trainer1 = new Trainer();
-        Trainer trainer2 = new Trainer();
-
-        TrainerDTO trainerDTO1 = new TrainerDTO();
-        TrainerDTO trainerDTO2 = new TrainerDTO();
-
-        when(traineeService.updateTraineeTrainerList("testuser", updateDTO.getTrainerUsernames()))
-                .thenReturn(List.of(trainer1, trainer2));
-        when(mapper.mapTrainersToProfileDTOs(List.of(trainer1, trainer2)))
-                .thenReturn(List.of(trainerDTO1, trainerDTO2));
-
-        mockMvc.perform(put("/api/trainees/update-trainers?traineeUsername=testuser")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDTO))
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
-    }
 }

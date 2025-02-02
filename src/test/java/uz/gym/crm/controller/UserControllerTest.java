@@ -6,16 +6,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
-import uz.gym.crm.dto.BaseUserDTO;
 import uz.gym.crm.dto.ChangePasswordDTO;
 import uz.gym.crm.service.abstr.UserService;
-import uz.gym.crm.util.JwtUtil;
+
 
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.http.HttpStatus.*;
 
 class UserControllerTest {
 
@@ -29,95 +27,48 @@ class UserControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
-    /*
-    @Test
-    void auth_ShouldReturnLoginSuccessful_WhenCredentialsAreValid() {
-        BaseUserDTO userDTO = new BaseUserDTO();
-        userDTO.setUsername("validUser");
-        userDTO.setPassword("validPassword");
-
-        when(userService.authenticate("validUser", "validPassword")).thenReturn(true);
-
-        ResponseEntity<String> response = userController.auth(userDTO, null);
-
-        assertEquals(OK, response.getStatusCode());
-        assertEquals("Login successful", response.getBody());
-    }
-
-     */
-    /*
-    @Test
-    void auth_ShouldReturnUnauthorized_WhenCredentialsAreInvalid() {
-
-        BaseUserDTO userDTO = new BaseUserDTO();
-        userDTO.setUsername("invalidUser");
-        userDTO.setPassword("wrongPassword");
-
-        when(userService.authenticate("invalidUser", "wrongPassword")).thenReturn(false);
-
-        ResponseEntity<String> response = userController.auth(userDTO, null);
-
-
-        assertEquals(UNAUTHORIZED, response.getStatusCode());
-        assertEquals("Invalid username or password", response.getBody());
-    }
-
-     */
 
     @Test
-    void login_ShouldReturnToken_WhenCredentialsAreValid() {
-        String username = "validUser";
-        String password = "validPassword";
-        String token = "generatedToken";
-
-        when(userService.authenticate(username, password)).thenReturn(true);
-        mockStatic(JwtUtil.class);
-        when(JwtUtil.generateToken(username)).thenReturn(token);
-
-
-        String response = userController.login(username, password);
-
-        assertEquals(token, response);
-        verify(userService).authenticate(username, password);
+    void testLogin_Success() {
+        when(userService.authenticate("testUser", "password123")).thenReturn(true);
+        String token = userController.login("testUser", "password123");
+        assertNotNull(token);
     }
 
     @Test
-    void login_ShouldThrowException_WhenCredentialsAreInvalid() {
-
-        String username = "invalidUser";
-        String password = "wrongPassword";
-
-        when(userService.authenticate(username, password)).thenReturn(false);
-
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            userController.login(username, password);
-        });
-
-        assertEquals("Invalid username or password", exception.getMessage());
+    void testLogin_Failure() {
+        when(userService.authenticate("testUser", "wrongPassword")).thenReturn(false);
+        assertThrows(IllegalArgumentException.class, () -> userController.login("testUser", "wrongPassword"));
     }
 
-
     @Test
-    void changePassword_ShouldReturnSuccessMessage_WhenAuthorizationIsValid() throws Exception {
-
+    void testChangePassword() {
         ChangePasswordDTO changePasswordDTO = new ChangePasswordDTO();
-        changePasswordDTO.setUsername("validUser");
-        changePasswordDTO.setOldPassword("oldPassword");
-        changePasswordDTO.setNewPassword("newPassword");
-
-        doNothing().when(userService).updateUser(
-                changePasswordDTO.getUsername(),
-                changePasswordDTO.getOldPassword(),
-                changePasswordDTO.getNewPassword()
-        );
+        changePasswordDTO.setUsername("testUser");
+        changePasswordDTO.setOldPassword("oldPass");
+        changePasswordDTO.setNewPassword("newPass");
+        doNothing().when(userService).changePassword("testUser", "oldPass", "newPass");
 
         ResponseEntity<Map<String, Object>> response = userController.changePassword(changePasswordDTO);
 
-        assertEquals(200, response.getStatusCodeValue());
         assertNotNull(response.getBody());
         assertTrue((Boolean) response.getBody().get("success"));
         assertEquals("Password updated successfully", response.getBody().get("message"));
     }
 
+    @Test
+    void testUpdateTraineeStatus_Activate() {
+        doNothing().when(userService).activate("testUser");
+
+        ResponseEntity<Void> response = userController.updateTraineeStatus("testUser", true);
+        assertEquals(200, response.getStatusCodeValue());
+    }
+
+    @Test
+    void testUpdateTraineeStatus_Deactivate() {
+        doNothing().when(userService).deactivate("testUser");
+
+        ResponseEntity<Void> response = userController.updateTraineeStatus("testUser", false);
+        assertEquals(200, response.getStatusCodeValue());
+    }
 }

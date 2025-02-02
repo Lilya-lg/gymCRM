@@ -1,6 +1,6 @@
 package uz.gym.crm.domain;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import java.time.LocalDate;
 
@@ -19,16 +19,16 @@ public class Training {
     @JoinColumn(name = "trainer_id")
     private Trainer trainer;
 
-    @Column(nullable = false)
+    @Column(name = "training_name",nullable = false)
     private String trainingName;
 
     @ManyToOne
     @JoinColumn(name = "training_type_id", nullable = false)
     private TrainingType trainingType;
 
-    @Column(nullable = false)
+    @Column(name = "training_date",nullable = false)
     private LocalDate trainingDate;
-    @Column(nullable = false)
+    @Column(name = "training_duration",nullable = false)
     private Integer trainingDuration;
 
 

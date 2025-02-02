@@ -1,61 +1,100 @@
 package uz.gym.crm.config;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.MockitoAnnotations;
+
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.web.filter.OncePerRequestFilter;
 import uz.gym.crm.util.JwtUtil;
 
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-class JwtFilterTest {
+class JWTFilterTest {
 
     private JwtFilter jwtFilter;
-
-    @Mock
     private FilterChain filterChain;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         jwtFilter = new JwtFilter();
+        filterChain = mock(FilterChain.class);
     }
 
     @Test
-    void testFilterAllowsExcludedUrls() throws Exception {
+    void testDoFilterInternalWithValidToken() throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRequestURI("/api/users/login");
+        request.addHeader("Authorization", "Bearer validToken");
+        MockHttpServletResponse response = new MockHttpServletResponse();
 
+        try (MockedStatic<JwtUtil> mockedJwtUtil = mockStatic(JwtUtil.class)) {
+            mockedJwtUtil.when(() -> JwtUtil.validateToken("validToken")).thenAnswer(invocation -> null);
+
+            jwtFilter.doFilterInternal(request, response, filterChain);
+
+            assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+            verify(filterChain, times(1)).doFilter(request, response);
+        }
+    }
+
+    @Test
+    void testDoFilterInternalWithInvalidToken() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer invalidToken");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        try (MockedStatic<JwtUtil> mockedJwtUtil = mockStatic(JwtUtil.class)) {
+            mockedJwtUtil.when(() -> JwtUtil.validateToken("invalidToken")).thenThrow(new RuntimeException("Invalid token"));
+
+            jwtFilter.doFilterInternal(request, response, filterChain);
+
+            assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.getStatus());
+            assertEquals("Invalid or expired token", response.getContentAsString());
+            verify(filterChain, never()).doFilter(request, response);
+        }
+    }
+
+    @Test
+    void testDoFilterInternalWithMissingToken() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         jwtFilter.doFilterInternal(request, response, filterChain);
 
-        verify(filterChain, times(1)).doFilter(request, response);
-        assertEquals(200, response.getStatus());
-    }
-
-    @Test
-    void testFilterRejectsMissingAuthorizationHeader() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRequestURI("/api/secure/data"); // Not excluded
-
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        jwtFilter.doFilterInternal(request, response, filterChain);
-
-        verify(filterChain, never()).doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class));
-        assertEquals(401, response.getStatus());
+        assertEquals(HttpServletResponse.SC_UNAUTHORIZED, response.getStatus());
         assertEquals("Missing or invalid Authorization header", response.getContentAsString());
+        verify(filterChain, never()).doFilter(request, response);
     }
 
+    @Test
+    void testDoFilterInternalExcludedPaths() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        request.setRequestURI("/api/users/login");
+        request.setMethod("GET");
 
+        jwtFilter.doFilterInternal(request, response, filterChain);
+
+        assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+        verify(filterChain, times(1)).doFilter(request, response);
+    }
+
+    @Test
+    void testDoFilterInternalExcludedPostPaths() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        request.setRequestURI("/api/trainees");
+        request.setMethod("POST");
+
+        jwtFilter.doFilterInternal(request, response, filterChain);
+
+        assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+        verify(filterChain, times(1)).doFilter(request, response);
+    }
 }
