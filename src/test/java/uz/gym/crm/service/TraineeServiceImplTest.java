@@ -10,12 +10,11 @@ import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.Training;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.dto.TraineeProfileDTO;
-import uz.gym.crm.repository.TraineeRepository;
-import uz.gym.crm.repository.TrainerRepository;
-import uz.gym.crm.repository.TrainingRepository;
-import uz.gym.crm.repository.UserRepository;
+import uz.gym.crm.dto.TraineeUpdateDTO;
+import uz.gym.crm.mapper.Mapper;
+import uz.gym.crm.repository.*;
 
-import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -32,45 +31,20 @@ class TraineeServiceImplTest {
     private TrainingRepository trainingRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
     private TrainerRepository trainerRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private Mapper mapper;
 
     @InjectMocks
     private TraineeServiceImpl traineeService;
 
-    private Trainee trainee;
-    private Training training;
-    private Trainer trainer1, trainer2;
-    private User user1, user2;
-
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-
-
-        trainee = new Trainee();
-        trainee.setId(1L);
-
-        training = new Training();
-        training.setId(100L);
-        training.setTrainee(trainee);
-
-
-        user1 = new User();
-        user1.setUsername("trainerJohn");
-
-        user2 = new User();
-        user2.setUsername("trainerAlice");
-
-        trainer1 = new Trainer();
-        trainer1.setId(101L);
-        trainer1.setUser(user1);
-
-        trainer2 = new Trainer();
-        trainer2.setId(102L);
-        trainer2.setUser(user2);
     }
 
     @Test
@@ -86,31 +60,107 @@ class TraineeServiceImplTest {
     }
 
     @Test
-    void deleteProfileByUsername() {
-        String username = "testUser";
+    void createTrainee_withNullUser_throwsException() {
+        Trainee trainee = new Trainee();
 
-        traineeService.deleteProfileByUsername(username);
+        Exception exception = assertThrows(NullPointerException.class, () -> {
+            traineeService.create(trainee);
+        });
 
-        verify(traineeRepository, times(1)).deleteByUsername(username);
+        assertNotNull(exception);
     }
 
     @Test
-    void getTraineeProfile() {
+    void deleteProfileByUsername() {
         String username = "testUser";
         Trainee trainee = new Trainee();
-        User user = new User();
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        trainee.setUser(user);
-        trainee.setDateOfBirth(LocalDate.now());
+        trainee.setId(1L);
 
         when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
-        when(trainingRepository.findTrainersByTraineeId(trainee.getId())).thenReturn(Collections.emptyList());
+        when(traineeRepository.deleteByUsername(username)).thenReturn(1); // Simulating a successful deletion
 
-        TraineeProfileDTO result = traineeService.getTraineeProfile(username);
+        traineeService.deleteProfileByUsername(username);
+
+        verify(traineeRepository, times(1)).findByUsername(username);
+        verify(traineeRepository, times(1)).deleteByUsername(username);
+    }
+
+
+    @Test
+    void getTraineeProfile_withNonExistingUser_throwsException() {
+        String username = "nonexistent";
+
+        when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            traineeService.getTraineeProfile(username);
+        });
+
+        assertEquals("Trainee not found", exception.getMessage());
+        verify(traineeRepository, times(1)).findByUsername(username);
+    }
+
+
+
+    @Test
+    void updateTraineeProfile_withNonExistingUser_throwsException() {
+        String username = "unknown";
+        TraineeUpdateDTO traineeUpdateDTO = new TraineeUpdateDTO();
+
+        when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            traineeService.updateTraineeProfile(username, traineeUpdateDTO);
+        });
+
+        assertEquals("Trainee with username 'unknown' does not exist", exception.getMessage());
+        verify(traineeRepository, times(1)).findByUsername(username);
+    }
+
+    @Test
+    void updateTraineeTrainerList() {
+        String username = "testUser";
+        Long trainingId = 1L;
+        List<String> trainerIds = Arrays.asList("trainer1", "trainer2");
+
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
+        Training training = new Training();
+        training.setId(trainingId);
+        Trainer trainer1 = new Trainer();
+        trainer1.setId(101L);
+        Trainer trainer2 = new Trainer();
+        trainer2.setId(102L);
+        List<Trainer> trainers = Arrays.asList(trainer1, trainer2);
+
+        when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
+        when(trainingRepository.findById(trainingId)).thenReturn(Optional.of(training));
+        when(trainerRepository.findByUsernameIn(trainerIds)).thenReturn(trainers);
+        when(trainingRepository.findTrainersByTraineeId(trainee.getId())).thenReturn(trainers);
+
+        List<Trainer> result = traineeService.updateTraineeTrainerList(username, trainingId, trainerIds);
 
         assertNotNull(result);
-        assertEquals("John", result.getFirstName());
-        assertEquals("Doe", result.getSecondName());
+        assertEquals(2, result.size());
+
+        verify(traineeRepository, times(1)).findByUsername(username);
+        verify(trainingRepository, times(1)).findById(trainingId);
+        verify(trainerRepository, times(1)).findByUsernameIn(trainerIds);
+    }
+
+    @Test
+    void updateTraineeTrainerList_withInvalidTrainee_throwsException() {
+        String username = "invalidUser";
+        Long trainingId = 1L;
+        List<String> trainerIds = Arrays.asList("trainer1", "trainer2");
+
+        when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            traineeService.updateTraineeTrainerList(username, trainingId, trainerIds);
+        });
+
+        assertEquals("Trainee not found", exception.getMessage());
+        verify(traineeRepository, times(1)).findByUsername(username);
     }
 }

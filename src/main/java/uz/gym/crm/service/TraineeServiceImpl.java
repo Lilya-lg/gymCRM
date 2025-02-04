@@ -44,7 +44,6 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
 
     @Override
     public void create(Trainee trainee) {
-        System.out.println(trainee.getUser());
         prepareUser(trainee.getUser());
         userRepository.save(trainee.getUser());
         traineeRepository.save(trainee);
@@ -54,7 +53,13 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
     @Override
     public void deleteProfileByUsername(String username) {
         LOGGER.debug("Deleting Trainee profile with username: {}", username);
-        traineeRepository.deleteByUsername(username);
+        Optional<Trainee> trainee = traineeRepository.findByUsername(username);
+        if (trainee.isPresent()) {
+            int deletedRows = traineeRepository.deleteByUsername(username);
+            LOGGER.info("Deleted rows: " + deletedRows);
+        } else {
+            LOGGER.info("Trainee not found for username: " + username);
+        }
         LOGGER.info("Trainee profile and associated user deleted successfully for username: {}", username);
     }
 

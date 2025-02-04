@@ -1,5 +1,8 @@
 package uz.gym.crm.controller;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +14,8 @@ import uz.gym.crm.dto.*;
 import uz.gym.crm.mapper.Mapper;
 import uz.gym.crm.service.abstr.TraineeService;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 
 @RestController
 @RequestMapping(value = "/api/trainees", produces = {"application/json", "application/xml"})
@@ -19,23 +24,30 @@ public class TraineeController {
 
     private final TraineeService traineeService;
     private final Mapper mapper;
+    private final Counter getProfileCounter;
+    private final Timer createTraineeTimer;
 
-    public TraineeController(TraineeService traineeService, Mapper mapper) {
+    public TraineeController(TraineeService traineeService, Mapper mapper, MeterRegistry meterRegistry) {
         this.traineeService = traineeService;
         this.mapper = mapper;
+        this.getProfileCounter = meterRegistry.counter("trainee_profile_requests", "endpoint", "/api/trainees/profiles/{username}");
+        this.createTraineeTimer = meterRegistry.timer("create_trainee_timer", "endpoint", "/api/trainees");
     }
 
     @GetMapping("/profiles/{username}")
     public ResponseEntity<TraineeProfileDTO> getTraineeProfile(@PathVariable String username) {
+        getProfileCounter.increment();
         TraineeProfileDTO traineeProfile = traineeService.getTraineeProfile(username);
         return ResponseEntity.ok(traineeProfile);
     }
 
     @PostMapping
     public ResponseEntity<BaseUserDTO> createTrainee(@RequestBody @Valid TraineeProfileDTO traineeDTO) {
+        long startTime = System.nanoTime();
         Trainee trainee = mapper.toTrainee(traineeDTO);
         traineeService.create(trainee);
         BaseUserDTO userDTO = new BaseUserDTO(trainee.getUser().getUsername(), trainee.getUser().getPassword());
+        createTraineeTimer.record(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
         return ResponseEntity.ok(userDTO);
     }
 

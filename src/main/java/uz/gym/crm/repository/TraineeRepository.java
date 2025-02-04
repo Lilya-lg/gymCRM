@@ -3,6 +3,7 @@ package uz.gym.crm.repository;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import uz.gym.crm.domain.Trainee;
 
@@ -13,7 +14,7 @@ public interface TraineeRepository extends BaseRepository<Trainee> {
     @Modifying
     @Transactional
     @Query("DELETE FROM Trainee t WHERE t.user.username = :username")
-    void deleteByUsername(String username);
+    int deleteByUsername(@Param("username") String username);
 
     @Query("SELECT t FROM Trainee t WHERE t.user.username = :username")
     Optional<Trainee> findByUsername(String username);

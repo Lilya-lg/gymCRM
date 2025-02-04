@@ -8,6 +8,7 @@ import org.mockito.MockitoAnnotations;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.dto.TrainerProfileDTO;
+import uz.gym.crm.dto.TrainerProfileResponseDTO;
 import uz.gym.crm.mapper.Mapper;
 import uz.gym.crm.repository.TrainerRepository;
 import uz.gym.crm.repository.TrainingRepository;
@@ -55,15 +56,28 @@ class TrainerServiceImplTest {
     }
 
     @Test
+    void createTrainer_withNullUser_throwsException() {
+        Trainer trainer = new Trainer(); // No user assigned
+
+        Exception exception = assertThrows(NullPointerException.class, () -> {
+            trainerService.create(trainer);
+        });
+
+        assertNotNull(exception);
+    }
+
+    @Test
     void getUnassignedTrainersForTrainee() {
         String traineeUsername = "testUser";
 
-        when(trainerRepository.getUnassignedTrainersByTraineeUsername(traineeUsername)).thenReturn(Collections.emptyList());
+        when(trainerRepository.getUnassignedTrainersByTraineeUsername(traineeUsername))
+                .thenReturn(Collections.emptyList());
 
         List<Trainer> result = trainerService.getUnassignedTrainersForTrainee(traineeUsername);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
+        verify(trainerRepository, times(1)).getUnassignedTrainersByTraineeUsername(traineeUsername);
     }
 
     @Test
@@ -92,4 +106,47 @@ class TrainerServiceImplTest {
         verify(mapper, times(1)).mapToTrainerProfileDTO(trainer);
     }
 
+    @Test
+    void getTrainerProfile_withNonExistingUser_throwsException() {
+        String username = "nonexistent";
+
+        when(trainerRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            trainerService.getTrainerProfile(username);
+        });
+
+        assertEquals("Trainee not found", exception.getMessage());
+        verify(trainerRepository, times(1)).findByUsername(username);
+    }
+
+
+
+
+
+    @Test
+    void findByUsername() {
+        String username = "trainer1";
+        Trainer trainer = new Trainer();
+
+        when(trainerRepository.findByUsername(username)).thenReturn(Optional.of(trainer));
+
+        Optional<Trainer> result = trainerService.findByUsername(username);
+
+        assertTrue(result.isPresent());
+        assertEquals(trainer, result.get());
+        verify(trainerRepository, times(1)).findByUsername(username);
+    }
+
+    @Test
+    void findByUsername_withNonExistingUser_returnsEmptyOptional() {
+        String username = "unknown";
+
+        when(trainerRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        Optional<Trainer> result = trainerService.findByUsername(username);
+
+        assertFalse(result.isPresent());
+        verify(trainerRepository, times(1)).findByUsername(username);
+    }
 }

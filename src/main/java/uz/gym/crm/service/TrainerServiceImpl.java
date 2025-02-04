@@ -48,7 +48,6 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
 
     @Override
     public void create(Trainer trainer) {
-        System.out.println(trainer.getUser());
         prepareUser(trainer.getUser());
         userRepository.save(trainer.getUser());
         trainerRepository.save(trainer);

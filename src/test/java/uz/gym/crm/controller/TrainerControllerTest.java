@@ -1,5 +1,8 @@
 package uz.gym.crm.controller;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +21,7 @@ import uz.gym.crm.service.abstr.TrainerService;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,6 +35,13 @@ public class TrainerControllerTest {
 
     @Mock
     private Mapper mapper;
+    @Mock
+    private MeterRegistry meterRegistry;
+    @Mock
+    private Counter counter;
+    @Mock
+    private Timer timer;
+
 
     @InjectMocks
     private TrainerController trainerController;
@@ -43,6 +54,9 @@ public class TrainerControllerTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(meterRegistry.counter(any(String.class), any(String[].class))).thenReturn(counter);
+        lenient().when(meterRegistry.timer(any(String.class), any(String[].class))).thenReturn(timer);
+        trainerController = new TrainerController(trainerService, mapper, meterRegistry);
 
         trainerDTO = new TrainerDTO();
         trainerDTO.setUsername("trainer1");
@@ -100,6 +114,7 @@ public class TrainerControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(trainerProfileResponseDTO, response.getBody());
         verify(trainerService, times(1)).updateTrainerProfile("trainer1", trainerProfileDTO);
+        verify(trainerService, times(1)).getTrainerProfileResponse("trainer1");
         verify(trainerService, times(1)).getTrainerProfileResponse("trainer1");
     }
 
