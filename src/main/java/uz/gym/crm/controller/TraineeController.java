@@ -1,37 +1,35 @@
 package uz.gym.crm.controller;
 
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.mapper.Mapper;
+import uz.gym.crm.metrics.MetricsService;
 import uz.gym.crm.service.abstr.TraineeService;
+
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 
 @RestController
 @RequestMapping(value = "/api/trainees", produces = {"application/json", "application/xml"})
 public class TraineeController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TraineeController.class);
-
     private final TraineeService traineeService;
     private final Mapper mapper;
+    private final MetricsService metricsService;
     private final Counter getProfileCounter;
     private final Timer createTraineeTimer;
 
-    public TraineeController(TraineeService traineeService, Mapper mapper, MeterRegistry meterRegistry) {
+    public TraineeController(TraineeService traineeService, Mapper mapper, MetricsService metricsService) {
         this.traineeService = traineeService;
         this.mapper = mapper;
-        this.getProfileCounter = meterRegistry.counter("trainee_profile_requests", "endpoint", "/api/trainees/profiles/{username}");
-        this.createTraineeTimer = meterRegistry.timer("create_trainee_timer", "endpoint", "/api/trainees");
+        this.metricsService = metricsService;
+        this.getProfileCounter = metricsService.createCounter("trainee_profile_requests", "endpoint", "/api/trainees/profiles/{username}");
+        this.createTraineeTimer = metricsService.createTimer("create_trainee_timer", "endpoint", "/api/trainees");
     }
 
     @GetMapping("/profiles/{username}")
@@ -47,7 +45,7 @@ public class TraineeController {
         Trainee trainee = mapper.toTrainee(traineeDTO);
         traineeService.create(trainee);
         BaseUserDTO userDTO = new BaseUserDTO(trainee.getUser().getUsername(), trainee.getUser().getPassword());
-        createTraineeTimer.record(System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
+        metricsService.recordTimer(createTraineeTimer, startTime);
         return ResponseEntity.ok(userDTO);
     }
 

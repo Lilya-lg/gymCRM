@@ -14,6 +14,7 @@ import uz.gym.crm.dto.TraineeUpdateDTO;
 import uz.gym.crm.mapper.Mapper;
 import uz.gym.crm.repository.*;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -101,7 +102,6 @@ class TraineeServiceImplTest {
     }
 
 
-
     @Test
     void updateTraineeProfile_withNonExistingUser_throwsException() {
         String username = "unknown";
@@ -162,5 +162,64 @@ class TraineeServiceImplTest {
 
         assertEquals("Trainee not found", exception.getMessage());
         verify(traineeRepository, times(1)).findByUsername(username);
+    }
+
+    @Test
+    void getTraineeProfile_withValidUser_returnsProfile() {
+        String username = "validUser";
+        Trainee trainee = new Trainee();
+        User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setIsActive(true);
+        trainee.setUser(user);
+        trainee.setDateOfBirth(LocalDate.of(1990, 1, 1));
+        trainee.setAddress("123 Main St");
+
+        when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
+        when(trainingRepository.findTrainersByTraineeId(trainee.getId())).thenReturn(Collections.emptyList());
+
+        TraineeProfileDTO profileDTO = traineeService.getTraineeProfile(username);
+
+        assertNotNull(profileDTO);
+        assertEquals("John", profileDTO.getFirstName());
+        assertEquals("Doe", profileDTO.getSecondName());
+        assertEquals("1990-01-01", profileDTO.getDateOfBirth());
+        assertEquals("123 Main St", profileDTO.getAddress());
+        assertTrue(profileDTO.isActive());
+        assertTrue(profileDTO.getTrainers().isEmpty());
+
+        verify(traineeRepository, times(1)).findByUsername(username);
+        verify(trainingRepository, times(1)).findTrainersByTraineeId(trainee.getId());
+    }
+
+    @Test
+    void updateTraineeProfile_withValidUserAndActiveStatusChange_updatesProfile() {
+        String username = "validUser";
+        Trainee trainee = new Trainee();
+        User user = new User();
+        user.setUsername(username);
+        user.setIsActive(false);
+        trainee.setUser(user);
+
+        TraineeUpdateDTO traineeUpdateDTO = new TraineeUpdateDTO();
+        traineeUpdateDTO.setIsActive("true");
+
+        when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+        doNothing().when(mapper).updateTraineeFromDTO(traineeUpdateDTO, trainee);
+
+
+        traineeService.updateTraineeProfile(username, traineeUpdateDTO);
+
+        assertTrue(trainee.getUser().getIsActive());
+
+
+        verify(traineeRepository, times(2)).findByUsername(username);
+        verify(userRepository, times(1)).findByUsername(username);
+        verify(mapper, times(1)).updateTraineeFromDTO(traineeUpdateDTO, trainee);
+        verify(traineeRepository, times(1)).save(trainee);
     }
 }

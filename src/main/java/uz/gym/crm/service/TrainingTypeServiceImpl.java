@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class TrainingTypeServiceImpl implements TrainingTypeService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TrainingServiceImpl.class);
     private final TrainingTypeRepository trainingTypeRepository;
 
 

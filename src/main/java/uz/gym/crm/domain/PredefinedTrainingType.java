@@ -1,10 +1,7 @@
 package uz.gym.crm.domain;
 
 public enum PredefinedTrainingType {
-    YOGA("Yoga"),
-    CARDIO("Cardio"),
-    CYCLE("Cycle"),
-    PILATES("Pilates");
+    YOGA("Yoga"), CARDIO("Cardio"), CYCLE("Cycle"), PILATES("Pilates");
 
     private final String displayName;
 

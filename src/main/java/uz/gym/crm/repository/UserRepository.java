@@ -22,7 +22,5 @@ public interface UserRepository extends BaseRepository<User> {
     @Modifying
     @Transactional
     @Query("UPDATE User u SET u.password = :newPassword WHERE u.username = :username AND u.password = :oldPassword")
-    int updatePassword(@Param("username") String username,
-                       @Param("oldPassword") String oldPassword,
-                       @Param("newPassword") String newPassword);
+    int updatePassword(@Param("username") String username, @Param("oldPassword") String oldPassword, @Param("newPassword") String newPassword);
 }

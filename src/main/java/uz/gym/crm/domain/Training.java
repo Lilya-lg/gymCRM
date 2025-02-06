@@ -19,16 +19,16 @@ public class Training {
     @JoinColumn(name = "trainer_id")
     private Trainer trainer;
 
-    @Column(name = "training_name",nullable = false)
+    @Column(name = "training_name", nullable = false)
     private String trainingName;
 
     @ManyToOne
     @JoinColumn(name = "training_type_id", nullable = false)
     private TrainingType trainingType;
 
-    @Column(name = "training_date",nullable = false)
+    @Column(name = "training_date", nullable = false)
     private LocalDate trainingDate;
-    @Column(name = "training_duration",nullable = false)
+    @Column(name = "training_duration", nullable = false)
     private Integer trainingDuration;
 
 

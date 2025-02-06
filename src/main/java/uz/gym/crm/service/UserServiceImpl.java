@@ -2,7 +2,6 @@ package uz.gym.crm.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.repository.BaseRepository;
 import uz.gym.crm.repository.TrainingRepository;
@@ -46,16 +45,14 @@ public class UserServiceImpl extends AbstractProfileService<User> implements Use
     }
 
     public void activate(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
         user.setIsActive(true);
         userRepository.save(user);
     }
 
     @Override
     public void deactivate(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
         user.setIsActive(false);
         userRepository.save(user);
     }

@@ -2,7 +2,6 @@ package uz.gym.crm.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +17,7 @@ import uz.gym.crm.service.abstr.TrainerService;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
 
 
 @Service("trainerServiceImpl")
@@ -26,9 +25,9 @@ import java.util.stream.Collectors;
 public class TrainerServiceImpl extends AbstractProfileService<Trainer> implements TrainerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrainerServiceImpl.class);
     private final Mapper mapper;
-    private  final BaseRepository<Trainer> baseRepository;
-    private final TrainingRepository trainingRepository;
+    private final BaseRepository<Trainer> baseRepository;
     private final UserRepository userRepository;
+    private final TrainingRepository trainingRepository;
     private final TrainerRepository trainerRepository;
 
     public TrainerServiceImpl(Mapper mapper, UserRepository userRepository, BaseRepository<Trainer> baseRepository, TrainingRepository trainingRepository, TrainerRepository trainerRepository) {
@@ -55,14 +54,12 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
     }
 
 
-
     public List<Trainer> getUnassignedTrainersForTrainee(String traineeUsername) {
         LOGGER.debug("Fetching unassigned trainers for trainee with username: {}", traineeUsername);
         List<Trainer> unassignedTrainers = trainerRepository.getUnassignedTrainersByTraineeUsername(traineeUsername);
         LOGGER.info("Found {} unassigned trainers for trainee with username: {}", unassignedTrainers.size(), traineeUsername);
         return unassignedTrainers;
     }
-
 
 
     public TrainerProfileDTO getTrainerProfile(String username) {

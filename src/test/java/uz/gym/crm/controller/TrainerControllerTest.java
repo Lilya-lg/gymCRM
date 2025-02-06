@@ -16,12 +16,13 @@ import uz.gym.crm.domain.User;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.dto.abstr.BaseTrainerDTO;
 import uz.gym.crm.mapper.Mapper;
+import uz.gym.crm.metrics.MetricsService;
 import uz.gym.crm.service.abstr.TrainerService;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,7 +37,7 @@ public class TrainerControllerTest {
     @Mock
     private Mapper mapper;
     @Mock
-    private MeterRegistry meterRegistry;
+    private MetricsService meterRegistry;
     @Mock
     private Counter counter;
     @Mock
@@ -54,8 +55,8 @@ public class TrainerControllerTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(meterRegistry.counter(any(String.class), any(String[].class))).thenReturn(counter);
-        lenient().when(meterRegistry.timer(any(String.class), any(String[].class))).thenReturn(timer);
+        lenient().when(meterRegistry.createCounter(any(String.class), any(String[].class))).thenReturn(counter);
+        lenient().when(meterRegistry.createTimer(any(String.class), any(String[].class))).thenReturn(timer);
         trainerController = new TrainerController(trainerService, mapper, meterRegistry);
 
         trainerDTO = new TrainerDTO();

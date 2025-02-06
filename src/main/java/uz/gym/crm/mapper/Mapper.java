@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class Mapper {
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainingRepository trainingRepository;
+
     public Mapper(TrainingTypeRepository trainingTypeRepository, TrainingRepository trainingRepository) {
         this.trainingTypeRepository = trainingTypeRepository;
         this.trainingRepository = trainingRepository;
@@ -110,6 +111,7 @@ public class Mapper {
                 })
                 .collect(Collectors.toList());
     }
+
     public TrainerProfileResponseDTO mapToTrainerProfileResponseDTO(Trainer trainer) {
         List<Trainee> trainees = trainingRepository.findTraineesByTrainerId(trainer.getId());
         TrainerProfileResponseDTO profileDTO = new TrainerProfileResponseDTO();

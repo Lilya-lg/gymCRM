@@ -32,7 +32,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
     private final UserRepository userRepository;
     private final TrainerRepository trainerRepository;
 
-    public TraineeServiceImpl(Mapper mapper, TraineeRepository traineeRepository, TrainingRepository trainingRepository, UserRepository userRepository, BaseRepository<Trainee> baseRepository, TrainerRepository trainerRepository) {
+    public TraineeServiceImpl(Mapper mapper, TraineeRepository traineeRepository, TrainingRepository trainingRepository, UserRepository userRepository, TraineeRepository baseRepository, TrainerRepository trainerRepository) {
         super(userRepository, trainingRepository, baseRepository);
         this.mapper = mapper;
         this.traineeRepository = traineeRepository;
@@ -65,12 +65,10 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
 
 
     @Override
-    public List<Trainer> updateTraineeTrainerList(String username, Long trainingId,List<String> trainerIds) {
-        Trainee trainee = traineeRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Trainee not found"));
+    public List<Trainer> updateTraineeTrainerList(String username, Long trainingId, List<String> trainerIds) {
+        Trainee trainee = traineeRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("Trainee not found"));
 
-        Training training = trainingRepository.findById(trainingId)
-                .orElseThrow(() -> new IllegalArgumentException("Training not found for trainee"));
+        Training training = trainingRepository.findById(trainingId).orElseThrow(() -> new IllegalArgumentException("Training not found for trainee"));
 
         List<Trainer> trainers = trainerRepository.findByUsernameIn(trainerIds);
         if (trainers.isEmpty()) {
@@ -91,8 +89,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
     public TraineeProfileDTO getTraineeProfile(String username) {
         Optional<Trainee> optionalTrainee = traineeRepository.findByUsername(username);
 
-        Trainee trainee = optionalTrainee.orElseThrow(() ->
-                new IllegalArgumentException("Trainee not found"));
+        Trainee trainee = optionalTrainee.orElseThrow(() -> new IllegalArgumentException("Trainee not found"));
 
         TraineeProfileDTO profileDTO = new TraineeProfileDTO();
         profileDTO.setFirstName(trainee.getUser().getFirstName());
@@ -102,16 +99,14 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
         profileDTO.setActive(trainee.getUser().getIsActive());
 
         List<Trainer> trainers = trainingRepository.findTrainersByTraineeId(trainee.getId());
-        List<TrainerDTO> trainerDTOs = trainers.stream()
-                .map(trainer -> {
-                    TrainerDTO trainerDTO = new TrainerDTO();
-                    trainerDTO.setUsername(trainer.getUser().getUsername());
-                    trainerDTO.setFirstName(trainer.getUser().getFirstName());
-                    trainerDTO.setSecondName(trainer.getUser().getLastName());
-                    trainerDTO.setSpecialization(trainer.getSpecialization().getTrainingType().getDisplayName());
-                    return trainerDTO;
-                })
-                .collect(Collectors.toList());
+        List<TrainerDTO> trainerDTOs = trainers.stream().map(trainer -> {
+            TrainerDTO trainerDTO = new TrainerDTO();
+            trainerDTO.setUsername(trainer.getUser().getUsername());
+            trainerDTO.setFirstName(trainer.getUser().getFirstName());
+            trainerDTO.setSecondName(trainer.getUser().getLastName());
+            trainerDTO.setSpecialization(trainer.getSpecialization().getTrainingType().getDisplayName());
+            return trainerDTO;
+        }).collect(Collectors.toList());
 
         profileDTO.setTrainers(trainerDTOs);
         return profileDTO;
@@ -135,8 +130,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
     @Override
     public void updateTraineeProfile(String username, TraineeUpdateDTO traineeDTO) {
         Optional<Trainee> optionalTrainee = traineeRepository.findByUsername(username);
-        Trainee trainee = optionalTrainee.orElseThrow(() ->
-                new IllegalArgumentException("Trainee with username '" + username + "' does not exist"));
+        Trainee trainee = optionalTrainee.orElseThrow(() -> new IllegalArgumentException("Trainee with username '" + username + "' does not exist"));
         if (trainee.getUser().getIsActive() != Boolean.valueOf(traineeDTO.getIsActive())) {
             if (Boolean.valueOf(traineeDTO.getIsActive())) {
                 super.activate(username);

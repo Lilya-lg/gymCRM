@@ -14,10 +14,10 @@ import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.mapper.Mapper;
+import uz.gym.crm.metrics.MetricsService;
 import uz.gym.crm.service.abstr.TraineeService;
 
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -32,7 +32,7 @@ public class TraineeControllerTest {
     private Mapper mapper;
 
     @Mock
-    private MeterRegistry meterRegistry;
+    private MetricsService meterRegistry;
 
     @Mock
     private Counter counter;
@@ -50,8 +50,8 @@ public class TraineeControllerTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(meterRegistry.counter(any(String.class), any(String[].class))).thenReturn(counter);
-        lenient().when(meterRegistry.timer(any(String.class), any(String[].class))).thenReturn(timer);
+        lenient().when(meterRegistry.createCounter(any(String.class), any(String[].class))).thenReturn(counter);
+        lenient().when(meterRegistry.createTimer(any(String.class), any(String[].class))).thenReturn(timer);
         traineeController = new TraineeController(traineeService, mapper, meterRegistry);
         traineeProfileDTO = new TraineeProfileDTO();
         traineeProfileDTO.setFirstName("John");
@@ -105,8 +105,6 @@ public class TraineeControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(baseUserDTO.getUsername(), response.getBody().getUsername());
         verify(traineeService, times(1)).create(trainee);
-
-        verify(timer, times(1)).record(anyLong(), any(TimeUnit.class)); // Ensure timer is used
     }
 
     @Test

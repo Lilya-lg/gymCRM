@@ -11,10 +11,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import uz.gym.crm.util.JwtUtil;
+
 import java.io.IOException;
 
 @Component
-public class JwtFilter extends OncePerRequestFilter{
+public class JwtFilter extends OncePerRequestFilter {
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
@@ -56,15 +57,15 @@ public class JwtFilter extends OncePerRequestFilter{
         String requestMethod = request.getMethod();
         if ("POST".equalsIgnoreCase(requestMethod)) {
             return pathMatcher.match("/api/trainees", requestURI) ||
-                    pathMatcher.match("/api/trainers", requestURI)||
+                    pathMatcher.match("/api/trainers", requestURI) ||
                     pathMatcher.match("/api/users/login", requestURI);
         }
 
         return pathMatcher.match("/api/users/login", requestURI) ||
-                pathMatcher.match("/swagger-ui.html",requestURI)||
-                pathMatcher.match("/v2/api-docs",requestURI)||
-                pathMatcher.match("/swagger-ui/index.html",requestURI)||
-                pathMatcher.match("/actuator/**",requestURI);
+                pathMatcher.match("/swagger-ui.html", requestURI) ||
+                pathMatcher.match("/v2/api-docs", requestURI) ||
+                pathMatcher.match("/swagger-ui/index.html", requestURI) ||
+                pathMatcher.match("/actuator/**", requestURI);
     }
 
 

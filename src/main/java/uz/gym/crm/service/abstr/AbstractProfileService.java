@@ -12,7 +12,6 @@ import uz.gym.crm.repository.UserRepository;
 import uz.gym.crm.util.PasswordGenerator;
 import uz.gym.crm.util.UsernameGenerator;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Service

@@ -18,12 +18,13 @@ public interface TraineeRepository extends BaseRepository<Trainee> {
 
     @Query("SELECT t FROM Trainee t WHERE t.user.username = :username")
     Optional<Trainee> findByUsername(String username);
+
     @Transactional
     @Modifying
     @Query(value = """
-        UPDATE trainings 
-        SET trainer_id = :trainerId 
-        WHERE trainee_id = :traineeId AND id = :trainingId
-    """, nativeQuery = true)
+                UPDATE trainings 
+                SET trainer_id = :trainerId 
+                WHERE trainee_id = :traineeId AND id = :trainingId
+            """, nativeQuery = true)
     void updateTraineeTrainer(Long traineeId, Long trainingId, Long trainerId);
 }

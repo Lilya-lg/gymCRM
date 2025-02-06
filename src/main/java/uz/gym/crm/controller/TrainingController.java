@@ -1,20 +1,18 @@
 package uz.gym.crm.controller;
 
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.gym.crm.domain.Training;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.mapper.Mapper;
 import uz.gym.crm.service.abstr.TrainingService;
+
 import java.util.List;
 
 @RestController
 @RequestMapping(value = "api/trainings", produces = {"application/json", "application/xml"})
 public class TrainingController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TrainingController.class);
 
     private final TrainingService trainingService;
     private final Mapper mapper;
@@ -25,16 +23,14 @@ public class TrainingController {
     }
 
     @GetMapping("/trainee")
-    public ResponseEntity<List<TrainingTraineeTrainerDTO>> getTrainingsForTrainee(
-            @Valid @RequestBody TrainingTraineeListDTO traineeListDTO) {
+    public ResponseEntity<List<TrainingTraineeTrainerDTO>> getTrainingsForTrainee(@Valid @RequestBody TrainingTraineeListDTO traineeListDTO) {
         List<Training> trainings = trainingService.findByCriteria(traineeListDTO.getUsername(), traineeListDTO.getTrainingType(), traineeListDTO.getPeriodFrom(), traineeListDTO.getPeriodTo(), traineeListDTO.getTrainerName());
         List<TrainingTraineeTrainerDTO> trainingTrainee = mapper.mapTrainingsToTrainingDTOs(trainings);
         return ResponseEntity.ok(trainingTrainee);
     }
 
     @GetMapping("/trainer")
-    public ResponseEntity<List<TrainingTraineeTrainerDTO>> getTrainingsForTrainer(
-            @Valid @RequestBody TrainingTrainerListDTO trainerListDTO) {
+    public ResponseEntity<List<TrainingTraineeTrainerDTO>> getTrainingsForTrainer(@Valid @RequestBody TrainingTrainerListDTO trainerListDTO) {
 
 
         List<Training> trainings = trainingService.findByCriteriaForTrainer(trainerListDTO.getUsername(), trainerListDTO.getPeriodFrom(), trainerListDTO.getPeriodTo(), trainerListDTO.getTraineeName());

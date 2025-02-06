@@ -8,7 +8,6 @@ import uz.gym.crm.domain.*;
 import uz.gym.crm.repository.TraineeRepository;
 import uz.gym.crm.repository.TrainerRepository;
 import uz.gym.crm.repository.TrainingRepository;
-import uz.gym.crm.repository.UserRepository;
 import uz.gym.crm.service.abstr.TrainingService;
 
 import java.time.LocalDate;

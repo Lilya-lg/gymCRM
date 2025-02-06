@@ -1,34 +1,32 @@
 package uz.gym.crm.controller;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.dto.abstr.BaseTrainerDTO;
 import uz.gym.crm.mapper.Mapper;
+import uz.gym.crm.metrics.MetricsService;
 import uz.gym.crm.service.abstr.TrainerService;
+
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 @RequestMapping(value = "/api/trainers", produces = {"application/json", "application/xml"})
 public class TrainerController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TrainerController.class);
 
     private final TrainerService trainerService;
     private final Mapper mapper;
+    private final MetricsService metricsService;
     private final AtomicInteger activeRequests = new AtomicInteger(0);
-    public TrainerController(TrainerService trainerService, Mapper mapper, MeterRegistry meterRegistry) {
+
+    public TrainerController(TrainerService trainerService, Mapper mapper, MetricsService metricsService) {
         this.trainerService = trainerService;
         this.mapper = mapper;
-        Gauge.builder("trainer_active_requests", activeRequests, AtomicInteger::get)
-                .description("Number of active trainer requests")
-                .register(meterRegistry);
+        this.metricsService = metricsService;
+        metricsService.createGauge("trainer_active_requests", activeRequests, "Number of active trainer requests");
     }
 
     @PostMapping
@@ -46,7 +44,7 @@ public class TrainerController {
             trainerService.updateTrainerProfile(trainerDTO.getUsername(), trainerDTO);
             TrainerProfileResponseDTO trainerProfile = trainerService.getTrainerProfileResponse(trainerDTO.getUsername());
             return ResponseEntity.ok(trainerProfile);
-        }finally {
+        } finally {
             activeRequests.decrementAndGet();
         }
 
@@ -62,8 +60,8 @@ public class TrainerController {
     public ResponseEntity<List<TrainerDTO>> getUnassignedTrainee(@RequestParam String username) {
         activeRequests.incrementAndGet();
         try {
-        List<TrainerDTO> trainers = mapper.mapTrainersToProfileDTOs(trainerService.getUnassignedTrainersForTrainee(username));
-        return ResponseEntity.ok(trainers);
+            List<TrainerDTO> trainers = mapper.mapTrainersToProfileDTOs(trainerService.getUnassignedTrainersForTrainee(username));
+            return ResponseEntity.ok(trainers);
         } finally {
             activeRequests.decrementAndGet();
         }

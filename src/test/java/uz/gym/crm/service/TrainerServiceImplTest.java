@@ -149,4 +149,5 @@ class TrainerServiceImplTest {
         assertFalse(result.isPresent());
         verify(trainerRepository, times(1)).findByUsername(username);
     }
+
 }
