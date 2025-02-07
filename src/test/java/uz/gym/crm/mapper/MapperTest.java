@@ -1,16 +1,19 @@
 package uz.gym.crm.mapper;
 
-import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import uz.gym.crm.domain.*;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.dto.abstr.BaseTraineeDTO;
 import uz.gym.crm.dto.abstr.BaseTrainerDTO;
-import uz.gym.crm.service.abstr.TrainingTypeService;
+import uz.gym.crm.repository.TrainingRepository;
+import uz.gym.crm.repository.TrainingTypeRepository;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,185 +21,194 @@ import static org.mockito.Mockito.*;
 
 class MapperTest {
 
+    @Mock
+    private TrainingTypeRepository trainingTypeRepository;
+
+    @Mock
+    private TrainingRepository trainingRepository;
+
+    @InjectMocks
     private Mapper mapper;
-    private SessionFactory mockSessionFactory;
-    private TrainingTypeService mockTrainingTypeService;
 
     @BeforeEach
     void setUp() {
-        mockSessionFactory = Mockito.mock(SessionFactory.class);
-        mockTrainingTypeService = Mockito.mock(TrainingTypeService.class);
-        mapper = new Mapper(mockSessionFactory, mockTrainingTypeService);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void toTrainee_ShouldMapBaseTraineeDTOToTrainee() {
-
+    void testToTrainee() {
         BaseTraineeDTO traineeDTO = mock(BaseTraineeDTO.class);
         when(traineeDTO.getFirstName()).thenReturn("John");
         when(traineeDTO.getSecondName()).thenReturn("Doe");
-        when(traineeDTO.getDateOfBirth()).thenReturn(LocalDate.of(2000, 1, 1));
-        when(traineeDTO.getAddress()).thenReturn("123 Main Street");
-
+        when(traineeDTO.getDateOfBirth()).thenReturn("2000-01-01");
+        when(traineeDTO.getAddress()).thenReturn("123 Street");
 
         Trainee trainee = mapper.toTrainee(traineeDTO);
 
-
-        assertNotNull(trainee, "Trainee should not be null");
-        assertEquals("John", trainee.getUser().getFirstName(), "First name should match");
-        assertEquals("Doe", trainee.getUser().getLastName(), "Second name should match");
-        assertEquals(LocalDate.of(2000, 1, 1), trainee.getDateOfBirth(), "Date of birth should match");
-        assertEquals("123 Main Street", trainee.getAddress(), "Address should match");
+        assertNotNull(trainee);
+        assertEquals("John", trainee.getUser().getFirstName());
+        assertEquals("Doe", trainee.getUser().getLastName());
+        assertEquals(LocalDate.of(2000, 1, 1), trainee.getDateOfBirth());
+        assertEquals("123 Street", trainee.getAddress());
     }
 
     @Test
-    void toTrainer_ShouldMapBaseTrainerDTOToTrainer() {
-
+    void testToTrainer() {
         BaseTrainerDTO trainerDTO = mock(BaseTrainerDTO.class);
         when(trainerDTO.getFirstName()).thenReturn("Alice");
         when(trainerDTO.getSecondName()).thenReturn("Smith");
         when(trainerDTO.getSpecialization()).thenReturn("Yoga");
 
+        PredefinedTrainingType predefinedType = PredefinedTrainingType.fromName("Yoga");
         TrainingType trainingType = new TrainingType();
-        trainingType.setTrainingType(PredefinedTrainingType.YOGA);
-        when(mockTrainingTypeService.getOrCreateTrainingType(PredefinedTrainingType.YOGA)).thenReturn(trainingType);
+        trainingType.setTrainingType(predefinedType);
 
+        when(trainingTypeRepository.getOrCreateTrainingType(predefinedType)).thenReturn(trainingType);
 
         Trainer trainer = mapper.toTrainer(trainerDTO);
 
+        assertNotNull(trainer);
+        assertEquals("Alice", trainer.getUser().getFirstName());
+        assertEquals("Smith", trainer.getUser().getLastName());
+        assertEquals(trainingType, trainer.getSpecialization());
 
-        assertNotNull(trainer, "Trainer should not be null");
-        assertEquals("Alice", trainer.getUser().getFirstName(), "First name should match");
-        assertEquals("Smith", trainer.getUser().getLastName(), "Second name should match");
-        assertEquals(trainingType, trainer.getSpecialization(), "Specialization should match");
-        verify(mockTrainingTypeService, times(1)).getOrCreateTrainingType(PredefinedTrainingType.YOGA);
+        verify(trainingTypeRepository, times(1)).getOrCreateTrainingType(predefinedType);
     }
 
     @Test
-    void toTraining_ShouldMapTrainingDTOToTraining() {
-
+    void testToTraining() {
         TrainingDTO trainingDTO = new TrainingDTO();
-        trainingDTO.setTrainingName("Morning Yoga");
-        trainingDTO.setTrainingDate(LocalDate.of(2025, 1, 1));
+        trainingDTO.setTrainingName("Boxing Basics");
         trainingDTO.setTrainingDuration(60);
-
+        trainingDTO.setTrainingDate(LocalDate.of(2025, 5, 15));
 
         Training training = mapper.toTraining(trainingDTO);
 
-
-        assertNotNull(training, "Training should not be null");
-        assertEquals("Morning Yoga", training.getTrainingName(), "Training name should match");
-        assertEquals(LocalDate.of(2025, 1, 1), training.getTrainingDate(), "Training date should match");
-        assertEquals(60, training.getTrainingDuration(), "Training duration should match");
+        assertNotNull(training);
+        assertEquals("Boxing Basics", training.getTrainingName());
+        assertEquals(60, training.getTrainingDuration());
+        assertEquals(LocalDate.of(2025, 5, 15), training.getTrainingDate());
     }
 
     @Test
-    void updateTraineeFromDTO_ShouldUpdateTraineeFields() {
-
-        TraineeUpdateDTO traineeDTO = new TraineeUpdateDTO();
-        traineeDTO.setFirstName("UpdatedFirstName");
-        traineeDTO.setSecondName("UpdatedLastName");
-        traineeDTO.setDateOfBirth(LocalDate.of(1995, 5, 15));
-        traineeDTO.setAddress("Updated Address");
-        traineeDTO.setIsActive("true");
-
-        User user = new User();
+    void testUpdateTraineeFromDTO() {
         Trainee trainee = new Trainee();
+        User user = new User();
         trainee.setUser(user);
 
+        TraineeUpdateDTO traineeDTO = new TraineeUpdateDTO();
+        traineeDTO.setFirstName("Michael");
+        traineeDTO.setSecondName("Jordan");
+        traineeDTO.setAddress("New Address");
+        traineeDTO.setDateOfBirth("1985-10-10");
 
         mapper.updateTraineeFromDTO(traineeDTO, trainee);
 
-
-        assertEquals("UpdatedFirstName", user.getFirstName(), "First name should be updated");
-        assertEquals("UpdatedLastName", user.getLastName(), "Last name should be updated");
-        assertEquals(LocalDate.of(1995, 5, 15), trainee.getDateOfBirth(), "Date of birth should be updated");
-        assertEquals("Updated Address", trainee.getAddress(), "Address should be updated");
+        assertEquals("Michael", trainee.getUser().getFirstName());
+        assertEquals("Jordan", trainee.getUser().getLastName());
+        assertEquals("New Address", trainee.getAddress());
+        assertEquals(LocalDate.of(1985, 10, 10), trainee.getDateOfBirth());
     }
 
     @Test
-    void updateTrainerFromDTO_ShouldUpdateTrainerFields() {
-
-        TrainerProfileDTO trainerDTO = new TrainerProfileDTO();
-        trainerDTO.setFirstName("UpdatedFirstName");
-        trainerDTO.setSecondName("UpdatedLastName");
-        trainerDTO.setSpecialization("Cardio");
-        trainerDTO.setIsActive(true);
-
-        User user = new User();
-        TrainingType trainingType = new TrainingType();
+    void testUpdateTrainerFromDTO() {
         Trainer trainer = new Trainer();
+        User user = new User();
         trainer.setUser(user);
 
-        when(mockTrainingTypeService.getOrCreateTrainingType(PredefinedTrainingType.fromName("Cardio")))
-                .thenReturn(trainingType);
+        TrainerProfileDTO trainerDTO = new TrainerProfileDTO();
+        trainerDTO.setFirstName("Bruce");
+        trainerDTO.setSecondName("Lee");
+        trainerDTO.setSpecialization("Yoga");
 
+        PredefinedTrainingType trainingType = PredefinedTrainingType.fromName("Yoga");
+        TrainingType newTrainingType = new TrainingType();
+        newTrainingType.setTrainingType(trainingType);
+
+        when(trainingTypeRepository.getOrCreateTrainingType(trainingType)).thenReturn(newTrainingType);
 
         mapper.updateTrainerFromDTO(trainerDTO, trainer);
 
+        assertEquals("Bruce", trainer.getUser().getFirstName());
+        assertEquals("Lee", trainer.getUser().getLastName());
+        assertEquals(newTrainingType, trainer.getSpecialization());
 
-        assertEquals("UpdatedFirstName", user.getFirstName(), "First name should be updated");
-        assertEquals("UpdatedLastName", user.getLastName(), "Last name should be updated");
-        assertEquals(trainingType, trainer.getSpecialization(), "Specialization should be updated");
-        verify(mockTrainingTypeService, times(1)).getOrCreateTrainingType(PredefinedTrainingType.fromName("Cardio"));
+        verify(trainingTypeRepository, times(1)).getOrCreateTrainingType(trainingType);
     }
 
     @Test
-    void mapTrainingsToTrainingDTOs_ShouldMapTrainingsToDTOs() {
+    void testMapTrainingsToTrainingDTOs() {
 
         Training training = new Training();
-        training.setTrainingName("Yoga Session");
-        training.setTrainingDate(LocalDate.of(2025, 2, 15));
+        training.setTrainingName("Pilates");
         training.setTrainingDuration(90);
+        training.setTrainingDate(LocalDate.of(2025, 3, 10));
 
+
+        PredefinedTrainingType predefinedTrainingType = PredefinedTrainingType.fromName("Pilates");
         TrainingType trainingType = new TrainingType();
-        trainingType.setTrainingType(PredefinedTrainingType.YOGA);
+        trainingType.setTrainingType(predefinedTrainingType);
+
+        when(trainingTypeRepository.getOrCreateTrainingType(predefinedTrainingType)).thenReturn(trainingType);
+
         training.setTrainingType(trainingType);
 
-        User trainerUser = new User();
-        trainerUser.setUsername("trainerUser");
+
         Trainer trainer = new Trainer();
-        trainer.setUser(trainerUser);
+        User user = new User();
+        user.setUsername("coach_john");
+        trainer.setUser(user);
         training.setTrainer(trainer);
 
 
         List<TrainingTraineeTrainerDTO> trainingDTOs = mapper.mapTrainingsToTrainingDTOs(List.of(training));
 
 
-        assertNotNull(trainingDTOs, "Training DTO list should not be null");
-        assertEquals(1, trainingDTOs.size(), "There should be one training DTO");
-        TrainingTraineeTrainerDTO dto = trainingDTOs.get(0);
-        assertEquals("Yoga Session", dto.getTrainingName(), "Training name should match");
-        assertEquals(LocalDate.of(2025, 2, 15), dto.getTrainingDate(), "Training date should match");
-        assertEquals(90, dto.getTrainingDuration(), "Training duration should match");
-        assertEquals("Yoga", dto.getTrainingType(), "Training type should match");
-        assertEquals("trainerUser", dto.getTrainerName(), "Trainer name should match");
+        assertEquals(1, trainingDTOs.size());
+        assertEquals("Pilates", trainingDTOs.get(0).getTrainingName());
+        assertEquals(90, trainingDTOs.get(0).getTrainingDuration());
+        assertEquals("coach_john", trainingDTOs.get(0).getTrainerName());
+
+
+        assertNotNull(trainingDTOs.get(0).getTrainingType());
+        assertEquals("Pilates", trainingDTOs.get(0).getTrainingType());
     }
 
-    @Test
-    void mapTrainersToProfileDTOs_ShouldMapTrainersToDTOs() {
 
+    @Test
+    void testMapToTrainerProfileResponseDTO() {
         Trainer trainer = new Trainer();
         User user = new User();
-        user.setFirstName("Alice");
-        user.setLastName("Smith");
-        user.setUsername("trainerAlice");
+        user.setFirstName("Tom");
+        user.setLastName("Cruise");
+        user.setIsActive(true);
         trainer.setUser(user);
 
         TrainingType trainingType = new TrainingType();
-        trainingType.setTrainingType(PredefinedTrainingType.YOGA);
+        trainingType.setTrainingType(PredefinedTrainingType.fromName("Pilates"));
         trainer.setSpecialization(trainingType);
 
+        User user1 = new User();
+        user1.setFirstName("John");
+        user1.setFirstName("Doe");
+        user1.setUsername("trainee1");
+        user1.setIsActive(false);
+        user1.setPassword("q231");
 
-        List<TrainerDTO> trainerDTOs = mapper.mapTrainersToProfileDTOs(List.of(trainer));
+        Trainee trainee1 = new Trainee();
+        trainee1.setUser(user1);
 
 
-        assertNotNull(trainerDTOs, "Trainer DTO list should not be null");
-        assertEquals(1, trainerDTOs.size(), "There should be one trainer DTO");
-        TrainerDTO dto = trainerDTOs.get(0);
-        assertEquals("Alice", dto.getFirstName(), "First name should match");
-        assertEquals("Smith", dto.getSecondName(), "Last name should match");
-        assertEquals("trainerAlice", dto.getUsername(), "Username should match");
-        assertEquals("Yoga", dto.getSpecialization(), "Specialization should match");
+        when(trainingRepository.findTraineesByTrainerId(trainer.getId())).thenReturn(List.of(trainee1));
+
+        TrainerProfileResponseDTO profileDTO = mapper.mapToTrainerProfileResponseDTO(trainer);
+
+        assertEquals("Tom", profileDTO.getFirstName());
+        assertEquals("Cruise", profileDTO.getSecondName());
+        assertEquals("Pilates", profileDTO.getSpecialization());
+        assertTrue(profileDTO.getIsActive());
+        assertEquals(1, profileDTO.getTrainees().size());
+
+        verify(trainingRepository, times(1)).findTraineesByTrainerId(trainer.getId());
     }
 }

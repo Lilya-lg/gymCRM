@@ -1,6 +1,6 @@
 package uz.gym.crm.domain;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "users")
@@ -37,14 +37,6 @@ public class User {
 
     public String getUsername() {
         return username;
-    }
-
-    public User(String firstName, String lastName) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-    }
-
-    public User() {
     }
 
 

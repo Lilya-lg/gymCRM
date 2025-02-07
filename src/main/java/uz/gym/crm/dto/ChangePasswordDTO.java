@@ -1,6 +1,7 @@
 package uz.gym.crm.dto;
 
-import javax.validation.constraints.NotBlank;
+
+import jakarta.validation.constraints.NotBlank;
 
 public class ChangePasswordDTO {
     @NotBlank(message = "Username is required")

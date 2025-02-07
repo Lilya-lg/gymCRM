@@ -1,11 +1,9 @@
 package uz.gym.crm.dto.abstr;
 
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 
 
 public abstract class BaseTraineeDTO {
@@ -13,8 +11,8 @@ public abstract class BaseTraineeDTO {
     private String firstName;
     @NotBlank(message = "Lastname is required")
     private String secondName;
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private LocalDate dateOfBirth;
+
+    private String dateOfBirth;
     private String address;
 
     public String getFirstName() {
@@ -33,11 +31,11 @@ public abstract class BaseTraineeDTO {
         this.secondName = secondName;
     }
 
-    public LocalDate getDateOfBirth() {
+    public String getDateOfBirth() {
         return dateOfBirth;
     }
 
-    public void setDateOfBirth(LocalDate dateOfBirth) {
+    public void setDateOfBirth(String dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
     }
 

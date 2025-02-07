@@ -1,6 +1,6 @@
 package uz.gym.crm.domain;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import java.time.LocalDate;
 
@@ -11,21 +11,14 @@ public class Trainee {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
+    @Column(name = "address")
     private String address;
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "user_id", unique = true, nullable = false)
     private User user;
 
-    public Trainee(LocalDate dateOfBirth, String address, User user) {
-        this.dateOfBirth = dateOfBirth;
-        this.address = address;
-        this.user = user;
-    }
-
-    public Trainee() {
-    }
 
     public LocalDate getDateOfBirth() {
         return dateOfBirth;

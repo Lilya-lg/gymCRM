@@ -1,120 +1,83 @@
 package uz.gym.crm.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uz.gym.crm.dao.UserDAOImpl;
-import uz.gym.crm.dao.abstr.TrainerDAO;
-import uz.gym.crm.dao.abstr.TrainingDAO;
-import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.mapper.Mapper;
+import uz.gym.crm.repository.BaseRepository;
+import uz.gym.crm.repository.TrainerRepository;
+import uz.gym.crm.repository.TrainingRepository;
+import uz.gym.crm.repository.UserRepository;
 import uz.gym.crm.service.abstr.AbstractProfileService;
-import uz.gym.crm.service.abstr.ProfileService;
 import uz.gym.crm.service.abstr.TrainerService;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
 
 
 @Service("trainerServiceImpl")
 @Transactional
 public class TrainerServiceImpl extends AbstractProfileService<Trainer> implements TrainerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrainerServiceImpl.class);
-    @Autowired
-    TrainerService trainerServirce;
-    ProfileService<Trainer> profileService;
-    private final TrainerDAO trainerDAO;
-    private final TrainingDAO trainingDAO;
     private final Mapper mapper;
-    private final UserDAOImpl userDAO;
+    private final BaseRepository<Trainer> baseRepository;
+    private final UserRepository userRepository;
+    private final TrainingRepository trainingRepository;
+    private final TrainerRepository trainerRepository;
 
-    public TrainerServiceImpl(UserDAOImpl userDAO, TrainerDAO trainerDAO, TrainingDAO trainingDAO, Mapper mapper) {
-        super(trainerDAO, userDAO, trainingDAO);
-        this.trainerDAO = trainerDAO;
-        this.trainingDAO = trainingDAO;
+    public TrainerServiceImpl(Mapper mapper, UserRepository userRepository, BaseRepository<Trainer> baseRepository, TrainingRepository trainingRepository, TrainerRepository trainerRepository) {
+        super(userRepository, trainingRepository, baseRepository);
+        this.baseRepository = baseRepository;
+        this.trainingRepository = trainingRepository;
         this.mapper = mapper;
-        this.userDAO = userDAO;
+        this.userRepository = userRepository;
+        this.trainerRepository = trainerRepository;
     }
 
+
+    @Override
+    public Optional<Trainer> findByUsername(String username) {
+        return trainerRepository.findByUsername(username);
+    }
 
     @Override
     public void create(Trainer trainer) {
         prepareUser(trainer.getUser());
-        super.create(trainer);
+        userRepository.save(trainer.getUser());
+        trainerRepository.save(trainer);
         LOGGER.info("Trainer entity created successfully with ID: {}", trainer.getId());
     }
 
-    @Override
-    public Optional<Trainer> findByUsernameAndPassword(String usernameAuth, String passwordAuth, String username, String password) {
-        if (!super.authenticate(usernameAuth, passwordAuth)) {
-            throw new IllegalArgumentException("Invalid username or password.");
-        }
-        LOGGER.debug("Attempting to find trainer with username: {}", username);
-        try {
-            return trainerDAO.findByUsernameAndPassword(username, password);
-        } catch (Exception e) {
-            LOGGER.error("Error finding trainer with username: {}", username, e);
-            throw e;
-        }
-    }
 
-    @Override
-    public Optional<Trainer> findByUsername(String username, String password, String usernameToSelect) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<Trainer> findByUsername(String username) {
-        LOGGER.debug("Searching for profile with username: {}", username);
-        return getDao().findByUsername(username);
-    }
-
-    @Override
     public List<Trainer> getUnassignedTrainersForTrainee(String traineeUsername) {
         LOGGER.debug("Fetching unassigned trainers for trainee with username: {}", traineeUsername);
-        List<Trainer> unassignedTrainers = trainerDAO.getUnassignedTrainersByTraineeUsername(traineeUsername);
+        List<Trainer> unassignedTrainers = trainerRepository.getUnassignedTrainersByTraineeUsername(traineeUsername);
         LOGGER.info("Found {} unassigned trainers for trainee with username: {}", unassignedTrainers.size(), traineeUsername);
         return unassignedTrainers;
     }
 
 
-    @Override
     public TrainerProfileDTO getTrainerProfile(String username) {
-        Optional<Trainer> optionalTrainer = trainerDAO.findByUsername(username);
+        Optional<Trainer> optionalTrainer = trainerRepository.findByUsername(username);
 
         Trainer trainer = optionalTrainer.orElseThrow(() ->
                 new IllegalArgumentException("Trainee not found"));
-        return mapToTrainerProfileDTO(trainer);
+        return mapper.mapToTrainerProfileDTO(trainer);
     }
 
-    public TrainerProfileDTO mapToTrainerProfileDTO(Trainer trainer) {
-        List<Trainee> trainees = trainingDAO.findTraineesByTrainerId(trainer.getId());
-        TrainerProfileDTO profileDTO = new TrainerProfileDTO();
-        profileDTO.setFirstName(trainer.getUser().getFirstName());
-        profileDTO.setSecondName(trainer.getUser().getLastName());
-        profileDTO.setSpecialization(trainer.getSpecialization().getTrainingType().getDisplayName());
-        profileDTO.setIsActive(trainer.getUser().getIsActive());
-        profileDTO.setTrainees(mapTraineesToProfileDTOs(trainees));
-        return profileDTO;
+    public TrainerProfileResponseDTO getTrainerProfileResponse(String username) {
+        Optional<Trainer> optionalTrainer = baseRepository.findByUsername(username);
+
+        Trainer trainer = optionalTrainer.orElseThrow(() ->
+                new IllegalArgumentException("Trainee not found"));
+        return mapper.mapToTrainerProfileResponseDTO(trainer);
     }
 
-    public List<UserDTO> mapTraineesToProfileDTOs(List<Trainee> trainees) {
-        return trainees.stream()
-                .map(trainee -> {
-                    UserDTO traineeProfileDTO = new UserDTO();
-                    traineeProfileDTO.setFirstName(trainee.getUser().getFirstName());
-                    traineeProfileDTO.setSecondName(trainee.getUser().getLastName());
-                    traineeProfileDTO.setUsername(trainee.getUser().getUsername());
-                    return traineeProfileDTO;
-                })
-                .collect(Collectors.toList());
-    }
 
     @Override
     public void updateTrainerProfile(String username, TrainerProfileDTO trainerDTO) {
@@ -131,17 +94,13 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
         User user = trainer.getUser();
         user.setIsActive(Boolean.valueOf(trainerDTO.getIsActive()));
         user.setLastName(trainerDTO.getSecondName());
-        System.out.println(trainerDTO.getSecondName());
-        userDAO.update(user);
+        userRepository.save(user);
         mapper.updateTrainerFromDTO(trainerDTO, trainer);
         super.updateProfile(username, trainer);
     }
-
 
     @Override
     protected User getUser(Trainer entity) {
         return entity.getUser();
     }
-
-
 }

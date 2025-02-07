@@ -1,6 +1,6 @@
 package uz.gym.crm.domain;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "trainers")
@@ -17,14 +17,6 @@ public class Trainer {
     @OneToOne(cascade = CascadeType.ALL, optional = false)
     @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
     private User user;
-
-    public Trainer(TrainingType specialization, User user) {
-        this.specialization = specialization;
-        this.user = user;
-    }
-
-    public Trainer() {
-    }
 
     public TrainingType getSpecialization() {
         return specialization;

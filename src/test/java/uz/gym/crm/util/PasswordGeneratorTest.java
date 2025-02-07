@@ -1,10 +1,12 @@
 package uz.gym.crm.util;
 
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class PasswordGeneratorTest {
+
     @Test
     void generatePasswordDefaultLength() {
         String password = PasswordGenerator.generatePassword();
@@ -47,5 +49,7 @@ public class PasswordGeneratorTest {
         assertTrue(hasDigit, "Password should contain at least one digit.");
         assertTrue(hasSpecialChar, "Password should contain at least one special character.");
     }
+
+
 
 }

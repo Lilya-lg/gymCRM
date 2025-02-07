@@ -1,8 +1,8 @@
 package uz.gym.crm.dto.abstr;
 
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public abstract class BaseTrainerDTO {
     @NotBlank(message = "Firstname is required")

@@ -2,77 +2,80 @@ package uz.gym.crm.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import uz.gym.crm.dao.abstr.BaseDAO;
-import uz.gym.crm.dao.abstr.TrainingDAO;
-import uz.gym.crm.dao.abstr.UserDAO;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import uz.gym.crm.domain.User;
+import uz.gym.crm.repository.UserRepository;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class UserServiceImplTest {
 
-    private BaseDAO<User> mockBaseDAO;
-    private UserDAO mockUserDAO;
-    private TrainingDAO mockTrainingDAO;
-    private UserServiceImpl service;
+    @Mock
+    private UserRepository userRepository;
+
+    @InjectMocks
+    private UserServiceImpl userService;
 
     @BeforeEach
     void setUp() {
-        mockBaseDAO = Mockito.mock(BaseDAO.class);
-        mockUserDAO = Mockito.mock(UserDAO.class);
-        mockTrainingDAO = Mockito.mock(TrainingDAO.class);
-        service = new UserServiceImpl(mockBaseDAO, mockUserDAO, mockTrainingDAO);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void updateUser_ShouldChangePassword() {
+    void changePassword() {
         String username = "testUser";
-        String oldPassword = "oldPass";
-        String newPassword = "newPass";
+        String oldPassword = "oldPassword";
+        String newPassword = "newPassword";
 
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(oldPassword);
+        when(userRepository.updatePassword(username, oldPassword, newPassword)).thenReturn(1);
 
-        when(mockUserDAO.findByUsernameAndPassword(username, oldPassword)).thenReturn(java.util.Optional.of(user));
-        doNothing().when(mockUserDAO).update(user);
+        userService.changePassword(username, oldPassword, newPassword);
 
-
-        service.updateUser(username, oldPassword, newPassword);
-
-
-        assertEquals(newPassword, user.getPassword(), "Password should be updated to the new password");
-        verify(mockUserDAO, times(1)).findByUsernameAndPassword(username, oldPassword);
-        verify(mockUserDAO, times(1)).updateUser(user);
+        verify(userRepository, times(1)).updatePassword(username, oldPassword, newPassword);
     }
 
     @Test
-    void updateUser_ShouldThrowException_WhenOldPasswordIsIncorrect() {
+    void authenticate() {
         String username = "testUser";
-        String oldPassword = "wrongPass";
-        String newPassword = "newPass";
+        String password = "password";
 
-        when(mockUserDAO.findByUsernameAndPassword(username, oldPassword)).thenReturn(java.util.Optional.empty());
+        when(userRepository.findByUsernameAndPassword(username, password)).thenReturn(Optional.of(new User()));
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () ->
-                service.updateUser(username, oldPassword, newPassword));
+        boolean result = userService.authenticate(username, password);
 
-        assertEquals("Invalid username or password.", exception.getMessage());
-        verify(mockUserDAO, times(1)).findByUsernameAndPassword(username, oldPassword);
-        verify(mockUserDAO, never()).update(any(User.class));
+        assertTrue(result);
     }
 
     @Test
-    void getUser_ShouldReturnNull() {
-
+    void activate() {
+        String username = "testUser";
         User user = new User();
+        user.setIsActive(false);
 
-        User result = service.getUser(user);
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
 
+        userService.activate(username);
 
-        assertNull(result, "getUser should always return null as per implementation");
+        assertTrue(user.getIsActive());
+        verify(userRepository, times(1)).save(user);
+    }
+
+    @Test
+    void deactivate() {
+        String username = "testUser";
+        User user = new User();
+        user.setIsActive(true);
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+        userService.deactivate(username);
+
+        assertFalse(user.getIsActive());
+        verify(userRepository, times(1)).save(user);
     }
 }
-

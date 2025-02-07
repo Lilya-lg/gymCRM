@@ -4,17 +4,19 @@ import org.junit.jupiter.api.Test;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
 import uz.gym.crm.domain.User;
-import uz.gym.crm.mapper.ProfileMapper;
+
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+
 class ProfileMapperTest {
+
 
     @Test
     void updateFields_ShouldUpdateTraineeFields() {
-        // Arrange
+
         User existingUser = new User();
         existingUser.setIsActive(false);
 
@@ -89,4 +91,6 @@ class ProfileMapperTest {
 
         assertTrue(exception.getMessage().startsWith("Unsupported profile type:"));
     }
+
+
 }

@@ -1,38 +1,48 @@
 package uz.gym.crm.mapper;
 
-import org.hibernate.SessionFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import uz.gym.crm.domain.*;
 import uz.gym.crm.dto.*;
 import uz.gym.crm.dto.abstr.BaseTraineeDTO;
 import uz.gym.crm.dto.abstr.BaseTrainerDTO;
-import uz.gym.crm.service.abstr.TrainingTypeService;
+import uz.gym.crm.repository.TrainingRepository;
+import uz.gym.crm.repository.TrainingTypeRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class Mapper {
-    private final SessionFactory sessionFactory;
-    private final TrainingTypeService trainingTypeDAO;
+    private final TrainingTypeRepository trainingTypeRepository;
+    private final TrainingRepository trainingRepository;
 
-    @Autowired
-    public Mapper(SessionFactory sessionFactory, TrainingTypeService trainingTypeDAO) {
-        this.sessionFactory = sessionFactory;
-        this.trainingTypeDAO = trainingTypeDAO;
+    public Mapper(TrainingTypeRepository trainingTypeRepository, TrainingRepository trainingRepository) {
+        this.trainingTypeRepository = trainingTypeRepository;
+        this.trainingRepository = trainingRepository;
     }
 
     public Trainee toTrainee(BaseTraineeDTO traineeDTO) {
-        User user = new User(traineeDTO.getFirstName(), traineeDTO.getSecondName());
-        return new Trainee(traineeDTO.getDateOfBirth(), traineeDTO.getAddress(), user);
+        User user = new User();
+        user.setLastName(traineeDTO.getSecondName());
+        user.setFirstName(traineeDTO.getFirstName());
+        Trainee trainee = new Trainee();
+        trainee.setDateOfBirth(LocalDate.parse(traineeDTO.getDateOfBirth()));
+        trainee.setAddress(traineeDTO.getAddress());
+        trainee.setUser(user);
+        return trainee;
     }
 
     public Trainer toTrainer(BaseTrainerDTO trainerDTO) {
-        User user = new User(trainerDTO.getFirstName(), trainerDTO.getSecondName());
+        User user = new User();
+        user.setLastName(trainerDTO.getSecondName());
+        user.setFirstName(trainerDTO.getFirstName());
+        Trainer trainer = new Trainer();
         PredefinedTrainingType predefinedType = PredefinedTrainingType.fromName(trainerDTO.getSpecialization());
-        TrainingType trainingType = trainingTypeDAO.getOrCreateTrainingType(predefinedType);
-        return new Trainer(trainingType, user);
+        TrainingType trainingType = trainingTypeRepository.getOrCreateTrainingType(predefinedType);
+        trainer.setSpecialization(trainingType);
+        trainer.setUser(user);
+        return trainer;
     }
 
     public Training toTraining(TrainingDTO trainingDTO) {
@@ -51,7 +61,7 @@ public class Mapper {
             trainee.getUser().setLastName(traineeDTO.getSecondName());
         }
         if (traineeDTO.getDateOfBirth() != null) {
-            trainee.setDateOfBirth(traineeDTO.getDateOfBirth());
+            trainee.setDateOfBirth(LocalDate.parse(traineeDTO.getDateOfBirth()));
         }
         if (traineeDTO.getAddress() != null) {
             trainee.setAddress(traineeDTO.getAddress());
@@ -69,7 +79,7 @@ public class Mapper {
         if (trainerDTO.getSpecialization() != null) {
             PredefinedTrainingType trainingType = PredefinedTrainingType.fromName(trainerDTO.getSpecialization());
 
-            trainer.setSpecialization(trainingTypeDAO.getOrCreateTrainingType(trainingType));
+            trainer.setSpecialization(trainingTypeRepository.getOrCreateTrainingType(trainingType));
         }
 
 
@@ -102,6 +112,40 @@ public class Mapper {
                 .collect(Collectors.toList());
     }
 
+    public TrainerProfileResponseDTO mapToTrainerProfileResponseDTO(Trainer trainer) {
+        List<Trainee> trainees = trainingRepository.findTraineesByTrainerId(trainer.getId());
+        TrainerProfileResponseDTO profileDTO = new TrainerProfileResponseDTO();
+        profileDTO.setFirstName(trainer.getUser().getFirstName());
+        profileDTO.setSecondName(trainer.getUser().getLastName());
+        profileDTO.setSpecialization(trainer.getSpecialization().getTrainingType().getDisplayName());
+        profileDTO.setIsActive(trainer.getUser().getIsActive());
+        profileDTO.setTrainees(mapTraineesToProfileDTOs(trainees));
+        return profileDTO;
+    }
+
+    public TrainerProfileDTO mapToTrainerProfileDTO(Trainer trainer) {
+        List<Trainee> trainees = trainingRepository.findTraineesByTrainerId(trainer.getId());
+        TrainerProfileDTO profileDTO = new TrainerProfileDTO();
+        profileDTO.setFirstName(trainer.getUser().getFirstName());
+        profileDTO.setSecondName(trainer.getUser().getLastName());
+        profileDTO.setUsername(trainer.getUser().getUsername());
+        profileDTO.setSpecialization(trainer.getSpecialization().getTrainingType().getDisplayName());
+        profileDTO.setIsActive(trainer.getUser().getIsActive());
+        profileDTO.setTrainees(mapTraineesToProfileDTOs(trainees));
+        return profileDTO;
+    }
+
+    public List<UserDTO> mapTraineesToProfileDTOs(List<Trainee> trainees) {
+        return trainees.stream()
+                .map(trainee -> {
+                    UserDTO traineeProfileDTO = new UserDTO();
+                    traineeProfileDTO.setFirstName(trainee.getUser().getFirstName());
+                    traineeProfileDTO.setSecondName(trainee.getUser().getLastName());
+                    traineeProfileDTO.setUsername(trainee.getUser().getUsername());
+                    return traineeProfileDTO;
+                })
+                .collect(Collectors.toList());
+    }
 
 }
 

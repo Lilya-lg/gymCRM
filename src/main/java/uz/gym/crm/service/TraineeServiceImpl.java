@@ -2,18 +2,16 @@ package uz.gym.crm.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import uz.gym.crm.dao.UserDAOImpl;
-import uz.gym.crm.dao.abstr.TraineeDAO;
-import uz.gym.crm.dao.abstr.TrainingDAO;
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
+import uz.gym.crm.domain.Training;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.dto.TraineeProfileDTO;
 import uz.gym.crm.dto.TraineeUpdateDTO;
 import uz.gym.crm.dto.TrainerDTO;
 import uz.gym.crm.mapper.Mapper;
+import uz.gym.crm.repository.*;
 import uz.gym.crm.service.abstr.AbstractProfileService;
 import uz.gym.crm.service.abstr.TraineeService;
 
@@ -28,105 +26,87 @@ import java.util.stream.Collectors;
 @Transactional
 public class TraineeServiceImpl extends AbstractProfileService<Trainee> implements TraineeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(TraineeServiceImpl.class);
-    @Autowired
-    TraineeService traineeService;
-    private final TraineeDAO traineeDAO;
-    private final UserDAOImpl userDAO;
-    private final TrainingDAO trainingDAO;
     private final Mapper mapper;
+    private final TraineeRepository traineeRepository;
+    private final TrainingRepository trainingRepository;
+    private final UserRepository userRepository;
+    private final TrainerRepository trainerRepository;
 
-    @Autowired
-    public TraineeServiceImpl(UserDAOImpl userDAO, TraineeDAO traineeDAO, TrainingDAO trainingDAO, Mapper mapper) {
-        super(traineeDAO, userDAO, trainingDAO);
-        this.traineeDAO = traineeDAO;
-        this.userDAO = userDAO;
-        this.trainingDAO = trainingDAO;
+    public TraineeServiceImpl(Mapper mapper, TraineeRepository traineeRepository, TrainingRepository trainingRepository, UserRepository userRepository, TraineeRepository baseRepository, TrainerRepository trainerRepository) {
+        super(userRepository, trainingRepository, baseRepository);
         this.mapper = mapper;
+        this.traineeRepository = traineeRepository;
+        this.trainingRepository = trainingRepository;
+        this.userRepository = userRepository;
+        this.trainerRepository = trainerRepository;
     }
 
 
     @Override
     public void create(Trainee trainee) {
         prepareUser(trainee.getUser());
-        userDAO.save(trainee.getUser());
-        super.create(trainee);
+        userRepository.save(trainee.getUser());
+        traineeRepository.save(trainee);
         LOGGER.info("Trainee entity created successfully with ID: {}", trainee.getId());
     }
 
     @Override
     public void deleteProfileByUsername(String username) {
         LOGGER.debug("Deleting Trainee profile with username: {}", username);
-        traineeDAO.deleteByUsername(username);
+        Optional<Trainee> trainee = traineeRepository.findByUsername(username);
+        if (trainee.isPresent()) {
+            int deletedRows = traineeRepository.deleteByUsername(username);
+            LOGGER.info("Deleted rows: " + deletedRows);
+        } else {
+            LOGGER.info("Trainee not found for username: " + username);
+        }
         LOGGER.info("Trainee profile and associated user deleted successfully for username: {}", username);
     }
 
 
-    public Optional<Trainee> findByUsername(String username, String password, String usernameToSelect) {
-        if (!super.authenticate(username, password)) {
-            throw new IllegalArgumentException("Invalid username or password.");
-        }
-        LOGGER.debug("Searching for profile with username: {}", usernameToSelect);
-        return getDao().findByUsername(usernameToSelect);
-    }
-
     @Override
-    public Optional<Trainee> findByUsername(String username) {
-        LOGGER.debug("!!Searching for profile with username: {}", username);
-        return getDao().findByUsername(username);
-    }
+    public List<Trainer> updateTraineeTrainerList(String username, Long trainingId, List<String> trainerIds) {
+        Trainee trainee = traineeRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("Trainee not found"));
 
-    @Override
-    public Optional<Trainee> findByUsernameAndPassword(String usernameAuth, String passwordAuth, String username, String password) {
-        if (!super.authenticate(usernameAuth, passwordAuth)) {
-            throw new IllegalArgumentException("Invalid username or password.");
+        Training training = trainingRepository.findById(trainingId).orElseThrow(() -> new IllegalArgumentException("Training not found for trainee"));
+
+        List<Trainer> trainers = trainerRepository.findByUsernameIn(trainerIds);
+        if (trainers.isEmpty()) {
+            throw new IllegalArgumentException("No valid trainers found for given usernames");
         }
-        LOGGER.debug("Attempting to find trainer with username: {}", username);
-        try {
-            return traineeDAO.findByUsernameAndPassword(username, password);
-        } catch (Exception e) {
-            LOGGER.error("Error finding trainer with username: {}", username, e);
-            throw e;
+
+
+        for (Trainer trainer : trainers) {
+            traineeRepository.updateTraineeTrainer(trainee.getId(), trainingId, trainer.getId());
         }
-    }
 
-    @Override
-    public List<Trainer> updateTraineeTrainerList(String username, List<String> trainerIds) {
-        Optional<Trainee> optionalTrainee = traineeDAO.findByUsername(username);
-        Trainee trainee = optionalTrainee.orElseThrow(() ->
-                new IllegalArgumentException("Trainee not found"));
-        traineeDAO.updateTraineeTrainerList(trainee.getId(), trainerIds);
-        return trainingDAO.findTrainersByTraineeId(trainee.getId());
 
+        return trainingRepository.findTrainersByTraineeId(trainee.getId());
 
     }
-
 
     @Override
     public TraineeProfileDTO getTraineeProfile(String username) {
-        // Fetch trainee details
-        Optional<Trainee> optionalTrainee = traineeDAO.findByUsername(username);
+        Optional<Trainee> optionalTrainee = traineeRepository.findByUsername(username);
 
-        Trainee trainee = optionalTrainee.orElseThrow(() ->
-                new IllegalArgumentException("Trainee not found"));
+        Trainee trainee = optionalTrainee.orElseThrow(() -> new IllegalArgumentException("Trainee not found"));
 
         TraineeProfileDTO profileDTO = new TraineeProfileDTO();
         profileDTO.setFirstName(trainee.getUser().getFirstName());
         profileDTO.setSecondName(trainee.getUser().getLastName());
-        profileDTO.setDateOfBirth(trainee.getDateOfBirth());
+        profileDTO.setDateOfBirth(trainee.getDateOfBirth().toString());
         profileDTO.setAddress(trainee.getAddress());
         profileDTO.setActive(trainee.getUser().getIsActive());
 
-        List<Trainer> trainers = trainingDAO.findTrainersByTraineeId(trainee.getId());
-        List<TrainerDTO> trainerDTOs = trainers.stream()
-                .map(trainer -> {
-                    TrainerDTO trainerDTO = new TrainerDTO();
-                    trainerDTO.setUsername(trainer.getUser().getUsername());
-                    trainerDTO.setFirstName(trainer.getUser().getFirstName());
-                    trainerDTO.setSecondName(trainer.getUser().getLastName());
-                    trainerDTO.setSpecialization(trainer.getSpecialization().getTrainingType().getDisplayName());
-                    return trainerDTO;
-                })
-                .collect(Collectors.toList());
+        List<Trainer> trainers = trainingRepository.findTrainersByTraineeId(trainee.getId());
+        List<TrainerDTO> trainerDTOs = trainers.stream().map(trainer -> {
+            TrainerDTO trainerDTO = new TrainerDTO();
+            trainerDTO.setUsername(trainer.getUser().getUsername());
+            trainerDTO.setFirstName(trainer.getUser().getFirstName());
+            trainerDTO.setSecondName(trainer.getUser().getLastName());
+            trainerDTO.setSpecialization(trainer.getSpecialization().getTrainingType().getDisplayName());
+            return trainerDTO;
+        }).collect(Collectors.toList());
 
         profileDTO.setTrainers(trainerDTOs);
         return profileDTO;
@@ -137,10 +117,20 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
         super.updateProfile(username, updatedTrainee);
     }
 
+    @Override
+    protected User getUser(Trainee entity) {
+        return entity.getUser();
+    }
+
+    @Override
+    public Optional<Trainee> findByUsername(String username) {
+        return traineeRepository.findByUsername(username);
+    }
+
+    @Override
     public void updateTraineeProfile(String username, TraineeUpdateDTO traineeDTO) {
-        Optional<Trainee> optionalTrainee = findByUsername(username);
-        Trainee trainee = optionalTrainee.orElseThrow(() ->
-                new IllegalArgumentException("Trainee with username '" + username + "' does not exist"));
+        Optional<Trainee> optionalTrainee = traineeRepository.findByUsername(username);
+        Trainee trainee = optionalTrainee.orElseThrow(() -> new IllegalArgumentException("Trainee with username '" + username + "' does not exist"));
         if (trainee.getUser().getIsActive() != Boolean.valueOf(traineeDTO.getIsActive())) {
             if (Boolean.valueOf(traineeDTO.getIsActive())) {
                 super.activate(username);
@@ -151,12 +141,6 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
         mapper.updateTraineeFromDTO(traineeDTO, trainee);
         updateProfile(username, trainee);
 
-    }
-
-
-    @Override
-    protected User getUser(Trainee entity) {
-        return entity.getUser();
     }
 
 }

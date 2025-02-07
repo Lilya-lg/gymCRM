@@ -1,8 +1,8 @@
 package uz.gym.crm.dto;
 
+import jakarta.validation.constraints.NotNull;
 import uz.gym.crm.dto.abstr.BaseTrainerDTO;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 public class TrainerProfileDTO extends BaseTrainerDTO {

@@ -8,9 +8,8 @@ public interface ProfileService<T> {
 
     boolean authenticate(String username, String password);
 
-    void changePassword(String username, String oldPassword, String newPassword);
-
     void activate(String username);
 
     void deactivate(String username);
+    void create(T entity);
 }

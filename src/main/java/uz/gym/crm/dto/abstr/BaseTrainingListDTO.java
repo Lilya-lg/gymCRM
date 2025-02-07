@@ -1,6 +1,8 @@
 package uz.gym.crm.dto.abstr;
 
-import javax.validation.constraints.NotBlank;
+
+import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDate;
 
 public abstract class BaseTrainingListDTO {

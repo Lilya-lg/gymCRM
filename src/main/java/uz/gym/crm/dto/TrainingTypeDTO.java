@@ -10,6 +10,8 @@ public class TrainingTypeDTO {
         this.name = name;
     }
 
+    public TrainingTypeDTO() {
+    }
 
     public Long getId() {
         return id;

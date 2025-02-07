@@ -1,5 +1,6 @@
 package uz.gym.crm.util;
 
+
 import org.junit.jupiter.api.Test;
 import uz.gym.crm.domain.User;
 
@@ -8,6 +9,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
 
 public class UsernameGeneratorTest {
 
@@ -80,4 +82,6 @@ public class UsernameGeneratorTest {
             user.setUsername(username);
             return user;
         }
+
+
 }

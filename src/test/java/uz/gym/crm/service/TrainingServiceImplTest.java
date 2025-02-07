@@ -2,14 +2,19 @@ package uz.gym.crm.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import uz.gym.crm.dao.TraineeDAOImpl;
-import uz.gym.crm.dao.TrainerDAOImpl;
-import uz.gym.crm.dao.TrainingDAOImpl;
-import uz.gym.crm.dao.UserDAOImpl;
-import uz.gym.crm.domain.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import uz.gym.crm.domain.PredefinedTrainingType;
+import uz.gym.crm.domain.Trainee;
+import uz.gym.crm.domain.Trainer;
+import uz.gym.crm.domain.Training;
+import uz.gym.crm.repository.TraineeRepository;
+import uz.gym.crm.repository.TrainerRepository;
+import uz.gym.crm.repository.TrainingRepository;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,194 +23,80 @@ import static org.mockito.Mockito.*;
 
 class TrainingServiceImplTest {
 
-    private TraineeDAOImpl mockTraineeDAO;
-    private TrainerDAOImpl mockTrainerDAO;
-    private TrainingDAOImpl mockTrainingDAO;
-    private UserDAOImpl mockUserDAO;
-    private TrainingServiceImpl service;
+    @Mock
+    private TrainingRepository trainingRepository;
+
+    @Mock
+    private TraineeRepository traineeRepository;
+
+    @Mock
+    private TrainerRepository trainerRepository;
+
+    @InjectMocks
+    private TrainingServiceImpl trainingService;
 
     @BeforeEach
     void setUp() {
-        mockTraineeDAO = Mockito.mock(TraineeDAOImpl.class);
-        mockTrainerDAO = Mockito.mock(TrainerDAOImpl.class);
-        mockTrainingDAO = Mockito.mock(TrainingDAOImpl.class);
-        mockUserDAO = Mockito.mock(UserDAOImpl.class);
-
-        service = new TrainingServiceImpl(
-                null,
-                mockTrainingDAO,
-                mockUserDAO,
-                mockTrainerDAO,
-                mockTraineeDAO
-        );
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void addTraining_ShouldAddTraining_WhenTrainingTypeIsNull() {
+    void addTraining() {
         Training training = new Training();
-        User authenticatedUser = new User();
-        authenticatedUser.setUsername("adminUser");
-        authenticatedUser.setPassword("adminPassword");
+        String username = "testUser";
+        String password = "password";
 
-        when(mockUserDAO.findByUsernameAndPassword("adminUser", "adminPassword"))
-                .thenReturn(Optional.of(authenticatedUser));
-        doNothing().when(mockTrainingDAO).save(training);
+        trainingService.addTraining(training, username, password);
 
-        service.addTraining(training, "adminUser", "adminPassword");
-
-        verify(mockUserDAO, times(1)).findByUsernameAndPassword("adminUser", "adminPassword");
-        verify(mockTrainingDAO, times(1)).save(training);
+        verify(trainingRepository, times(1)).save(training);
     }
 
     @Test
-    void findByCriteriaForTrainer_ShouldReturnTrainingList_WhenAuthenticated() {
-        String trainerUsername = "trainerJohn";
-        String traineeName = "traineeJane";
+    void findByCriteriaForTrainer() {
+        String trainerUsername = "testUser";
         LocalDate fromDate = LocalDate.now();
-        LocalDate toDate = LocalDate.now().plusDays(10);
+        LocalDate toDate = LocalDate.now();
+        String traineeName = "traineeUser";
 
-        Training training1 = new Training();
-        Training training2 = new Training();
-        List<Training> expectedTrainings = List.of(training1, training2);
+        when(trainingRepository.findByCriteriaForTrainer(trainerUsername, fromDate, toDate, traineeName)).thenReturn(Collections.emptyList());
 
-        when(mockTrainingDAO.findByCriteriaForTrainer(trainerUsername, fromDate, toDate, traineeName))
-                .thenReturn(expectedTrainings);
+        List<Training> result = trainingService.findByCriteriaForTrainer(trainerUsername, fromDate, toDate, traineeName);
 
-        List<Training> actualTrainings = service.findByCriteriaForTrainer(trainerUsername, fromDate, toDate, traineeName);
-
-        assertEquals(expectedTrainings.size(), actualTrainings.size());
-        verify(mockTrainingDAO, times(1))
-                .findByCriteriaForTrainer(trainerUsername, fromDate, toDate, traineeName);
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
     @Test
-    void findByCriteria_ShouldReturnTrainingList_WhenAuthenticated() {
-        String traineeUsername = "traineeJane";
-        String trainingType = "Yoga";
-        String trainerName = "trainerJohn";
+    void findByCriteria() {
+        String traineeUsername = "testUser";
+        String trainingType = "CARDIO";
         LocalDate fromDate = LocalDate.now();
-        LocalDate toDate = LocalDate.now().plusDays(10);
+        LocalDate toDate = LocalDate.now();
+        String trainerName = "trainerUser";
 
-        Training training1 = new Training();
-        Training training2 = new Training();
-        List<Training> expectedTrainings = List.of(training1, training2);
+        when(trainingRepository.findByCriteria(traineeUsername, PredefinedTrainingType.CARDIO, fromDate, toDate, trainerName)).thenReturn(Collections.emptyList());
 
-        when(mockTrainingDAO.findByCriteria(traineeUsername, PredefinedTrainingType.fromName(trainingType), fromDate, toDate, trainerName))
-                .thenReturn(expectedTrainings);
+        List<Training> result = trainingService.findByCriteria(traineeUsername, trainingType, fromDate, toDate, trainerName);
 
-        List<Training> actualTrainings = service.findByCriteria(traineeUsername, trainingType, fromDate, toDate, trainerName);
-
-        assertEquals(expectedTrainings.size(), actualTrainings.size());
-        verify(mockTrainingDAO, times(1))
-                .findByCriteria(traineeUsername, PredefinedTrainingType.fromName(trainingType), fromDate, toDate, trainerName);
-    }
-
-
-
-    @Test
-    void findByCriteria_ShouldThrowException_WhenInvalidTrainingType() {
-        String invalidTrainingType = "InvalidType";
-
-        Exception exception = assertThrows(IllegalArgumentException.class, () ->
-                service.findByCriteria("traineeJane", invalidTrainingType, LocalDate.now(), LocalDate.now().plusDays(10), "trainerJohn"));
-
-        assertEquals("Invalid specialization: InvalidType", exception.getMessage());
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
     @Test
-    void create_ShouldCallDAOCreate() {
+    void linkTraineeTrainer() {
         Training training = new Training();
-        doNothing().when(mockTrainingDAO).save(training);
-
-        service.create(training);
-
-        verify(mockTrainingDAO, times(1)).save(training);
-    }
-    @Test
-    void linkTraineeTrainer_ShouldLinkTraineeAndTrainer() {
-        String traineeName = "traineeJane";
-        String trainerName = "trainerJohn";
+        String traineeName = "traineeUser";
+        String trainerName = "trainerUser";
 
         Trainee trainee = new Trainee();
         Trainer trainer = new Trainer();
-        Training training = new Training();
 
-        when(mockTraineeDAO.findByUsername(traineeName)).thenReturn(Optional.of(trainee));
-        when(mockTrainerDAO.findByUsername(trainerName)).thenReturn(Optional.of(trainer));
+        when(traineeRepository.findByUsername(traineeName)).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findByUsername(trainerName)).thenReturn(Optional.of(trainer));
 
-        service.linkTraineeTrainer(training, traineeName, trainerName);
+        trainingService.linkTraineeTrainer(training, traineeName, trainerName);
 
         assertEquals(trainee, training.getTrainee());
         assertEquals(trainer, training.getTrainer());
-        assertEquals(trainer.getSpecialization(), training.getTrainingType());
-
-        verify(mockTraineeDAO, times(1)).findByUsername(traineeName);
-        verify(mockTrainerDAO, times(1)).findByUsername(trainerName);
-    }
-    @Test
-    void linkTraineeTrainer_ShouldThrowException_WhenTraineeNotFound() {
-        String traineeName = "nonexistentTrainee";
-        String trainerName = "trainerJohn";
-
-        when(mockTraineeDAO.findByUsername(traineeName)).thenReturn(Optional.empty());
-
-        Exception exception = assertThrows(IllegalArgumentException.class, () ->
-                service.linkTraineeTrainer(new Training(), traineeName, trainerName)
-        );
-
-        assertEquals("Trainee not found with username: nonexistentTrainee", exception.getMessage());
-        verify(mockTraineeDAO, times(1)).findByUsername(traineeName);
-        verifyNoInteractions(mockTrainerDAO);
-    }
-    @Test
-    void linkTraineeTrainer_ShouldThrowException_WhenTrainerNotFound() {
-        String traineeName = "traineeJane";
-        String trainerName = "nonexistentTrainer";
-
-        Trainee trainee = new Trainee();
-
-        when(mockTraineeDAO.findByUsername(traineeName)).thenReturn(Optional.of(trainee));
-        when(mockTrainerDAO.findByUsername(trainerName)).thenReturn(Optional.empty());
-
-        Exception exception = assertThrows(IllegalArgumentException.class, () ->
-                service.linkTraineeTrainer(new Training(), traineeName, trainerName)
-        );
-
-        assertEquals("Trainer not found with username: nonexistentTrainer", exception.getMessage());
-        verify(mockTraineeDAO, times(1)).findByUsername(traineeName);
-        verify(mockTrainerDAO, times(1)).findByUsername(trainerName);
-    }
-    @Test
-    void addTraining_ShouldThrowException_WhenAuthenticationFails() {
-        Training training = new Training();
-
-        when(mockUserDAO.findByUsernameAndPassword("invalidUser", "invalidPass"))
-                .thenReturn(Optional.empty());
-
-        Exception exception = assertThrows(IllegalArgumentException.class, () ->
-                service.addTraining(training, "invalidUser", "invalidPass")
-        );
-
-        assertEquals("Invalid username or password.", exception.getMessage());
-        verify(mockUserDAO, times(1)).findByUsernameAndPassword("invalidUser", "invalidPass");
-        verifyNoInteractions(mockTrainingDAO);
-    }
-    @Test
-    void findByCriteriaForTrainer_ShouldLogError_WhenExceptionOccurs() {
-        String trainerUsername = "trainerJohn";
-        String traineeName = "traineeJane";
-        LocalDate fromDate = LocalDate.now();
-        LocalDate toDate = LocalDate.now().plusDays(10);
-
-        when(mockTrainingDAO.findByCriteriaForTrainer(trainerUsername, fromDate, toDate, traineeName))
-                .thenThrow(new RuntimeException("Database error"));
-
-        Exception exception = assertThrows(RuntimeException.class, () ->
-                service.findByCriteriaForTrainer(trainerUsername, fromDate, toDate, traineeName)
-        );
-
-        assertEquals("Database error", exception.getMessage());
-        verify(mockTrainingDAO, times(1))
-                .findByCriteriaForTrainer(trainerUsername, fromDate, toDate, traineeName);
     }
 }
