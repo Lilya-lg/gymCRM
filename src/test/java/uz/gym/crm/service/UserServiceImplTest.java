@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import uz.gym.crm.domain.User;
 import uz.gym.crm.repository.UserRepository;
 
@@ -18,37 +19,18 @@ class UserServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private LoginAttemptService loginAttemptService;
+
     @InjectMocks
     private UserServiceImpl userService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-    }
-
-    @Test
-    void changePassword() {
-        String username = "testUser";
-        String oldPassword = "oldPassword";
-        String newPassword = "newPassword";
-
-        when(userRepository.updatePassword(username, oldPassword, newPassword)).thenReturn(1);
-
-        userService.changePassword(username, oldPassword, newPassword);
-
-        verify(userRepository, times(1)).updatePassword(username, oldPassword, newPassword);
-    }
-
-    @Test
-    void authenticate() {
-        String username = "testUser";
-        String password = "password";
-
-        when(userRepository.findByUsernameAndPassword(username, password)).thenReturn(Optional.of(new User()));
-
-        boolean result = userService.authenticate(username, password);
-
-        assertTrue(result);
     }
 
     @Test

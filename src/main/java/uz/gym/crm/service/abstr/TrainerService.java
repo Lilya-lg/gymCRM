@@ -2,6 +2,7 @@ package uz.gym.crm.service.abstr;
 
 import uz.gym.crm.domain.Trainee;
 import uz.gym.crm.domain.Trainer;
+import uz.gym.crm.domain.User;
 import uz.gym.crm.dto.TrainerProfileDTO;
 import uz.gym.crm.dto.TrainerProfileResponseDTO;
 
@@ -16,4 +17,5 @@ public interface TrainerService extends BaseService<Trainer> {
     TrainerProfileResponseDTO getTrainerProfileResponse(String username);
 
     void updateTrainerProfile(String username, TrainerProfileDTO trainerDTO);
+    String putPassword(User user);
 }

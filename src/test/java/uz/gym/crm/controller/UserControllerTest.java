@@ -31,7 +31,7 @@ class UserControllerTest {
     @Test
     void testLogin_Success() {
         when(userService.authenticate("testUser", "password123")).thenReturn(true);
-        String token = userController.login("testUser", "password123");
+        String token = userController.login("testUser", "password123").getBody().get("message").toString();
         assertNotNull(token);
     }
 

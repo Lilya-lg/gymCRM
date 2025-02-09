@@ -3,6 +3,7 @@ package uz.gym.crm.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.gym.crm.dto.ChangePasswordDTO;
+import uz.gym.crm.service.BlackListService;
 import uz.gym.crm.service.abstr.UserService;
 import uz.gym.crm.util.JwtUtil;
 
@@ -14,20 +15,32 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final BlackListService blackListService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, BlackListService blackListService) {
         this.userService = userService;
+        this.blackListService = blackListService;
     }
 
     @PostMapping(value = "/login")
-    public String login(@RequestParam("username") String username, @RequestParam("password") String password) {
+    public ResponseEntity<Map<String, Object>> login(@RequestParam("username") String username, @RequestParam("password") String password) {
         if (userService.authenticate(username, password)) {
-            return JwtUtil.generateToken(username);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", JwtUtil.generateToken(username));
+            return ResponseEntity.ok(response);
         } else {
             throw new IllegalArgumentException("Invalid username or password");
         }
     }
-
+    @PostMapping(value = "/logout")
+    public ResponseEntity<Map<String, Object>> logout(@RequestHeader("Authorization") String token) {
+        blackListService.addToBlacklist(token.substring(7));
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Logged out successfully");
+        return ResponseEntity.ok(response);
+    }
     @PutMapping("/change-password")
     public ResponseEntity<Map<String, Object>> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO) {
         String username = changePasswordDTO.getUsername();

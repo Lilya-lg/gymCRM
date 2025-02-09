@@ -4,19 +4,22 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
+import uz.gym.crm.service.BlackListService;
 import uz.gym.crm.util.JwtUtil;
 
 import java.io.IOException;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
-
+    @Autowired
+    private BlackListService blackListService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
@@ -31,6 +34,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
+            if (blackListService.isBlacklisted(token)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Token is invalidated");
+                return;
+            }
             try {
                 // Validate the token to ensure it is valid and not expired
                 JwtUtil.validateToken(token);

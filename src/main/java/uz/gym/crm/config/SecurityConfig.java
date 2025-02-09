@@ -7,6 +7,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -14,10 +15,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.cors.CorsConfiguration;
 import uz.gym.crm.repository.UserRepository;
 import uz.gym.crm.service.CustomUserDetailsService;
 
+import java.util.List;
+
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -27,6 +32,13 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(request -> {
+                    var corsConfig = new CorsConfiguration();
+                    corsConfig.setAllowedOrigins(List.of("http://localhost:3000"));
+                    corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    corsConfig.setAllowedHeaders(List.of("*"));
+                    return corsConfig;
+                }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/login").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
@@ -38,8 +50,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/users/change-password").authenticated()
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
 
         return http.build();
     }
