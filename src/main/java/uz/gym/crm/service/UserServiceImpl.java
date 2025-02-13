@@ -10,6 +10,8 @@ import uz.gym.crm.repository.TrainingRepository;
 import uz.gym.crm.repository.UserRepository;
 import uz.gym.crm.service.abstr.AbstractProfileService;
 import uz.gym.crm.service.abstr.UserService;
+import uz.gym.crm.util.exceptions.EntityNotFoundException;
+import uz.gym.crm.util.exceptions.UserBlockedException;
 
 import java.util.Optional;
 
@@ -35,7 +37,7 @@ public class UserServiceImpl extends AbstractProfileService<User> implements Use
     @Override
     public void changePassword(String username, String oldPassword, String newPassword) {
         Optional<User> optionalUser = userRepository.findByUsername(username);
-        User user = optionalUser.orElseThrow(() -> new IllegalArgumentException("User with username '" + username + "' does not exist"));
+        User user = optionalUser.orElseThrow(() -> new EntityNotFoundException("User with username '" + username + "' does not exist"));
         boolean authenticated = passwordEncoder.matches(oldPassword, user.getPassword());
         if (authenticated) {
             int updatedRows = userRepository.updatePassword(username, passwordEncoder.encode(newPassword));
@@ -54,10 +56,10 @@ public class UserServiceImpl extends AbstractProfileService<User> implements Use
     @Override
     public boolean authenticate(String username, String password) {
         if (loginAttemptService.isBlocked(username)) {
-            throw new RuntimeException("User is blocked due to too many failed attempts");
+            throw new UserBlockedException("User is blocked due to too many failed attempts. Please try again later.");
         }
         Optional<User> optionalUser = userRepository.findByUsername(username);
-        User user = optionalUser.orElseThrow(() -> new IllegalArgumentException("User with username '" + username + "' does not exist"));
+        User user = optionalUser.orElseThrow(() -> new EntityNotFoundException("User with username '" + username + "' does not exist"));
         boolean authenticated = passwordEncoder.matches(password, user.getPassword());
         if (authenticated) {
             loginAttemptService.loginSucceeded(username);
@@ -69,14 +71,14 @@ public class UserServiceImpl extends AbstractProfileService<User> implements Use
     }
 
     public void activate(String username) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User not found for username: " + username));
         user.setIsActive(true);
         userRepository.save(user);
     }
 
     @Override
     public void deactivate(String username) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User not found for username: " + username));
         user.setIsActive(false);
         userRepository.save(user);
     }

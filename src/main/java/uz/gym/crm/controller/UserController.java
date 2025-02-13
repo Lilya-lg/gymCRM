@@ -24,15 +24,18 @@ public class UserController {
 
     @PostMapping(value = "/login")
     public ResponseEntity<Map<String, Object>> login(@RequestParam("username") String username, @RequestParam("password") String password) {
+        Map<String, Object> response = new HashMap<>();
         if (userService.authenticate(username, password)) {
-            Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", JwtUtil.generateToken(username));
+            response.put("token", JwtUtil.generateToken(username));
             return ResponseEntity.ok(response);
         } else {
-            throw new IllegalArgumentException("Invalid username or password");
+            response.put("success", false);
+            response.put("message", "Invalid username or password");
+            return ResponseEntity.ok(response);
         }
     }
+
     @PostMapping(value = "/logout")
     public ResponseEntity<Map<String, Object>> logout(@RequestHeader("Authorization") String token) {
         blackListService.addToBlacklist(token.substring(7));
@@ -41,6 +44,7 @@ public class UserController {
         response.put("message", "Logged out successfully");
         return ResponseEntity.ok(response);
     }
+
     @PutMapping("/change-password")
     public ResponseEntity<Map<String, Object>> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO) {
         String username = changePasswordDTO.getUsername();
