@@ -1,5 +1,7 @@
 package uz.gym.crm.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.gym.crm.domain.User;
@@ -8,6 +10,8 @@ import uz.gym.crm.repository.TrainingRepository;
 import uz.gym.crm.repository.UserRepository;
 import uz.gym.crm.service.abstr.AbstractProfileService;
 import uz.gym.crm.service.abstr.UserService;
+import uz.gym.crm.util.exceptions.EntityNotFoundException;
+import uz.gym.crm.util.exceptions.UserBlockedException;
 
 import java.util.Optional;
 
@@ -18,6 +22,10 @@ public class UserServiceImpl extends AbstractProfileService<User> implements Use
     private final UserRepository userRepository;
     private final TrainingRepository trainingRepository;
     private final BaseRepository<User> baseRepository;
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public UserServiceImpl(UserRepository userRepository, TrainingRepository trainingRepository, BaseRepository<User> baseRepository) {
         super(userRepository, trainingRepository, baseRepository);
@@ -28,31 +36,49 @@ public class UserServiceImpl extends AbstractProfileService<User> implements Use
 
     @Override
     public void changePassword(String username, String oldPassword, String newPassword) {
-        int updatedRows = userRepository.updatePassword(username, oldPassword, newPassword);
-        if (updatedRows == 0) {
-            throw new IllegalArgumentException("Invalid username or password.");
+        Optional<User> optionalUser = userRepository.findByUsername(username);
+        User user = optionalUser.orElseThrow(() -> new EntityNotFoundException("User with username '" + username + "' does not exist"));
+        boolean authenticated = passwordEncoder.matches(oldPassword, user.getPassword());
+        if (authenticated) {
+            int updatedRows = userRepository.updatePassword(username, passwordEncoder.encode(newPassword));
+            if (updatedRows == 0) {
+                throw new IllegalArgumentException("Invalid username or password.");
+            }
         }
     }
 
 
+    @Override
     public Optional<User> findByUsername(String username) {
-        return Optional.empty();
+        return userRepository.findByUsername(username);
     }
 
-
+    @Override
     public boolean authenticate(String username, String password) {
-        return userRepository.findByUsernameAndPassword(username, password).isPresent();
+        if (loginAttemptService.isBlocked(username)) {
+            throw new UserBlockedException("User is blocked due to too many failed attempts. Please try again later.");
+        }
+        Optional<User> optionalUser = userRepository.findByUsername(username);
+        User user = optionalUser.orElseThrow(() -> new EntityNotFoundException("User with username '" + username + "' does not exist"));
+        boolean authenticated = passwordEncoder.matches(password, user.getPassword());
+        if (authenticated) {
+            loginAttemptService.loginSucceeded(username);
+        } else {
+            loginAttemptService.loginFailed(username);
+        }
+
+        return authenticated;
     }
 
     public void activate(String username) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User not found for username: " + username));
         user.setIsActive(true);
         userRepository.save(user);
     }
 
     @Override
     public void deactivate(String username) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found for username: " + username));
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User not found for username: " + username));
         user.setIsActive(false);
         userRepository.save(user);
     }

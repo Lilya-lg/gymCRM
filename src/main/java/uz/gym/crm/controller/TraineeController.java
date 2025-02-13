@@ -44,14 +44,14 @@ public class TraineeController {
         long startTime = System.nanoTime();
         Trainee trainee = mapper.toTrainee(traineeDTO);
         traineeService.create(trainee);
-        BaseUserDTO userDTO = new BaseUserDTO(trainee.getUser().getUsername(), trainee.getUser().getPassword());
+        String password = traineeService.putPassword(trainee.getUser());
+        BaseUserDTO userDTO = new BaseUserDTO(trainee.getUser().getUsername(), password);
         metricsService.recordTimer(createTraineeTimer, startTime);
         return ResponseEntity.ok(userDTO);
     }
 
     @PutMapping(value = "/update-profile", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<TraineeProfileDTO> updateTraineeProfile(
-            @Valid @RequestBody TraineeUpdateDTO traineeDTO) {
+    public ResponseEntity<TraineeProfileDTO> updateTraineeProfile(@Valid @RequestBody TraineeUpdateDTO traineeDTO) {
         traineeService.updateTraineeProfile(traineeDTO.getUsername(), traineeDTO);
         TraineeProfileDTO traineeProfile = traineeService.getTraineeProfile(traineeDTO.getUsername());
         TraineeProfileDTO response = traineeProfile;
@@ -65,8 +65,7 @@ public class TraineeController {
     }
 
     @PatchMapping(value = "/update-trainers", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<List<TrainerDTO>> updateTraineeTrainers(
-            @Valid @RequestBody UpdateTraineeTrainersDTO updateDTO) {
+    public ResponseEntity<List<TrainerDTO>> updateTraineeTrainers(@Valid @RequestBody UpdateTraineeTrainersDTO updateDTO) {
         List<Trainer> trainers = traineeService.updateTraineeTrainerList(updateDTO.getTraineeUsername(), updateDTO.getTrainingId(), updateDTO.getTrainerUsernames());
         List<TrainerDTO> trainersDTO = mapper.mapTrainersToProfileDTOs(trainers);
         return ResponseEntity.ok(trainersDTO);

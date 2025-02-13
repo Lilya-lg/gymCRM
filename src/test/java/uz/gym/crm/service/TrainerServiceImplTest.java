@@ -57,7 +57,7 @@ class TrainerServiceImplTest {
 
     @Test
     void createTrainer_withNullUser_throwsException() {
-        Trainer trainer = new Trainer(); // No user assigned
+        Trainer trainer = new Trainer();
 
         Exception exception = assertThrows(NullPointerException.class, () -> {
             trainerService.create(trainer);

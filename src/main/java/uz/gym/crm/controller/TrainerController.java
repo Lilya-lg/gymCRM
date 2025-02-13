@@ -33,7 +33,8 @@ public class TrainerController {
     public ResponseEntity<BaseUserDTO> createTrainer(@Valid @RequestBody TrainerDTO trainerDTO) {
         Trainer trainer = mapper.toTrainer(trainerDTO);
         trainerService.create(trainer);
-        BaseUserDTO userDTO = new BaseUserDTO(trainer.getUser().getUsername(), trainer.getUser().getPassword());
+        String password = trainerService.putPassword(trainer.getUser());
+        BaseUserDTO userDTO = new BaseUserDTO(trainer.getUser().getUsername(), password);
         return ResponseEntity.ok(userDTO);
     }
 

@@ -6,9 +6,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import uz.gym.crm.service.BlackListService;
 import uz.gym.crm.util.JwtUtil;
 
 import java.io.IOException;
@@ -16,14 +19,19 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+@SpringBootTest
 class JWTFilterTest {
 
+    @Autowired
     private JwtFilter jwtFilter;
+
+    @MockBean
+    private BlackListService blackListService;
+
     private FilterChain filterChain;
 
     @BeforeEach
     void setUp() {
-        jwtFilter = new JwtFilter();
         filterChain = mock(FilterChain.class);
     }
 
@@ -32,6 +40,8 @@ class JWTFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer validToken");
         MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(blackListService.isBlacklisted("validToken")).thenReturn(false);
 
         try (MockedStatic<JwtUtil> mockedJwtUtil = mockStatic(JwtUtil.class)) {
             mockedJwtUtil.when(() -> JwtUtil.validateToken("validToken")).thenAnswer(invocation -> null);
@@ -48,6 +58,8 @@ class JWTFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer invalidToken");
         MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(blackListService.isBlacklisted("invalidToken")).thenReturn(false);
 
         try (MockedStatic<JwtUtil> mockedJwtUtil = mockStatic(JwtUtil.class)) {
             mockedJwtUtil.when(() -> JwtUtil.validateToken("invalidToken")).thenThrow(new RuntimeException("Invalid token"));

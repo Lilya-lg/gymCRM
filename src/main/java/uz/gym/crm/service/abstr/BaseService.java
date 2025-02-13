@@ -1,5 +1,7 @@
 package uz.gym.crm.service.abstr;
 
+import uz.gym.crm.domain.User;
+
 import java.util.List;
 
 public interface BaseService<T> {
@@ -14,5 +16,7 @@ public interface BaseService<T> {
     List<T> getAll();
 
     boolean authenticate(String username, String password);
+
+
 }
 

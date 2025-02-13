@@ -85,7 +85,7 @@ public class TraineeControllerTest {
         assertEquals(traineeProfileDTO, response.getBody());
         verify(traineeService, times(1)).getTraineeProfile("john.doe");
 
-        verify(counter, times(1)).increment(); // Ensure counter is used
+        verify(counter, times(1)).increment();
     }
 
     @Test

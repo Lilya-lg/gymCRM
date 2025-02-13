@@ -50,6 +50,12 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
         LOGGER.info("Trainee entity created successfully with ID: {}", trainee.getId());
     }
 
+    public String putPassword(User user) {
+        String pass = generatePassword(user);
+        userRepository.save(user);
+        return pass;
+    }
+
     @Override
     public void deleteProfileByUsername(String username) {
         LOGGER.debug("Deleting Trainee profile with username: {}", username);
