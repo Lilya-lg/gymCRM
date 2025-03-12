@@ -77,7 +77,11 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
                 new IllegalArgumentException("Trainee not found"));
         return mapper.mapToTrainerProfileResponseDTO(trainer);
     }
-
+    public String putPassword(User user){
+        String pass = generatePassword(user);
+        userRepository.save(user);
+        return pass;
+    }
 
     @Override
     public void updateTrainerProfile(String username, TrainerProfileDTO trainerDTO) {

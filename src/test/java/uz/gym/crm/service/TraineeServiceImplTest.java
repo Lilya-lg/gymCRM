@@ -78,7 +78,7 @@ class TraineeServiceImplTest {
         trainee.setId(1L);
 
         when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
-        when(traineeRepository.deleteByUsername(username)).thenReturn(1); // Simulating a successful deletion
+        when(traineeRepository.deleteByUsername(username)).thenReturn(1);
 
         traineeService.deleteProfileByUsername(username);
 
