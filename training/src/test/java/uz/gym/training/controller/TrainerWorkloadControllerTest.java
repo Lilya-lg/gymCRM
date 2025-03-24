@@ -14,6 +14,7 @@ import uz.gym.training.dto.TrainingSessionDTO;
 import uz.gym.training.service.TrainingService;
 import uz.gym.training.security.JwtUtil;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,8 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@WebMvcTest(controllers = TrainerWorkloadController.class) // Explicitly specify controller
-@AutoConfigureMockMvc(addFilters = true) // Disable security filters in test
+@WebMvcTest(controllers = TrainerWorkloadController.class)
+@AutoConfigureMockMvc(addFilters = true)
 class TrainerWorkloadControllerTest {
 
     @Autowired
@@ -38,7 +39,7 @@ class TrainerWorkloadControllerTest {
     private TrainingService trainingService;
 
     @MockBean
-    private JwtUtil jwtUtil; // Mock missing security dependency
+    private JwtUtil jwtUtil;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -60,7 +61,7 @@ class TrainerWorkloadControllerTest {
     }
 
     @Test
-    @WithMockUser // Simulate authenticated user
+    @WithMockUser
     void testGetTrainerSummary() throws Exception {
         mockMvc.perform(get("/api/trainings/JohnDoe/summary"))
                 .andExpect(status().isOk())
@@ -84,7 +85,7 @@ class TrainerWorkloadControllerTest {
     }
 
     @Test
-    @WithMockUser // Simulate authenticated user
+    @WithMockUser
     void testGetTrainerSummary_InternalServerError() throws Exception {
         when(trainingService.getMonthlySummary("JohnDoe")).thenThrow(new RuntimeException("Unexpected error"));
 
@@ -93,10 +94,13 @@ class TrainerWorkloadControllerTest {
     }
 
     @Test
-    @WithMockUser // Simulate authenticated user
+    @WithMockUser
     void testProcessTraining() throws Exception {
         TrainingSessionDTO sessionDTO = new TrainingSessionDTO();
         sessionDTO.setUsername("JohnDoe");
+        sessionDTO.setTrainingDate(LocalDate.now());
+        sessionDTO.setActionType("ADD");
+        sessionDTO.setDuration(60);
 
         mockMvc.perform(post("/api/trainings")
                         .with(csrf())
@@ -106,7 +110,7 @@ class TrainerWorkloadControllerTest {
                 .andExpect(content().string("Processed"));
 
         ArgumentCaptor<TrainingSessionDTO> captor = ArgumentCaptor.forClass(TrainingSessionDTO.class);
-        verify(trainingService, times(1)).addOrDeleteTraining(captor.capture());
+        verify(trainingService, times(1)).addTraining(captor.capture());
         TrainingSessionDTO capturedDTO = captor.getValue();
         assertEquals("JohnDoe", capturedDTO.getUsername());
     }

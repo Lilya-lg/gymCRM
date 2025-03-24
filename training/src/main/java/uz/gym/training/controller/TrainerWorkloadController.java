@@ -1,5 +1,6 @@
 package uz.gym.training.controller;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,8 @@ import uz.gym.training.service.TrainingService;
 @RequestMapping("/api/trainings")
 public class TrainerWorkloadController {
     private final TrainingService service;
+    String ACTION_ADD = "ADD";
+    String ACTION_DELETE = "DELETE";
 
     public TrainerWorkloadController(TrainingService service) {
         this.service = service;
@@ -18,22 +21,25 @@ public class TrainerWorkloadController {
 
     @PostMapping
     public ResponseEntity<String> processTraining(@RequestBody TrainingSessionDTO sessionDTO) {
-        service.addOrDeleteTraining(sessionDTO);
+        if (ACTION_ADD.equalsIgnoreCase(sessionDTO.getActionType())) {
+            service.addTraining(sessionDTO);
+        } else if (ACTION_DELETE.equalsIgnoreCase(sessionDTO.getActionType())) {
+            System.out.println("Delete");
+            service.deleteTraining(sessionDTO);
+        } else {
+            return ResponseEntity.badRequest().body("Invalid action type");
+        }
         return ResponseEntity.ok("Processed");
     }
 
     @GetMapping("/{trainerUsername}/summary")
     public ResponseEntity<TrainerSummaryDTO> getTrainerSummary(@PathVariable String trainerUsername) {
-         try {
-            TrainerSummaryDTO summary = service.getMonthlySummary(trainerUsername);
+        TrainerSummaryDTO summary = service.getMonthlySummary(trainerUsername);
 
-            if (summary == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(summary);
-
-        } catch (RuntimeException ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // 🔥 Now returns 500 properly
+        if (summary == null) {
+            throw new EntityNotFoundException("Trainer not found: " + trainerUsername);
         }
+        return ResponseEntity.ok(summary);
     }
+
 }

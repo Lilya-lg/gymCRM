@@ -1,5 +1,6 @@
 package uz.micro.gym.service;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import uz.micro.gym.domain.User;
 import uz.micro.gym.dto.TraineeProfileDTO;
 import uz.micro.gym.dto.TraineeUpdateDTO;
 import uz.micro.gym.dto.TrainerDTO;
+import uz.micro.gym.dto.TrainingSessionDTO;
 import uz.micro.gym.mapper.Mapper;
 import uz.micro.gym.repository.TraineeRepository;
 import uz.micro.gym.repository.TrainerRepository;
@@ -33,14 +35,16 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
     private final TrainingRepository trainingRepository;
     private final UserRepository userRepository;
     private final TrainerRepository trainerRepository;
+    private final TrainingServiceClient trainingServiceClient;
 
-    public TraineeServiceImpl(Mapper mapper, TraineeRepository traineeRepository, TrainingRepository trainingRepository, UserRepository userRepository, TraineeRepository baseRepository, TrainerRepository trainerRepository) {
+    public TraineeServiceImpl(Mapper mapper, TraineeRepository traineeRepository, TrainingRepository trainingRepository, UserRepository userRepository, TraineeRepository baseRepository, TrainerRepository trainerRepository, TrainingServiceClient trainingServiceClient) {
         super(userRepository, trainingRepository, baseRepository);
         this.mapper = mapper;
         this.traineeRepository = traineeRepository;
         this.trainingRepository = trainingRepository;
         this.userRepository = userRepository;
         this.trainerRepository = trainerRepository;
+        this.trainingServiceClient = trainingServiceClient;
     }
 
 
@@ -59,10 +63,24 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
     }
 
     @Override
+    @CircuitBreaker(name = "trainingService", fallbackMethod = "fallbackDeleteTraining")
     public void deleteProfileByUsername(String username) {
         LOGGER.debug("Deleting Trainee profile with username: {}", username);
         Optional<Trainee> trainee = traineeRepository.findByUsername(username);
         if (trainee.isPresent()) {
+            Optional<Trainer> trainer = trainingRepository.findTrainersByTraineeId(trainee.get().getId()).stream().findFirst();
+            Optional<Training> training = trainingRepository.findByCriteria(trainee.get().getUser().getUsername(),null,null,null,trainer.get().getUser().getUsername()).stream().findFirst();
+            if(training.isPresent()) {
+                TrainingSessionDTO trainingSessionDTO = new TrainingSessionDTO();
+                trainingSessionDTO.setTrainingDate(training.get().getTrainingDate());
+                trainingSessionDTO.setUsername(training.get().getTrainer().getUser().getUsername());
+                trainingSessionDTO.setDuration(training.get().getTrainingDuration());
+                trainingSessionDTO.setActionType("DELETE");
+                 trainingServiceClient.createTraining(trainingSessionDTO);
+            }
+            else{
+                LOGGER.info("No trainigs for " + trainee.get().getUser().getUsername());
+            }
             int deletedRows = traineeRepository.deleteByUsername(username);
             LOGGER.info("Deleted rows: " + deletedRows);
         } else {
@@ -150,5 +168,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
         updateProfile(username, trainee);
 
     }
-
+    public void fallbackDeleteTraining(String username, Throwable throwable) {
+        LOGGER.error("Resilience4j Circuit Breaker activated. Reason:",throwable.getMessage());
+    }
 }

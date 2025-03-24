@@ -1,17 +1,13 @@
 package uz.gym.training.domain;
 
-import jakarta.persistence.*;
 
 import java.util.List;
-@Entity
 public class Trainer {
-    @Id
+    private Long id;
     private String username;
     private String firstName;
     private String lastName;
     private boolean isActive;
-
-    @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<TrainingSession> trainingSessions;
 
     public String getUsername() {
@@ -44,5 +40,21 @@ public class Trainer {
 
     public void setActive(boolean active) {
         isActive = active;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public List<TrainingSession> getTrainingSessions() {
+        return trainingSessions;
+    }
+
+    public void setTrainingSessions(List<TrainingSession> trainingSessions) {
+        this.trainingSessions = trainingSessions;
     }
 }

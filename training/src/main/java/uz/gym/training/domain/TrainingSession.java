@@ -1,21 +1,14 @@
 package uz.gym.training.domain;
 
-import jakarta.persistence.*;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
-@Entity
+
 public class TrainingSession {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private LocalDate trainingDate;
     private int duration;
     private String actionType;
-
-    @ManyToOne
-    @JoinColumn(name = "trainer_username")
     private Trainer trainer;
 
     public Long getId() {
@@ -58,4 +51,3 @@ public class TrainingSession {
         this.trainer = trainer;
     }
 }
-
