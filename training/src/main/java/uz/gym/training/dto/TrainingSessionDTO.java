@@ -3,67 +3,68 @@ package uz.gym.training.dto;
 import java.time.LocalDate;
 
 public class TrainingSessionDTO {
-    private String username;
-    private String firstName;
-    private String lastName;
-    private boolean isActive;
-    private LocalDate trainingDate;
-    private int duration;
-    private String actionType;
+  private String username;
+  private String firstName;
+  private String lastName;
+  private boolean isActive;
+  private LocalDate trainingDate;
+  private int duration;
+  private String actionType;
 
-    public String getUsername() {
-        return username;
-    }
+  public String getUsername() {
+    return username;
+  }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+  public void setUsername(String username) {
+    this.username = username;
+  }
 
-    public String getFirstName() {
-        return firstName;
-    }
+  public String getFirstName() {
+    return firstName;
+  }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
+  public void setFirstName(String firstName) {
+    this.firstName = firstName;
+  }
 
-    public String getLastName() {
-        return lastName;
-    }
+  public String getLastName() {
+    return lastName;
+  }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
+  public void setLastName(String lastName) {
+    this.lastName = lastName;
+  }
 
-    public boolean isActive() {
-        return isActive;
-    }
+  public boolean isActive() {
+    return isActive;
+  }
 
-    public void setActive(boolean active) {
-        isActive = active;
-    }
+  public void setActive(boolean active) {
+    isActive = active;
+  }
 
-    public LocalDate getTrainingDate() {
-        return trainingDate;
-    }
+  public LocalDate getTrainingDate() {
+    return trainingDate;
+  }
 
-    public void setTrainingDate(LocalDate trainingDate) {
-        this.trainingDate = trainingDate;
-    }
+  public void setTrainingDate(LocalDate trainingDate) {
 
-    public int getDuration() {
-        return duration;
-    }
+    this.trainingDate = trainingDate;
+  }
 
-    public void setDuration(int duration) {
-        this.duration = duration;
-    }
+  public int getDuration() {
+    return duration;
+  }
 
-    public String getActionType() {
-        return actionType;
-    }
+  public void setDuration(int duration) {
+    this.duration = duration;
+  }
 
-    public void setActionType(String actionType) {
-        this.actionType = actionType;
-    }
+  public String getActionType() {
+    return actionType;
+  }
+
+  public void setActionType(String actionType) {
+    this.actionType = actionType;
+  }
 }

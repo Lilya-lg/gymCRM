@@ -12,11 +12,14 @@ import java.util.Base64;
 @Configuration
 public class JwtConfig {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+  @Value("${jwt.secret}")
+  private String jwtSecret;
 
-    @Bean
-    public JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withSecretKey(new SecretKeySpec(Base64.getDecoder().decode(jwtSecret), "HmacSHA256")).build();
-    }
+  @Bean
+  public JwtDecoder jwtDecoder() {
+    return NimbusJwtDecoder.withSecretKey(
+            new SecretKeySpec(Base64.getDecoder().decode(jwtSecret),
+                    "HmacSHA256"))
+        .build();
+  }
 }

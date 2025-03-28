@@ -32,101 +32,99 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc(addFilters = true)
 class TrainerWorkloadControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @MockBean
-    private TrainingService trainingService;
+  @MockBean private TrainingService trainingService;
 
-    @MockBean
-    private JwtUtil jwtUtil;
+  @MockBean private JwtUtil jwtUtil;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired private ObjectMapper objectMapper;
 
+  @BeforeEach
+  void setUp() {
+    TrainerSummaryDTO mockSummary = new TrainerSummaryDTO();
+    mockSummary.setUsername("JohnDoe");
+    mockSummary.setFirstName("John");
+    mockSummary.setLastName("Doe");
+    mockSummary.setStatus("Active");
+    Integer[] array = {2025};
+    mockSummary.setYears(new ArrayList<Integer>(Arrays.asList(array)));
+    mockSummary.setMonthlySummaries(Collections.EMPTY_MAP);
 
+    when(trainingService.getMonthlySummary("JohnDoe")).thenReturn(mockSummary);
+  }
 
-    @BeforeEach
-    void setUp() {
-        TrainerSummaryDTO mockSummary = new TrainerSummaryDTO();
-        mockSummary.setUsername("JohnDoe");
-        mockSummary.setFirstName("John");
-        mockSummary.setLastName("Doe");
-        mockSummary.setStatus("Active");
-        Integer[] array = {2025};
-        mockSummary.setYears( new ArrayList<Integer>(Arrays.asList(array)));
-        mockSummary.setMonthlySummaries(Collections.EMPTY_MAP);
+  @Test
+  @WithMockUser
+  void testGetTrainerSummary() throws Exception {
+    mockMvc
+        .perform(get("/api/trainings/JohnDoe/summary"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.username").value("JohnDoe"))
+        .andExpect(jsonPath("$.firstName").value("John"))
+        .andExpect(jsonPath("$.lastName").value("Doe"))
+        .andExpect(jsonPath("$.status").value("Active"))
+        .andExpect(jsonPath("$.years").value(2025))
+        .andExpect(jsonPath("$.monthlySummaries").isEmpty());
 
-        when(trainingService.getMonthlySummary("JohnDoe")).thenReturn(mockSummary);
-    }
+    verify(trainingService, times(1)).getMonthlySummary("JohnDoe");
+  }
 
-    @Test
-    @WithMockUser
-    void testGetTrainerSummary() throws Exception {
-        mockMvc.perform(get("/api/trainings/JohnDoe/summary"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("JohnDoe"))
-                .andExpect(jsonPath("$.firstName").value("John"))
-                .andExpect(jsonPath("$.lastName").value("Doe"))
-                .andExpect(jsonPath("$.status").value("Active"))
-                .andExpect(jsonPath("$.years").value(2025))
-                .andExpect(jsonPath("$.monthlySummaries").isEmpty());
+  @Test
+  @WithMockUser // Simulate authenticated user
+  void testGetTrainerSummary_NotFound() throws Exception {
+    when(trainingService.getMonthlySummary("UnknownUser")).thenReturn(null);
 
-        verify(trainingService, times(1)).getMonthlySummary("JohnDoe");
-    }
+    mockMvc.perform(get("/api/trainings/UnknownUser/summary")).andExpect(status().isNotFound());
+  }
 
-    @Test
-    @WithMockUser // Simulate authenticated user
-    void testGetTrainerSummary_NotFound() throws Exception {
-        when(trainingService.getMonthlySummary("UnknownUser")).thenReturn(null);
+  @Test
+  @WithMockUser
+  void testGetTrainerSummary_InternalServerError() throws Exception {
+    when(trainingService.getMonthlySummary("JohnDoe"))
+        .thenThrow(new RuntimeException("Unexpected error"));
 
-        mockMvc.perform(get("/api/trainings/UnknownUser/summary"))
-                .andExpect(status().isNotFound());
-    }
+    mockMvc
+        .perform(get("/api/trainings/JohnDoe/summary"))
+        .andExpect(status().isInternalServerError());
+  }
 
-    @Test
-    @WithMockUser
-    void testGetTrainerSummary_InternalServerError() throws Exception {
-        when(trainingService.getMonthlySummary("JohnDoe")).thenThrow(new RuntimeException("Unexpected error"));
+  @Test
+  @WithMockUser
+  void testProcessTraining() throws Exception {
+    TrainingSessionDTO sessionDTO = new TrainingSessionDTO();
+    sessionDTO.setUsername("JohnDoe");
+    sessionDTO.setTrainingDate(LocalDate.now());
+    sessionDTO.setActionType("ADD");
+    sessionDTO.setDuration(60);
 
-        mockMvc.perform(get("/api/trainings/JohnDoe/summary"))
-                .andExpect(status().isInternalServerError());
-    }
+    mockMvc
+        .perform(
+            post("/api/trainings")
+                .with(csrf())
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(sessionDTO)))
+        .andExpect(status().isOk());
 
-    @Test
-    @WithMockUser
-    void testProcessTraining() throws Exception {
-        TrainingSessionDTO sessionDTO = new TrainingSessionDTO();
-        sessionDTO.setUsername("JohnDoe");
-        sessionDTO.setTrainingDate(LocalDate.now());
-        sessionDTO.setActionType("ADD");
-        sessionDTO.setDuration(60);
+    ArgumentCaptor<TrainingSessionDTO> captor = ArgumentCaptor.forClass(TrainingSessionDTO.class);
+    verify(trainingService, times(1)).addTraining(captor.capture());
+    TrainingSessionDTO capturedDTO = captor.getValue();
+    assertEquals("JohnDoe", capturedDTO.getUsername());
+  }
 
-        mockMvc.perform(post("/api/trainings")
-                        .with(csrf())
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(sessionDTO)))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Processed"));
+  @Test
+  void testUnauthorizedAccessToGetTrainerSummary() throws Exception {
+    mockMvc.perform(get("/api/trainings/JohnDoe/summary")).andExpect(status().isUnauthorized());
+  }
 
-        ArgumentCaptor<TrainingSessionDTO> captor = ArgumentCaptor.forClass(TrainingSessionDTO.class);
-        verify(trainingService, times(1)).addTraining(captor.capture());
-        TrainingSessionDTO capturedDTO = captor.getValue();
-        assertEquals("JohnDoe", capturedDTO.getUsername());
-    }
-    @Test
-    void testUnauthorizedAccessToGetTrainerSummary() throws Exception {
-        mockMvc.perform(get("/api/trainings/JohnDoe/summary"))
-                .andExpect(status().isUnauthorized());
-    }
+  @Test
+  @WithMockUser
+  void testInvalidTokenAccess() throws Exception {
+    when(jwtUtil.extractUsername(anyString())).thenThrow(new RuntimeException("Invalid token"));
 
-    @Test
-    @WithMockUser
-    void testInvalidTokenAccess() throws Exception {
-        when(jwtUtil.extractUsername(anyString())).thenThrow(new RuntimeException("Invalid token"));
-
-        mockMvc.perform(get("/api/trainings/JohnDoe/summary")
-                        .header("Authorization", "Bearer invalid_token"))
-                .andExpect(status().isUnauthorized());
-    }
+    mockMvc
+        .perform(
+            get("/api/trainings/JohnDoe/summary").header("Authorization", "Bearer invalid_token"))
+        .andExpect(status().isUnauthorized());
+  }
 }

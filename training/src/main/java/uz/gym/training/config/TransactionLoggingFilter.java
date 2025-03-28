@@ -12,44 +12,51 @@ import uz.gym.training.service.TrainingService;
 import java.io.IOException;
 import java.util.UUID;
 
-
 @Component
 public class TransactionLoggingFilter implements Filter {
 
-    private static final String TRANSACTION_ID = "transactionId";
-    private static final Logger LOGGER = LoggerFactory.getLogger(TrainingService.class);
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
+  private static final String TRANSACTION_ID = "transactionId";
+  private static final Logger LOGGER = LoggerFactory.getLogger(TrainingService.class);
 
-        String transactionId = httpRequest.getHeader(TRANSACTION_ID);
+  @Override
+  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+      throws IOException, ServletException {
+    HttpServletRequest httpRequest = (HttpServletRequest) request;
+    HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        if (transactionId == null) {
+    String transactionId = httpRequest.getHeader(TRANSACTION_ID);
 
-            transactionId = UUID.randomUUID().toString();
-        }
+    if (transactionId == null) {
 
-
-        MDC.put(TRANSACTION_ID, transactionId);
-
-
-        logRequest(httpRequest, transactionId);
-
-        try {
-            chain.doFilter(request, response);
-        } finally {
-
-            logResponse(httpResponse, transactionId);
-            MDC.clear();
-        }
+      transactionId = UUID.randomUUID().toString();
     }
 
-    private void logRequest(HttpServletRequest request, String transactionId) {
-       LOGGER.info("Transaction ID: " + transactionId + " | Request: " + request.getMethod() + " " + request.getRequestURI() + " | Headers: " + request.getHeaderNames());
-    }
+    MDC.put(TRANSACTION_ID, transactionId);
 
-    private void logResponse(HttpServletResponse response, String transactionId) {
-        LOGGER.info("Transaction ID: " + transactionId + " | Response Status: " + response.getStatus());
+    logRequest(httpRequest, transactionId);
+
+    try {
+      chain.doFilter(request, response);
+    } finally {
+
+      logResponse(httpResponse, transactionId);
+      MDC.clear();
     }
+  }
+
+  private void logRequest(HttpServletRequest request, String transactionId) {
+    LOGGER.info(
+        "Transaction ID: "
+            + transactionId
+            + " | Request: "
+            + request.getMethod()
+            + " "
+            + request.getRequestURI()
+            + " | Headers: "
+            + request.getHeaderNames());
+  }
+
+  private void logResponse(HttpServletResponse response, String transactionId) {
+    LOGGER.info("Transaction ID: " + transactionId + " | Response Status: " + response.getStatus());
+  }
 }
