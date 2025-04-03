@@ -1,4 +1,4 @@
-package uz.micro.gym.dto;
+package uz.gym.crm.dto;
 
 import java.time.LocalDate;
 

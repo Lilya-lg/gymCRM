@@ -10,7 +10,7 @@ import uz.micro.gym.service.TrainingServiceImpl;
 
 import java.io.IOException;
 import java.util.UUID;
-
+/*
 @Component
 public class TransactionLoggingFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionLoggingFilter.class);
@@ -50,3 +50,6 @@ public class TransactionLoggingFilter implements Filter {
                 " | Response Status: " + response.getStatus());
     }
 }
+
+
+ */

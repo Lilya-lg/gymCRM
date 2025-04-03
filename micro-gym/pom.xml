@@ -51,7 +51,15 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-activemq</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>uz.gym.crm</groupId>
+            <artifactId>dto</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>org.glassfish.expressly</groupId>
             <artifactId>expressly</artifactId>
@@ -105,14 +113,7 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.6.14</version> <!-- Use latest compatible version -->
         </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
-        </dependency>
+
         <!-- Remove the following to avoid conflicts with Spring Boot 3.x -->
         <!-- <dependency>
             <groupId>io.springfox</groupId>
@@ -150,10 +151,6 @@
             <artifactId>junit-jupiter-engine</artifactId>
             <version>5.10.0</version> <!-- Use the latest version -->
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>

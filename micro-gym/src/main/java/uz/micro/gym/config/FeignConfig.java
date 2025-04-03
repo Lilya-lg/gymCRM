@@ -1,7 +1,6 @@
 package uz.micro.gym.config;
 
 
-import feign.RequestInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-
+/*
 public class FeignConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FeignConfig.class);
@@ -73,3 +72,6 @@ public class FeignConfig {
         }
     }
 }
+
+
+ */

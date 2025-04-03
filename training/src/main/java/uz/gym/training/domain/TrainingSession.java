@@ -1,6 +1,6 @@
 package uz.gym.training.domain;
 
-import uz.gym.training.dto.TrainingSessionDTO;
+import uz.gym.crm.dto.TrainingSessionDTO;
 
 import java.time.LocalDate;
 import java.util.Objects;
@@ -11,6 +11,8 @@ public class TrainingSession {
   private int duration;
   private String actionType;
   private String trainerUsername;
+  private String firstName;
+  private String lastName;
 
   public TrainingSession() {}
 
@@ -19,6 +21,8 @@ public class TrainingSession {
     this.duration = sessionDTO.getDuration();
     this.actionType = sessionDTO.getActionType();
     this.trainerUsername = sessionDTO.getUsername();
+    this.firstName = sessionDTO.getFirstName();
+    this.lastName = sessionDTO.getLastName();
   }
 
   public Long getId() {
@@ -61,6 +65,22 @@ public class TrainingSession {
     this.trainerUsername = trainerUsername;
   }
 
+  public String getFirstName() {
+    return firstName;
+  }
+
+  public void setFirstName(String firstName) {
+    this.firstName = firstName;
+  }
+
+  public String getLastName() {
+    return lastName;
+  }
+
+  public void setLastName(String lastName) {
+    this.lastName = lastName;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -70,11 +90,14 @@ public class TrainingSession {
         && Objects.equals(id, that.id)
         && Objects.equals(trainingDate, that.trainingDate)
         && Objects.equals(actionType, that.actionType)
-        && Objects.equals(trainerUsername, that.trainerUsername);
+        && Objects.equals(trainerUsername, that.trainerUsername)
+        && Objects.equals(firstName, that.firstName)
+        && Objects.equals(lastName, that.lastName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, trainingDate, duration, actionType, trainerUsername);
+    return Objects.hash(
+        id, trainingDate, duration, actionType, trainerUsername, firstName, lastName);
   }
 }

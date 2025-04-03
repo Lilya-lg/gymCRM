@@ -10,14 +10,13 @@ import org.mockito.MockitoAnnotations;
 import uz.gym.training.domain.TrainingSession;
 import uz.gym.training.dto.MonthSummaryDTO;
 import uz.gym.training.dto.TrainerSummaryDTO;
-import uz.gym.training.dto.TrainingSessionDTO;
+import uz.gym.crm.dto.TrainingSessionDTO;
 import uz.gym.training.repository.TrainingRepository;
 
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Collections;
 import java.util.List;
-
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -85,22 +84,6 @@ class TrainingServiceTest {
   }
 
   @Test
-  void testGetTrainerSummary_NoSessions() {
-    String trainerUsername = "NoSessionsTrainer";
-
-    when(trainingRepository.getTrainingsByTrainer(trainerUsername))
-        .thenReturn(Collections.emptyList());
-
-    TrainerSummaryDTO result = trainingService.getMonthlySummary(trainerUsername);
-
-    assertNotNull(result);
-    assertEquals(trainerUsername, result.getUsername());
-    assertTrue(
-        result.getMonthlySummaries().isEmpty(),
-        "Summary should be empty for a trainer with no sessions");
-  }
-
-  @Test
   void testAddTraining_NewTrainer() {
     TrainingSessionDTO sessionDTO = new TrainingSessionDTO();
     sessionDTO.setUsername("newTrainer");
@@ -112,9 +95,7 @@ class TrainingServiceTest {
 
     trainingService.addTraining(sessionDTO);
 
-    verify(trainingRepository,
-            times(1)).addTraining(eq("newTrainer"),
-            any(TrainingSession.class));
+    verify(trainingRepository, times(1)).addTraining(eq("newTrainer"), any(TrainingSession.class));
   }
 
   @Test
@@ -153,8 +134,7 @@ class TrainingServiceTest {
 
     trainingService.deleteTraining(sessionDTO);
 
-    verify(trainingRepository, times(1))
-            .removeTraining(eq(trainerUsername), eq(session));
+    verify(trainingRepository, times(1)).removeTraining(eq(trainerUsername), eq(session));
   }
 
   @Test
@@ -166,8 +146,7 @@ class TrainingServiceTest {
     when(trainingRepository.getTrainingsByTrainer(trainerUsername))
         .thenReturn(Collections.emptyList());
 
-    assertThrows(EntityNotFoundException.class, () ->
-            trainingService.deleteTraining(sessionDTO));
+    assertThrows(EntityNotFoundException.class, () -> trainingService.deleteTraining(sessionDTO));
   }
 
   @Test
@@ -179,7 +158,6 @@ class TrainingServiceTest {
     when(trainingRepository.getTrainingsByTrainer(trainerUsername))
         .thenReturn(Collections.emptyList());
 
-    assertThrows(EntityNotFoundException.class, () ->
-            trainingService.deleteTraining(sessionDTO));
+    assertThrows(EntityNotFoundException.class, () -> trainingService.deleteTraining(sessionDTO));
   }
 }

@@ -2,10 +2,10 @@ package uz.gym.training.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import uz.gym.crm.dto.TrainingSessionDTO;
 import uz.gym.training.domain.TrainingSession;
 import uz.gym.training.dto.MonthSummaryDTO;
 import uz.gym.training.dto.TrainerSummaryDTO;
-import uz.gym.training.dto.TrainingSessionDTO;
 import uz.gym.training.repository.TrainingRepository;
 import uz.gym.training.service.abstr.BaseService;
 
@@ -32,13 +32,16 @@ public class TrainingService implements BaseService {
     List<TrainingSession> sessions = trainingRepository.getTrainingsByTrainer(trainerUsername);
 
     if (sessions.isEmpty()) {
-      throw new EntityNotFoundException("No training sessions found for trainer: " + trainerUsername);
+      throw new EntityNotFoundException(
+          "No training sessions found for trainer: " + trainerUsername);
     }
 
-    // Find the session that matches the given sessionDTO (e.g., by date, duration, etc.)
-    Optional<TrainingSession> sessionToRemove = sessions.stream()
-            .filter(session -> session.getTrainingDate().equals(sessionDTO.getTrainingDate()) &&
-                    session.getDuration() == sessionDTO.getDuration())
+    Optional<TrainingSession> sessionToRemove =
+        sessions.stream()
+            .filter(
+                session ->
+                    session.getTrainingDate().equals(sessionDTO.getTrainingDate())
+                        && session.getDuration() == sessionDTO.getDuration())
             .findFirst();
 
     if (sessionToRemove.isPresent()) {
@@ -53,46 +56,57 @@ public class TrainingService implements BaseService {
   }
 
   public TrainerSummaryDTO getMonthlySummary(String trainerUsername) {
-    List<TrainingSession> sessions =
-            trainingRepository.getTrainingsByTrainer(trainerUsername);
+    List<TrainingSession> sessions = trainingRepository.getTrainingsByTrainer(trainerUsername);
 
     if (sessions.isEmpty()) {
-      return new TrainerSummaryDTO(
-          trainerUsername,
-          "Unknown",
-          "Unknown",
-          "false",
-          Collections.emptyList(),
-          Collections.emptyMap());
+      throw new EntityNotFoundException(
+          "Trainer with username '" + trainerUsername + "' not found or has no sessions.");
     }
+    String firstName = sessions.get(0).getFirstName();
+    String lastName = sessions.get(0).getLastName();
 
-    Map<Integer, Map<Month, Integer>> trainingSummary =
-        sessions.stream()
-            .filter(session -> session.getTrainingDate() != null)
-            .collect(
+    Map<Integer, Map<Month, Integer>> trainingSummary = groupSessionsByYearAndMonth(sessions);
+    List<Integer> years = extractAndSortYears(trainingSummary);
+    Map<Integer, List<MonthSummaryDTO>> monthlySummaries =
+        convertToMonthlySummaries(trainingSummary);
+
+    return new TrainerSummaryDTO(
+        trainerUsername, firstName, lastName, "true", years, monthlySummaries);
+  }
+
+  private Map<Integer, Map<Month, Integer>> groupSessionsByYearAndMonth(
+      List<TrainingSession> sessions) {
+    return sessions.stream()
+        .filter(session -> session.getTrainingDate() != null)
+        .collect(
+            Collectors.groupingBy(
+                session -> session.getTrainingDate().getYear(),
                 Collectors.groupingBy(
-                    session -> session.getTrainingDate().getYear(),
-                    Collectors.groupingBy(
-                        session -> session.getTrainingDate().getMonth(),
-                        Collectors.summingInt(TrainingSession::getDuration))));
+                    session -> session.getTrainingDate().getMonth(),
+                    Collectors.summingInt(TrainingSession::getDuration))));
+  }
 
+  private List<Integer> extractAndSortYears(Map<Integer, Map<Month, Integer>> trainingSummary) {
     List<Integer> years = new ArrayList<>(trainingSummary.keySet());
     Collections.sort(years);
+    return years;
+  }
 
+  private Map<Integer, List<MonthSummaryDTO>> convertToMonthlySummaries(
+      Map<Integer, Map<Month, Integer>> trainingSummary) {
     Map<Integer, List<MonthSummaryDTO>> monthlySummaries = new HashMap<>();
-    for (var entry : trainingSummary.entrySet()) {
+
+    for (Map.Entry<Integer, Map<Month, Integer>> entry : trainingSummary.entrySet()) {
       Integer year = entry.getKey();
       List<MonthSummaryDTO> monthSummaries =
           entry.getValue().entrySet().stream()
-              .map(monthEntry -> new MonthSummaryDTO(monthEntry.getKey(),
-                      monthEntry.getValue()))
+              .map(monthEntry -> new MonthSummaryDTO(monthEntry.getKey(), monthEntry.getValue()))
               .sorted(Comparator.comparing(MonthSummaryDTO::getMonth))
               .collect(Collectors.toList());
+
       monthlySummaries.put(year, monthSummaries);
     }
 
-    return new TrainerSummaryDTO(
-        trainerUsername, "Unknown", "Unknown", "true", years,
-            monthlySummaries);
+    return monthlySummaries;
   }
 }

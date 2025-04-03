@@ -64,11 +64,9 @@ class TrainingRepositoryTest {
     session.setTrainingDate(LocalDate.of(2024, 4, 10));
     session.setDuration(120);
 
-    trainingRepository.removeTraining(
-        trainerUsername, session);
+    trainingRepository.removeTraining(trainerUsername, session);
 
-    List<TrainingSession> sessions = trainingRepository.getTrainingsByTrainer(
-            trainerUsername);
+    List<TrainingSession> sessions = trainingRepository.getTrainingsByTrainer(trainerUsername);
     assertTrue(
         sessions.isEmpty(), "Removing a non-existent session should not affect the repository.");
   }
