@@ -10,7 +10,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import uz.gym.training.dto.TrainerSummaryDTO;
-import uz.gym.training.dto.TrainingSessionDTO;
+import uz.gym.crm.dto.TrainingSessionDTO;
 import uz.gym.training.service.TrainingService;
 import uz.gym.training.security.JwtUtil;
 

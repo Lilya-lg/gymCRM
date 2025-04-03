@@ -1,6 +1,7 @@
 package uz.micro.gym.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.micro.gym.domain.Training;
@@ -12,6 +13,7 @@ import uz.micro.gym.mapper.Mapper;
 import uz.micro.gym.service.abstr.TrainingService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "api/trainings", produces = {"application/json", "application/xml"})
@@ -42,10 +44,13 @@ public class TrainingController {
     }
 
     @PostMapping
-    public ResponseEntity<String> createTraining(@Valid @RequestBody TrainingDTO trainingDTO) {
+    public ResponseEntity<Map<String,String>> createTraining(@Valid @RequestBody TrainingDTO trainingDTO) {
         Training training = mapper.toTraining(trainingDTO);
         trainingService.linkTraineeTrainer(training, trainingDTO.getTraineeUsername(), trainingDTO.getTrainerUsername());
         trainingService.create(training);
-        return ResponseEntity.ok("Training was created successfully");
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                "status", "success",
+                "message", "Training added succesfully: "
+        ));
     }
 }

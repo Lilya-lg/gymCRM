@@ -4,8 +4,10 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.gym.training.dto.TrainerSummaryDTO;
-import uz.gym.training.dto.TrainingSessionDTO;
+import uz.gym.crm.dto.TrainingSessionDTO;
 import uz.gym.training.service.TrainingService;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/trainings")
@@ -19,15 +21,18 @@ public class TrainerWorkloadController {
   }
 
   @PostMapping
-  public ResponseEntity<String> processTraining(@RequestBody TrainingSessionDTO sessionDTO) {
+  public ResponseEntity<Map<String, String>> processTraining(
+      @RequestBody TrainingSessionDTO sessionDTO) {
     if (ACTION_ADD.equalsIgnoreCase(sessionDTO.getActionType())) {
       service.addTraining(sessionDTO);
+      return ResponseEntity.ok(Map.of("status", "success", "message", "Training session added"));
     } else if (ACTION_DELETE.equalsIgnoreCase(sessionDTO.getActionType())) {
       service.deleteTraining(sessionDTO);
+      return ResponseEntity.ok(Map.of("status", "success", "message", "Training session deleted"));
     } else {
-      return ResponseEntity.badRequest().body("Invalid action type");
+      return ResponseEntity.badRequest()
+          .body(Map.of("status", "error", "message", "Invalid action type"));
     }
-    return ResponseEntity.ok().build();
   }
 
   @GetMapping("/{trainerUsername}/summary")
