@@ -49,8 +49,7 @@ public class TrainingController {
         trainingService.linkTraineeTrainer(training, trainingDTO.getTraineeUsername(), trainingDTO.getTrainerUsername());
         trainingService.create(training);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of(
-                "status", "success",
-                "message", "Training added succesfully: "
+                "message", "Training added succesfully"
         ));
     }
 }

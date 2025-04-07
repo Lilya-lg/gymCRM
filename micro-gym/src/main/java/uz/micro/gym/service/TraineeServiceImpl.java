@@ -20,6 +20,7 @@ import uz.micro.gym.repository.TrainingRepository;
 import uz.micro.gym.repository.UserRepository;
 import uz.micro.gym.service.abstr.AbstractProfileService;
 import uz.micro.gym.service.abstr.TraineeService;
+import uz.micro.gym.util.exceptions.EntityNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
@@ -75,25 +76,34 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
     if (trainee.isPresent()) {
       Optional<Trainer> trainer =
           trainingRepository.findTrainersByTraineeId(trainee.get().getId()).stream().findFirst();
-      Optional<Training> training =
-          trainingRepository
-              .findByCriteria(
-                  trainee.get().getUser().getUsername(),
-                  null,
-                  null,
-                  null,
-                  trainer.get().getUser().getUsername())
-              .stream()
-              .findFirst();
-      if (training.isPresent()) {
-        TrainingSessionDTO trainingSessionDTO = new TrainingSessionDTO();
-        trainingSessionDTO.setTrainingDate(training.get().getTrainingDate());
-        trainingSessionDTO.setUsername(training.get().getTrainer().getUser().getUsername());
-        trainingSessionDTO.setDuration(training.get().getTrainingDuration());
-        trainingSessionDTO.setActionType("DELETE");
-        messageProducer.sendTrainingSession(trainingSessionDTO);
+      if (trainer.isPresent()) {
+        Optional<Training> training =
+            trainingRepository
+                .findByCriteria(
+                    trainee.get().getUser().getUsername(),
+                    null,
+                    null,
+                    null,
+                    trainer.get().getUser().getUsername())
+                .stream()
+                .findFirst();
+        if (training.isPresent()) {
+          TrainingSessionDTO trainingSessionDTO = new TrainingSessionDTO();
+          trainingSessionDTO.setTrainingDate(training.get().getTrainingDate());
+          trainingSessionDTO.setUsername(training.get().getTrainer().getUser().getUsername());
+          trainingSessionDTO.setDuration(training.get().getTrainingDuration());
+          trainingSessionDTO.setActionType("DELETE");
+          messageProducer.sendTrainingSession(trainingSessionDTO);
+        } else {
+          LOGGER.info("No trainigs for " + trainee.get().getUser().getUsername());
+        }
+
       } else {
-        LOGGER.info("No trainigs for " + trainee.get().getUser().getUsername());
+        LOGGER.info("No trainers for " + trainee.get().getUser().getUsername());
+      }
+      List<Training> trainings = trainingRepository.findByTraineeId(trainee.get().getId());
+      for (Training training : trainings) {
+        trainingRepository.deleteById(training.getId());
       }
       int deletedRows = traineeRepository.deleteByUsername(username);
       LOGGER.info("Deleted rows: " + deletedRows);
@@ -183,7 +193,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
     Trainee trainee =
         optionalTrainee.orElseThrow(
             () ->
-                new IllegalArgumentException(
+                new EntityNotFoundException(
                     "Trainee with username '" + username + "' does not exist"));
     if (trainee.getUser().getIsActive() != Boolean.valueOf(traineeDTO.getIsActive())) {
       if (Boolean.valueOf(traineeDTO.getIsActive())) {

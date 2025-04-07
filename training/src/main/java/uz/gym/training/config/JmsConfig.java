@@ -33,9 +33,4 @@ public class JmsConfig {
     factory.setMessageConverter(messageConverter);
     return factory;
   }
-
-  @Bean
-  public ConnectionFactory connectionFactory() {
-    return new ActiveMQConnectionFactory("tcp://localhost:61616");
-  }
 }

@@ -1,8 +1,10 @@
 package uz.micro.gym.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import uz.micro.gym.domain.PredefinedTrainingType;
 import uz.micro.gym.domain.Trainee;
 import uz.micro.gym.domain.Trainer;
@@ -24,4 +26,11 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
 
     @Query("SELECT DISTINCT t.trainee FROM Training t WHERE t.trainer.id = :trainerId")
     List<Trainee> findTraineesByTrainerId(Long trainerId);
+
+    List<Training> findByTraineeId(Long traineeId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Training t WHERE t.id = :id")
+    void deleteById(@Param("id") Long id);
 }

@@ -15,6 +15,7 @@ import uz.micro.gym.repository.TraineeRepository;
 import uz.micro.gym.repository.TrainerRepository;
 import uz.micro.gym.repository.TrainingRepository;
 import uz.micro.gym.service.abstr.TrainingService;
+import uz.micro.gym.util.exceptions.EntityNotFoundException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -82,7 +83,7 @@ public class TrainingServiceImpl implements TrainingService {
               .findByUsername(traineeName)
               .orElseThrow(
                   () ->
-                      new IllegalArgumentException(
+                      new EntityNotFoundException(
                           "Trainee not found with username: " + traineeName));
     } catch (Exception e) {
       throw new IllegalArgumentException("Trainee not found with username: " + traineeName, e);
@@ -96,7 +97,7 @@ public class TrainingServiceImpl implements TrainingService {
               .findByUsername(trainerName)
               .orElseThrow(
                   () ->
-                      new IllegalArgumentException(
+                      new EntityNotFoundException(
                           "Trainer not found with username: " + trainerName));
     } catch (Exception e) {
       throw new IllegalArgumentException("Trainer not found with username: " + trainerName, e);

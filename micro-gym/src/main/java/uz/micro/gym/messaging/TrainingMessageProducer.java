@@ -9,10 +9,11 @@ import uz.gym.crm.dto.TrainingSessionDTO;
 @Service
 public class TrainingMessageProducer {
   private final JmsTemplate jmsTemplate;
-  @Autowired ObjectMapper objectMapper;
-
-  public TrainingMessageProducer(JmsTemplate jmsTemplate) {
+  private final ObjectMapper objectMapper;
+  @Autowired
+  public TrainingMessageProducer(JmsTemplate jmsTemplate,ObjectMapper objectMapper) {
     this.jmsTemplate = jmsTemplate;
+    this.objectMapper = objectMapper;
   }
 
   public void sendTrainingSession(TrainingSessionDTO sessionDTO) {

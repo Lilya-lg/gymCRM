@@ -71,7 +71,7 @@ class TrainerWorkloadControllerTest {
   }
 
   @Test
-  @WithMockUser // Simulate authenticated user
+  @WithMockUser
   void testGetTrainerSummary_NotFound() throws Exception {
     when(trainingService.getMonthlySummary("UnknownUser")).thenReturn(null);
 
