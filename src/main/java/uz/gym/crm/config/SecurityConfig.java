@@ -21,7 +21,7 @@ import uz.gym.crm.repository.UserRepository;
 import uz.gym.crm.service.CustomUserDetailsService;
 
 import java.util.List;
-
+/*
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -70,3 +70,5 @@ public class SecurityConfig {
         return new CustomUserDetailsService(userRepository);
     }
 }
+
+ */

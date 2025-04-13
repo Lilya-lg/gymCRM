@@ -19,6 +19,7 @@ import uz.micro.gym.service.abstr.TrainingService;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -109,11 +110,11 @@ public class TrainingControllerTest {
         doNothing().when(trainingService).linkTraineeTrainer(training, "trainee1", "trainer1");
         doNothing().when(trainingService).create(training);
 
-        ResponseEntity<String> response = trainingController.createTraining(trainingDTO);
+        ResponseEntity<Map<String,String>> response = trainingController.createTraining(trainingDTO);
 
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Training was created successfully", response.getBody());
+        assertEquals("Training added succesfully", response.getBody().get("message"));
         verify(trainingService, times(1)).linkTraineeTrainer(training, "trainee1", "trainer1");
         verify(trainingService, times(1)).create(training);
     }
