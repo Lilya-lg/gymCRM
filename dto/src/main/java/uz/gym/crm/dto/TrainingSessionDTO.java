@@ -10,6 +10,7 @@ public class TrainingSessionDTO {
   private LocalDate trainingDate;
   private int duration;
   private String actionType;
+  private String trainingName;
 
   public String getUsername() {
     return username;
@@ -66,5 +67,13 @@ public class TrainingSessionDTO {
 
   public void setActionType(String actionType) {
     this.actionType = actionType;
+  }
+
+  public String getTrainingName() {
+    return trainingName;
+  }
+
+  public void setTrainingName(String trainingName) {
+    this.trainingName = trainingName;
   }
 }

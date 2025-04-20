@@ -126,6 +126,7 @@ public class TrainingServiceImpl implements TrainingService {
     microserviceRequest.setTrainingDate(training.getTrainingDate());
     microserviceRequest.setActive(training.getTrainer().getUser().getIsActive());
     microserviceRequest.setActionType("ADD");
+    microserviceRequest.setTrainingName(training.getTrainingName());
     messageProducer.sendTrainingSession(microserviceRequest);
   }
 }

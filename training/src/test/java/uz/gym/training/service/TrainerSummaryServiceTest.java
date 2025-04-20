@@ -11,6 +11,7 @@ import uz.gym.training.domain.YearSummary;
 import uz.gym.training.dto.MonthSummaryDTO;
 import uz.gym.training.dto.TrainerSummaryDTO;
 import uz.gym.training.repository.abstr.TrainerTrainingSummaryRepository;
+import uz.gym.training.util.exceptions.InsufficientDurationException;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -42,7 +43,7 @@ class TrainerSummaryServiceTest {
 
     when(repository.findByTrainerUsername("trainer1")).thenReturn(Optional.empty());
 
-    service.addTraining(dto);
+    service.getOrCreateTraining(dto);
     ArgumentCaptor<TrainerTrainingSummary> captor =
         ArgumentCaptor.forClass(TrainerTrainingSummary.class);
     verify(repository, times(1)).save(captor.capture());
@@ -86,7 +87,7 @@ class TrainerSummaryServiceTest {
 
     when(repository.findByTrainerUsername("trainer1")).thenReturn(Optional.of(existingTrainer));
 
-    service.addTraining(dto);
+    service.getOrCreateTraining(dto);
     ArgumentCaptor<TrainerTrainingSummary> captor =
         ArgumentCaptor.forClass(TrainerTrainingSummary.class);
     verify(repository, times(1)).save(captor.capture());
@@ -129,14 +130,13 @@ class TrainerSummaryServiceTest {
   @Test
   public void testGetTrainerSummary_NotFound() {
     when(repository.findByTrainerUsername("nonexistent")).thenReturn(Optional.empty());
-    TrainerSummaryDTO summary = service.getTrainerSummary("nonexistent");
-    assertNull(summary);
+    EntityNotFoundException ex =
+        assertThrows(EntityNotFoundException.class, () -> service.getTrainerSummary("nonexistent"));
   }
 
-  // Tests for deleteTraining()
   @Test
   public void testDeleteTraining_Success_PartialRemoval() {
-    // Create trainer with a YearSummary/MonthSummary.
+
     TrainerTrainingSummary trainer = new TrainerTrainingSummary("trainer1", "Alice", "Smith", true);
     YearSummary yearSummary = new YearSummary(2025);
     MonthSummary monthSummary = new MonthSummary();
@@ -213,8 +213,8 @@ class TrainerSummaryServiceTest {
     dto.setTrainingDate(LocalDate.of(2025, 4, 20));
     dto.setDuration(50);
 
-    EntityNotFoundException ex =
-        assertThrows(EntityNotFoundException.class, () -> service.deleteTraining(dto));
+    InsufficientDurationException ex =
+        assertThrows(InsufficientDurationException.class, () -> service.deleteTraining(dto));
     assertTrue(ex.getMessage().contains("insufficient duration"));
   }
 }

@@ -25,7 +25,7 @@ class TrainingMessageConsumerTest {
 
     trainingMessageConsumer.receiveTrainingSession(dto);
 
-    verify(trainerSummaryService, times(1)).addTraining(dto);
+    verify(trainerSummaryService, times(1)).getOrCreateTraining(dto);
     verify(trainerSummaryService, never()).deleteTraining(any());
   }
 
@@ -37,7 +37,7 @@ class TrainingMessageConsumerTest {
     trainingMessageConsumer.receiveTrainingSession(dto);
 
     verify(trainerSummaryService, times(1)).deleteTraining(dto);
-    verify(trainerSummaryService, never()).addTraining(any());
+    verify(trainerSummaryService, never()).getOrCreateTraining(any());
   }
 
   @Test
@@ -47,7 +47,7 @@ class TrainingMessageConsumerTest {
 
     trainingMessageConsumer.receiveTrainingSession(dto);
 
-    verify(trainerSummaryService, never()).addTraining(any());
+    verify(trainerSummaryService, never()).getOrCreateTraining(any());
     verify(trainerSummaryService, never()).deleteTraining(any());
   }
 
@@ -58,6 +58,6 @@ class TrainingMessageConsumerTest {
 
     trainingMessageConsumer.receiveTrainingSession(dto);
 
-    verify(trainerSummaryService, times(1)).addTraining(dto);
+    verify(trainerSummaryService, times(1)).getOrCreateTraining(dto);
   }
 }

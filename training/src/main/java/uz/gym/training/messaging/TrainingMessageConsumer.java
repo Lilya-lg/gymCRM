@@ -11,15 +11,14 @@ public class TrainingMessageConsumer {
   private static final String ACTION_ADD = "ADD";
   private static final String ACTION_DELETE = "DELETE";
 
-  public TrainingMessageConsumer(
-      TrainerSummaryService trainerSummaryService) {
+  public TrainingMessageConsumer(TrainerSummaryService trainerSummaryService) {
     this.trainerSummaryService = trainerSummaryService;
   }
 
   @JmsListener(destination = "training.queue", containerFactory = "jmsListenerContainerFactory")
   public void receiveTrainingSession(TrainingSessionDTO dto) {
     if (ACTION_ADD.equalsIgnoreCase(dto.getActionType())) {
-      trainerSummaryService.addTraining(dto);
+      trainerSummaryService.getOrCreateTraining(dto);
     } else if (ACTION_DELETE.equalsIgnoreCase(dto.getActionType())) {
       trainerSummaryService.deleteTraining(dto);
     }

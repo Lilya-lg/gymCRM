@@ -9,17 +9,13 @@ import uz.gym.crm.dto.TrainingSessionDTO;
 import uz.gym.training.domain.MonthSummary;
 import uz.gym.training.domain.TrainerTrainingSummary;
 import uz.gym.training.domain.YearSummary;
-import uz.gym.training.dto.MonthSummaryDTO;
 import uz.gym.training.dto.TrainerSummaryDTO;
+import uz.gym.training.mapper.TrainerSummaryConverter;
 import uz.gym.training.repository.abstr.TrainerTrainingSummaryRepository;
 import uz.gym.training.service.abstr.BaseService;
+import uz.gym.training.util.exceptions.InsufficientDurationException;
 
 import java.time.LocalDate;
-import java.time.Month;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class TrainerSummaryService implements BaseService {
@@ -28,139 +24,157 @@ public class TrainerSummaryService implements BaseService {
 
   @Autowired private TrainerTrainingSummaryRepository repository;
 
-  public void addTraining(TrainingSessionDTO event) {
-    TrainerTrainingSummary trainerSummary =
-        repository
-            .findByTrainerUsername(event.getUsername())
-            .orElseGet(
-                () -> {
-                  TrainerTrainingSummary newTrainer = new TrainerTrainingSummary();
-                  newTrainer.setTrainerUsername(event.getUsername());
-                  newTrainer.setTrainerFirstName(event.getFirstName());
-                  newTrainer.setTrainerLastName(event.getLastName());
-                  newTrainer.setTrainerStatus(event.isActive());
-                  return newTrainer;
-                });
+  @Override
+  public void getOrCreateTraining(TrainingSessionDTO event) {
+    validateTrainingDate(event.getTrainingDate());
+    TrainerTrainingSummary trainer = getOrCreateTrainerSummary(event);
 
-    LocalDate trainingDate = event.getTrainingDate();
-    int year = trainingDate.getYear();
-    String month = trainingDate.getMonth().toString();
-    YearSummary yearSummary =
-        trainerSummary.getYearsList().stream()
-            .filter(ys -> ys.getYear() != null && ys.getYear() == year)
-            .findFirst()
-            .orElseGet(
-                () -> {
-                  YearSummary ys = new YearSummary(year);
-                  trainerSummary.getYearsList().add(ys);
-                  return ys;
-                });
+    int year = event.getTrainingDate().getYear();
+    YearSummary yearSummary = getOrCreateYearSummary(trainer, year);
 
-    MonthSummary monthSummary =
-        yearSummary.getMonthsList().stream()
-            .filter(ms -> ms.getMonth() != null && ms.getMonth().equalsIgnoreCase(month))
-            .findFirst()
-            .orElseGet(
-                () -> {
-                  MonthSummary ms = new MonthSummary();
-                  ms.setMonth(month);
-                  ms.setTrainingSummaryDuration(0);
-                  yearSummary.getMonthsList().add(ms);
-                  return ms;
-                });
+    String month = event.getTrainingDate().getMonth().toString();
+    MonthSummary monthSummary = getOrCreateMonthSummary(yearSummary, month);
 
     int updatedDuration = monthSummary.getTrainingSummaryDuration() + event.getDuration();
     monthSummary.setTrainingSummaryDuration(updatedDuration);
-    repository.save(trainerSummary);
+
+    repository.save(trainer);
   }
 
+  @Override
   public TrainerSummaryDTO getTrainerSummary(String trainerUsername) {
-    Optional<TrainerTrainingSummary> trainerOpt = repository.findByTrainerUsername(trainerUsername);
-    if (trainerOpt.isPresent()) {
-      TrainerTrainingSummary trainer = trainerOpt.get();
-      TrainerSummaryDTO dto = new TrainerSummaryDTO();
-      dto.setUsername(trainer.getTrainerUsername());
-      dto.setFirstName(trainer.getTrainerFirstName());
-      dto.setLastName(trainer.getTrainerLastName());
-      dto.setStatus(trainer.getTrainerStatus().toString());
-
-      List<Integer> years =
-          trainer.getYearsList().stream().map(YearSummary::getYear).collect(Collectors.toList());
-      dto.setYears(years);
-
-      Map<Integer, List<MonthSummaryDTO>> monthlySummaries =
-          trainer.getYearsList().stream()
-              .collect(
-                  Collectors.toMap(
-                      YearSummary::getYear,
-                      yearSummary ->
-                          yearSummary.getMonthsList().stream()
-                              .map(
-                                  ms -> {
-                                    MonthSummaryDTO monthDto = new MonthSummaryDTO();
-                                    monthDto.setMonth(Month.valueOf(ms.getMonth()));
-                                    monthDto.setTotalTrainingDuration(
-                                        ms.getTrainingSummaryDuration());
-                                    return monthDto;
-                                  })
-                              .collect(Collectors.toList())));
-      dto.setMonthlySummaries(monthlySummaries);
-
-      return dto;
-    }
-    return null;
+    TrainerTrainingSummary trainer =
+        repository
+            .findByTrainerUsername(trainerUsername)
+            .orElseThrow(
+                () ->
+                    new EntityNotFoundException(
+                        "No training sessions found for trainer: " + trainerUsername));
+    return TrainerSummaryConverter.toDto(trainer);
   }
 
+  @Override
   public void deleteTraining(TrainingSessionDTO sessionDTO) {
-    String trainerUsername = sessionDTO.getUsername();
+    TrainerTrainingSummary trainer = findTrainerOrThrow(sessionDTO.getUsername());
 
-    Optional<TrainerTrainingSummary> trainerOpt = repository.findByTrainerUsername(trainerUsername);
-    if (!trainerOpt.isPresent()) {
-      throw new EntityNotFoundException(
-          "No training sessions found for trainer: " + trainerUsername);
+    YearSummary yearSummary =
+        findYearSummaryOrThrow(
+            trainer, sessionDTO.getTrainingDate().getYear(), sessionDTO.getTrainingName());
+
+    MonthSummary monthSummary =
+        findMonthSummaryOrThrow(
+            yearSummary,
+            sessionDTO.getTrainingDate().getMonth().toString(),
+            sessionDTO.getTrainingName());
+
+    validateDuration(
+        monthSummary.getTrainingSummaryDuration(),
+        sessionDTO.getDuration(),
+        sessionDTO.getTrainingName());
+
+    adjustSummaries(trainer, yearSummary, monthSummary, sessionDTO.getDuration());
+
+    repository.save(trainer);
+  }
+
+  private void validateTrainingDate(LocalDate date) {
+    if (date == null) {
+      throw new IllegalArgumentException("Training date cannot be null");
     }
-
-    TrainerTrainingSummary trainer = trainerOpt.get();
-    LocalDate trainingDate = sessionDTO.getTrainingDate();
-    int year = trainingDate.getYear();
-    String month = trainingDate.getMonth().toString();
-
-    Optional<YearSummary> yearOpt =
-        trainer.getYearsList().stream()
-            .filter(ys -> ys.getYear() != null && ys.getYear() == year)
-            .findFirst();
-    if (!yearOpt.isPresent()) {
-      throw new EntityNotFoundException("Training session not found for removal.");
+    if (date.isAfter(LocalDate.now())) {
+      throw new IllegalArgumentException("Training date cannot be in the future: " + date);
     }
-    YearSummary yearSummary = yearOpt.get();
+  }
 
-    Optional<MonthSummary> monthOpt =
-        yearSummary.getMonthsList().stream()
-            .filter(ms -> ms.getMonth() != null && ms.getMonth().equalsIgnoreCase(month))
-            .findFirst();
-    if (!monthOpt.isPresent()) {
-      throw new EntityNotFoundException("Training session not found for removal.");
-    }
-    MonthSummary monthSummary = monthOpt.get();
+  private TrainerTrainingSummary getOrCreateTrainerSummary(TrainingSessionDTO event) {
+    return repository
+        .findByTrainerUsername(event.getUsername())
+        .orElseGet(
+            () -> {
+              TrainerTrainingSummary newTrainer = new TrainerTrainingSummary();
+              newTrainer.setTrainerUsername(event.getUsername());
+              newTrainer.setTrainerFirstName(event.getFirstName());
+              newTrainer.setTrainerLastName(event.getLastName());
+              newTrainer.setTrainerStatus(event.isActive());
+              return newTrainer;
+            });
+  }
 
-    int currentDuration = monthSummary.getTrainingSummaryDuration();
-    int sessionDuration = sessionDTO.getDuration();
+  private YearSummary getOrCreateYearSummary(TrainerTrainingSummary trainer, int year) {
+    return trainer.getYearsList().stream()
+        .filter(ys -> ys.getYear() != null && ys.getYear() == year)
+        .findFirst()
+        .orElseGet(
+            () -> {
+              YearSummary ys = new YearSummary(year);
+              trainer.getYearsList().add(ys);
+              return ys;
+            });
+  }
 
+  private MonthSummary getOrCreateMonthSummary(YearSummary yearSummary, String month) {
+    return yearSummary.getMonthsList().stream()
+        .filter(ms -> ms.getMonth() != null && ms.getMonth().equalsIgnoreCase(month))
+        .findFirst()
+        .orElseGet(
+            () -> {
+              MonthSummary ms = new MonthSummary();
+              ms.setMonth(month);
+              yearSummary.getMonthsList().add(ms);
+              return ms;
+            });
+  }
+
+  private TrainerTrainingSummary findTrainerOrThrow(String username) {
+    return repository
+        .findByTrainerUsername(username)
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException("No training sessions found for trainer: " + username));
+  }
+
+  private YearSummary findYearSummaryOrThrow(
+      TrainerTrainingSummary trainer, int year, String trainingName) {
+    return trainer.getYearsList().stream()
+        .filter(ys -> ys.getYear() != null && ys.getYear() == year)
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    "Training session " + trainingName + " not found for removal."));
+  }
+
+  private MonthSummary findMonthSummaryOrThrow(
+      YearSummary yearSummary, String month, String trainingName) {
+    return yearSummary.getMonthsList().stream()
+        .filter(ms -> ms.getMonth() != null && ms.getMonth().equalsIgnoreCase(month))
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new EntityNotFoundException(
+                    "Training session " + trainingName + " not found for removal."));
+  }
+
+  private void validateDuration(int currentDuration, int sessionDuration, String trainingName) {
     if (currentDuration < sessionDuration) {
-      throw new EntityNotFoundException(
-          "Training session not found for removal: insufficient duration.");
+      throw new InsufficientDurationException(
+          "Training session " + trainingName + " not found for removal: insufficient duration.");
     }
+  }
 
-    monthSummary.setTrainingSummaryDuration(currentDuration - sessionDuration);
+  private void adjustSummaries(
+      TrainerTrainingSummary trainer,
+      YearSummary yearSummary,
+      MonthSummary monthSummary,
+      int sessionDuration) {
+    monthSummary.setTrainingSummaryDuration(
+        monthSummary.getTrainingSummaryDuration() - sessionDuration);
 
-    if (monthSummary.getTrainingSummaryDuration() == 0.0) {
+    if (monthSummary.getTrainingSummaryDuration() == 0) {
       yearSummary.getMonthsList().remove(monthSummary);
     }
-
     if (yearSummary.getMonthsList().isEmpty()) {
       trainer.getYearsList().remove(yearSummary);
     }
-
-    repository.save(trainer);
   }
 }
