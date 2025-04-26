@@ -11,11 +11,21 @@ public class MonthSummaryDTO {
     this.totalTrainingDuration = totalTrainingDuration;
   }
 
+  public MonthSummaryDTO() {}
+
   public Month getMonth() {
     return month;
   }
 
   public int getTotalTrainingDuration() {
     return totalTrainingDuration;
+  }
+
+  public void setMonth(Month month) {
+    this.month = month;
+  }
+
+  public void setTotalTrainingDuration(int totalTrainingDuration) {
+    this.totalTrainingDuration = totalTrainingDuration;
   }
 }

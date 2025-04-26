@@ -93,6 +93,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
           trainingSessionDTO.setUsername(training.get().getTrainer().getUser().getUsername());
           trainingSessionDTO.setDuration(training.get().getTrainingDuration());
           trainingSessionDTO.setActionType("DELETE");
+          trainingSessionDTO.setTrainingName(training.get().getTrainingName());
           messageProducer.sendTrainingSession(trainingSessionDTO);
         } else {
           LOGGER.info("No trainigs for " + trainee.get().getUser().getUsername());
