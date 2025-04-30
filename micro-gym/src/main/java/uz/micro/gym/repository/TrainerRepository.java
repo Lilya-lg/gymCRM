@@ -15,4 +15,6 @@ public interface TrainerRepository extends BaseRepository<Trainer> {
 
     @Query("SELECT t FROM Trainer t WHERE t.user.username IN :usernames")
     List<Trainer> findByUsernameIn(List<String> usernames);
+
+    Optional<Trainer> findByUserId(Long userId);
 }

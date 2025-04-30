@@ -14,7 +14,7 @@ public class Trainer {
     @JoinColumn(name = "specialization", referencedColumnName = "id")
     private TrainingType specialization;
 
-    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    @OneToOne(cascade = CascadeType.MERGE, optional = false)
     @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
     private User user;
 

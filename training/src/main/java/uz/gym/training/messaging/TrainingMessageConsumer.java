@@ -23,4 +23,5 @@ public class TrainingMessageConsumer {
       trainerSummaryService.deleteTraining(dto);
     }
   }
+
 }

@@ -43,6 +43,7 @@ public class TrainerSummaryService implements BaseService {
 
   @Override
   public TrainerSummaryDTO getTrainerSummary(String trainerUsername) {
+    try{
     TrainerTrainingSummary trainer =
         repository
             .findByTrainerUsername(trainerUsername)
@@ -51,6 +52,11 @@ public class TrainerSummaryService implements BaseService {
                     new EntityNotFoundException(
                         "No training sessions found for trainer: " + trainerUsername));
     return TrainerSummaryConverter.toDto(trainer);
+    }
+    catch (Exception e){
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   @Override

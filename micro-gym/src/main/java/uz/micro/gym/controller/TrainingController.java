@@ -28,10 +28,26 @@ public class TrainingController {
     }
 
     @GetMapping("/trainee")
-    public ResponseEntity<List<TrainingTraineeTrainerDTO>> getTrainingsForTrainee(@Valid @RequestBody TrainingTraineeListDTO traineeListDTO) {
-        List<Training> trainings = trainingService.findByCriteria(traineeListDTO.getUsername(), traineeListDTO.getTrainingType(), traineeListDTO.getPeriodFrom(), traineeListDTO.getPeriodTo(), traineeListDTO.getTrainerName());
-        List<TrainingTraineeTrainerDTO> trainingTrainee = mapper.mapTrainingsToTrainingDTOs(trainings);
-        return ResponseEntity.ok(trainingTrainee);
+    public ResponseEntity<?> getTrainingsForTrainee(@Valid @RequestBody TrainingTraineeListDTO traineeListDTO) {
+        try {
+            List<Training> trainings = trainingService.findByCriteria(
+                    traineeListDTO.getUsername(),
+                    traineeListDTO.getTrainingType(),
+                    traineeListDTO.getPeriodFrom(),
+                    traineeListDTO.getPeriodTo(),
+                    traineeListDTO.getTrainerName()
+            );
+
+            if (trainings.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "No trainings found for the given criteria"));
+            }
+
+            return ResponseEntity.ok(mapper.mapTrainingsToTrainingDTOs(trainings));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping("/trainer")

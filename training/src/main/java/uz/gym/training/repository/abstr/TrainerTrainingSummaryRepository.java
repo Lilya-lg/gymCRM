@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface TrainerTrainingSummaryRepository extends MongoRepository<TrainerTrainingSummary, String> {
     Optional<TrainerTrainingSummary> findByTrainerUsername(String trainerUsername);
+    void deleteByTrainerUsername(String trainerUsername);
 }
