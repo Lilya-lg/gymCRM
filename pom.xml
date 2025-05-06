@@ -3,10 +3,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
     <modules>
-        <module>eureka</module>
-      <module>training</module>
-      <module>micro-gym</module>
       <module>dto</module>
+      <module>eureka</module>
+      <module>micro-gym</module>
+      <module>training</module>
     </modules>
     <parent>
     <groupId>org.springframework.boot</groupId>
@@ -162,6 +162,26 @@
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-java</artifactId>
+      <version>7.14.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-spring</artifactId>
+      <version>7.14.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-junit</artifactId>
+      <version>7.14.0</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

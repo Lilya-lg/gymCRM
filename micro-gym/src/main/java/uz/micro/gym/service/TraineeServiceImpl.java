@@ -145,7 +145,7 @@ public class TraineeServiceImpl extends AbstractProfileService<Trainee> implemen
     Optional<Trainee> optionalTrainee = traineeRepository.findByUsername(username);
 
     Trainee trainee =
-        optionalTrainee.orElseThrow(() -> new IllegalArgumentException("Trainee not found"));
+        optionalTrainee.orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
 
     TraineeProfileDTO profileDTO = new TraineeProfileDTO();
     profileDTO.setFirstName(trainee.getUser().getFirstName());

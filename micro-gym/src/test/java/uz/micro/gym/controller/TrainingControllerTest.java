@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -77,10 +78,14 @@ public class TrainingControllerTest {
         when(mapper.mapTrainingsToTrainingDTOs(trainings)).thenReturn(Arrays.asList(trainingTraineeTrainerDTO, trainingTraineeTrainerDTO));
 
 
-        ResponseEntity<List<TrainingTraineeTrainerDTO>> response = trainingController.getTrainingsForTrainee(trainingTraineeListDTO);
+        ResponseEntity<?> response = trainingController.getTrainingsForTrainee(trainingTraineeListDTO);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(2, response.getBody().size());
+        @SuppressWarnings("unchecked")
+        List<TrainingTraineeTrainerDTO> responseBody = (List<TrainingTraineeTrainerDTO>) response.getBody();
+
+        assertNotNull(responseBody);
+        assertEquals(2, responseBody.size());
         verify(trainingService, times(1)).findByCriteria("trainee1", "Fitness", LocalDate.of(2023, 1, 1), LocalDate.of(2023, 12, 31), "trainer1");
         verify(mapper, times(1)).mapTrainingsToTrainingDTOs(trainings);
     }

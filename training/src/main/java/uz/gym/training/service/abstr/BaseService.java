@@ -1,6 +1,6 @@
 package uz.gym.training.service.abstr;
 
-import uz.gym.crm.dto.TrainingSessionDTO;
+import uz.gym.crm.dto.*;
 import uz.gym.training.dto.TrainerSummaryDTO;
 
 public interface BaseService {

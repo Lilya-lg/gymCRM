@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import uz.gym.crm.dto.TrainingSessionDTO;
+import uz.gym.crm.dto.*;
 import uz.gym.training.domain.MonthSummary;
 import uz.gym.training.domain.TrainerTrainingSummary;
 import uz.gym.training.domain.YearSummary;
@@ -43,6 +43,7 @@ public class TrainerSummaryService implements BaseService {
 
   @Override
   public TrainerSummaryDTO getTrainerSummary(String trainerUsername) {
+    try{
     TrainerTrainingSummary trainer =
         repository
             .findByTrainerUsername(trainerUsername)
@@ -51,6 +52,11 @@ public class TrainerSummaryService implements BaseService {
                     new EntityNotFoundException(
                         "No training sessions found for trainer: " + trainerUsername));
     return TrainerSummaryConverter.toDto(trainer);
+    }
+    catch (Exception e){
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   @Override

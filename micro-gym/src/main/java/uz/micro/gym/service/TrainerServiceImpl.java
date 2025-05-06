@@ -15,6 +15,7 @@ import uz.micro.gym.repository.TrainingRepository;
 import uz.micro.gym.repository.UserRepository;
 import uz.micro.gym.service.abstr.AbstractProfileService;
 import uz.micro.gym.service.abstr.TrainerService;
+import uz.micro.gym.util.exceptions.EntityNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
@@ -66,16 +67,16 @@ public class TrainerServiceImpl extends AbstractProfileService<Trainer> implemen
     public TrainerProfileDTO getTrainerProfile(String username) {
         Optional<Trainer> optionalTrainer = trainerRepository.findByUsername(username);
 
-        Trainer trainer = optionalTrainer.orElseThrow(() ->
-                new IllegalArgumentException("Trainee not found"));
+    Trainer trainer =
+        optionalTrainer.orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
         return mapper.mapToTrainerProfileDTO(trainer);
     }
 
     public TrainerProfileResponseDTO getTrainerProfileResponse(String username) {
         Optional<Trainer> optionalTrainer = baseRepository.findByUsername(username);
 
-        Trainer trainer = optionalTrainer.orElseThrow(() ->
-                new IllegalArgumentException("Trainee not found"));
+    Trainer trainer =
+        optionalTrainer.orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
         return mapper.mapToTrainerProfileResponseDTO(trainer);
     }
     public String putPassword(User user){
