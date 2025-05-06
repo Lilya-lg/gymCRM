@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import uz.gym.crm.dto.TrainingSessionDTO;
+import uz.gym.crm.dto.*;
 import uz.gym.training.domain.MonthSummary;
 import uz.gym.training.domain.TrainerTrainingSummary;
 import uz.gym.training.domain.YearSummary;

@@ -11,61 +11,65 @@ import uz.micro.gym.dto.TrainingTraineeTrainerDTO;
 import uz.micro.gym.dto.TrainingTrainerListDTO;
 import uz.micro.gym.mapper.Mapper;
 import uz.micro.gym.service.abstr.TrainingService;
+import uz.micro.gym.util.exceptions.EntityNotFoundException;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "api/trainings", produces = {"application/json", "application/xml"})
+@RequestMapping(
+    value = "api/trainings",
+    produces = {"application/json", "application/xml"})
 public class TrainingController {
 
-    private final TrainingService trainingService;
-    private final Mapper mapper;
+  private final TrainingService trainingService;
+  private final Mapper mapper;
 
-    public TrainingController(TrainingService trainingService, Mapper mapper) {
-        this.trainingService = trainingService;
-        this.mapper = mapper;
+  public TrainingController(TrainingService trainingService, Mapper mapper) {
+    this.trainingService = trainingService;
+    this.mapper = mapper;
+  }
+
+  @GetMapping("/trainee")
+  public ResponseEntity<?> getTrainingsForTrainee(
+      @Valid @RequestBody TrainingTraineeListDTO traineeListDTO) {
+    List<Training> trainings =
+        trainingService.findByCriteria(
+            traineeListDTO.getUsername(),
+            traineeListDTO.getTrainingType(),
+            traineeListDTO.getPeriodFrom(),
+            traineeListDTO.getPeriodTo(),
+            traineeListDTO.getTrainerName());
+
+    if (trainings.isEmpty()) {
+      throw new EntityNotFoundException("No trainings found for the given criteria");
     }
 
-    @GetMapping("/trainee")
-    public ResponseEntity<?> getTrainingsForTrainee(@Valid @RequestBody TrainingTraineeListDTO traineeListDTO) {
-        try {
-            List<Training> trainings = trainingService.findByCriteria(
-                    traineeListDTO.getUsername(),
-                    traineeListDTO.getTrainingType(),
-                    traineeListDTO.getPeriodFrom(),
-                    traineeListDTO.getPeriodTo(),
-                    traineeListDTO.getTrainerName()
-            );
+    return ResponseEntity.ok(mapper.mapTrainingsToTrainingDTOs(trainings));
+  }
 
-            if (trainings.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "No trainings found for the given criteria"));
-            }
+  @GetMapping("/trainer")
+  public ResponseEntity<List<TrainingTraineeTrainerDTO>> getTrainingsForTrainer(
+      @Valid @RequestBody TrainingTrainerListDTO trainerListDTO) {
 
-            return ResponseEntity.ok(mapper.mapTrainingsToTrainingDTOs(trainings));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
-        }
-    }
+    List<Training> trainings =
+        trainingService.findByCriteriaForTrainer(
+            trainerListDTO.getUsername(),
+            trainerListDTO.getPeriodFrom(),
+            trainerListDTO.getPeriodTo(),
+            trainerListDTO.getTraineeName());
+    List<TrainingTraineeTrainerDTO> trainingTrainee = mapper.mapTrainingsToTrainingDTOs(trainings);
+    return ResponseEntity.ok(trainingTrainee);
+  }
 
-    @GetMapping("/trainer")
-    public ResponseEntity<List<TrainingTraineeTrainerDTO>> getTrainingsForTrainer(@Valid @RequestBody TrainingTrainerListDTO trainerListDTO) {
-
-
-        List<Training> trainings = trainingService.findByCriteriaForTrainer(trainerListDTO.getUsername(), trainerListDTO.getPeriodFrom(), trainerListDTO.getPeriodTo(), trainerListDTO.getTraineeName());
-        List<TrainingTraineeTrainerDTO> trainingTrainee = mapper.mapTrainingsToTrainingDTOs(trainings);
-        return ResponseEntity.ok(trainingTrainee);
-    }
-
-    @PostMapping
-    public ResponseEntity<Map<String,String>> createTraining(@Valid @RequestBody TrainingDTO trainingDTO) {
-        Training training = mapper.toTraining(trainingDTO);
-        trainingService.linkTraineeTrainer(training, trainingDTO.getTraineeUsername(), trainingDTO.getTrainerUsername());
-        trainingService.create(training);
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of(
-                "message", "Training added succesfully"
-        ));
-    }
+  @PostMapping
+  public ResponseEntity<Map<String, String>> createTraining(
+      @Valid @RequestBody TrainingDTO trainingDTO) {
+    Training training = mapper.toTraining(trainingDTO);
+    trainingService.linkTraineeTrainer(
+        training, trainingDTO.getTraineeUsername(), trainingDTO.getTrainerUsername());
+    trainingService.create(training);
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(Map.of("message", "Training added succesfully"));
+  }
 }

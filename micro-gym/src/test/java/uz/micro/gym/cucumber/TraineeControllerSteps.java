@@ -19,7 +19,7 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TraineeControllerSTeps {
+public class TraineeControllerSteps {
 
   @Autowired private TestRestTemplate restTemplate;
 
@@ -37,29 +37,27 @@ public class TraineeControllerSTeps {
 
   @Before
   public void setupTestData() {
-
-    User user = userRepository.findByUsername("testuser").orElse(null);
-    if (user == null) {
-      user = new User();
-      user.setFirstName("Test");
-      user.setLastName("User");
-      user.setUsername("testuser");
-      user.setPassword(passwordEncoder.encode("password"));
-      userRepository.save(user);
-    }
-
-    if (traineeRepository.findByUsername("testuser").isEmpty()) {
-      Trainee trainee = new Trainee();
-      trainee.setUser(user);
-      trainee.setDateOfBirth(LocalDate.of(2000, 1, 1));
-      traineeRepository.save(trainee);
-    }
     jwtToken = testJwtTokenProvider.generateTestToken("testuser");
   }
 
   @Given("a user exists with username {string}")
   public void a_user_exists_with_username(String username) {
-    // Already created in @Before
+    User user = userRepository.findByUsername(username).orElse(null);
+    if (user == null) {
+      user = new User();
+      user.setFirstName("Test");
+      user.setLastName("User");
+      user.setUsername(username);
+      user.setPassword(passwordEncoder.encode("password"));
+      user = userRepository.save(user);
+    }
+
+    if (traineeRepository.findByUsername(username).isEmpty()) {
+      Trainee trainee = new Trainee();
+      trainee.setUser(user);
+      trainee.setDateOfBirth(LocalDate.of(2000, 1, 1));
+      traineeRepository.save(trainee);
+    }
   }
 
   @When("I fetch trainee profile by username {string}")

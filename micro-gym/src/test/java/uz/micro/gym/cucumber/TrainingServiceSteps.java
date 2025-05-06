@@ -183,6 +183,26 @@ public class TrainingServiceSteps {
             null);
   }
 
+  @Then("a message should be sent to the microservice")
+  public void aMessageShouldBeSent() {
+    verify(messageProducer, atLeastOnce()).sendTrainingSession(any(TrainingSessionDTO.class));
+  }
+
+  @Then("sending the message should fail")
+  public void sendingTheMessageShouldFail() {
+    doThrow(new RuntimeException("Microservice unavailable"))
+        .when(messageProducer)
+        .sendTrainingSession(any(TrainingSessionDTO.class));
+
+    assertThrows(
+        RuntimeException.class,
+        () -> {
+          TrainingSessionDTO dto = new TrainingSessionDTO();
+          dto.setUsername("test_user");
+          messageProducer.sendTrainingSession(dto);
+        });
+  }
+
   private Training createTrainingLinked() {
     Optional<Trainee> existingTrainee = traineeRepository.findByUsername("trainee_user");
     Trainee trainee;
@@ -231,25 +251,5 @@ public class TrainingServiceSteps {
         training, trainee.getUser().getUsername(), trainer.getUser().getUsername());
 
     return trainingRepository.save(training);
-  }
-
-  @Then("a message should be sent to the microservice")
-  public void aMessageShouldBeSent() {
-    verify(messageProducer, atLeastOnce()).sendTrainingSession(any(TrainingSessionDTO.class));
-  }
-
-  @Then("sending the message should fail")
-  public void sendingTheMessageShouldFail() {
-    doThrow(new RuntimeException("Microservice unavailable"))
-        .when(messageProducer)
-        .sendTrainingSession(any(TrainingSessionDTO.class));
-
-    assertThrows(
-        RuntimeException.class,
-        () -> {
-          TrainingSessionDTO dto = new TrainingSessionDTO();
-          dto.setUsername("test_user");
-          messageProducer.sendTrainingSession(dto);
-        });
   }
 }

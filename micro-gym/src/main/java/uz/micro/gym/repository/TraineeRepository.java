@@ -16,7 +16,7 @@ public interface TraineeRepository extends BaseRepository<Trainee> {
     int deleteByUsername(@Param("username") String username);
 
     @Query("SELECT t FROM Trainee t WHERE t.user.username = :username")
-    Optional<Trainee> findByUsername(String username);
+    Optional<Trainee> findByUsername(@Param("username") String username);
 
     @Transactional
     @Modifying

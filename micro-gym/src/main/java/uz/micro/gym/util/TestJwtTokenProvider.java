@@ -15,10 +15,12 @@ public class TestJwtTokenProvider {
     @Value("${jwt.secret}")
     private String base64Secret;
     private Key secretKey;
+
     @PostConstruct
     public void init() {
         this.secretKey = new SecretKeySpec(Base64.getDecoder().decode(base64Secret), "HmacSHA256");
     }
+
     public  String generateTestToken(String username) {
         return Jwts.builder()
                 .setSubject(username)

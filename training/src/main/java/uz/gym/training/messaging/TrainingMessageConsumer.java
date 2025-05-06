@@ -3,7 +3,7 @@ package uz.gym.training.messaging;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Service;
 import uz.gym.training.service.TrainerSummaryService;
-import uz.gym.crm.dto.TrainingSessionDTO;
+import uz.gym.crm.dto.*;
 
 @Service
 public class TrainingMessageConsumer {

@@ -18,34 +18,29 @@ import static org.mockito.Mockito.when;
 
 class TrainingTypeControllerTest {
 
-    @Mock
-    private TrainingTypeService trainingTypeService;
+  @Mock private TrainingTypeService trainingTypeService;
 
-    @InjectMocks
-    private TrainingTypeController trainingTypeController;
+  @InjectMocks private TrainingTypeController trainingTypeController;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
+  @BeforeEach
+  void setUp() {
+    MockitoAnnotations.openMocks(this);
+  }
 
-    @Test
-    void testGetTrainingTypes() {
-        TrainingTypeDTO trainingTypeDTO1 = new TrainingTypeDTO();
-        trainingTypeDTO1.setName("Yoga");
-        TrainingTypeDTO trainingTypeDTO2 = new TrainingTypeDTO();
-        trainingTypeDTO2.setName("Pilates");
-        List<TrainingTypeDTO> trainingTypes = Arrays.asList(
-                trainingTypeDTO1,
-                trainingTypeDTO2
-        );
-        when(trainingTypeService.getAllTrainingTypes()).thenReturn(trainingTypes);
+  @Test
+  void testGetTrainingTypes() {
+    TrainingTypeDTO trainingTypeDTO1 = new TrainingTypeDTO();
+    trainingTypeDTO1.setName("Yoga");
+    TrainingTypeDTO trainingTypeDTO2 = new TrainingTypeDTO();
+    trainingTypeDTO2.setName("Pilates");
+    List<TrainingTypeDTO> trainingTypes = Arrays.asList(trainingTypeDTO1, trainingTypeDTO2);
+    when(trainingTypeService.getAllTrainingTypes()).thenReturn(trainingTypes);
 
-        ResponseEntity<List<TrainingTypeDTO>> response = trainingTypeController.getTrainingTypes();
+    ResponseEntity<List<TrainingTypeDTO>> response = trainingTypeController.getTrainingTypes();
 
-        assertNotNull(response.getBody());
-        assertEquals(2, response.getBody().size());
-        assertEquals("Yoga", response.getBody().get(0).getName());
-        assertEquals("Pilates", response.getBody().get(1).getName());
-    }
+    assertNotNull(response.getBody());
+    assertEquals(2, response.getBody().size());
+    assertEquals("Yoga", response.getBody().get(0).getName());
+    assertEquals("Pilates", response.getBody().get(1).getName());
+  }
 }
